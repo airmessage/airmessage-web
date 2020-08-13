@@ -10,7 +10,7 @@ before_script:
 pages:
   stage: deploy
   script:
-    - mkdir src/config
+    - mkdir src/secure
     - base64 -d <<< $SECURE_CONFIG > src/secure/config.ts
     - npm run build
     - rm -rf public
