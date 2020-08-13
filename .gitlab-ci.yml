@@ -1,0 +1,20 @@
+image: node:latest
+
+cache:
+  paths:
+    - node_modules # Cache node_modules for better performance
+
+before_script:
+  - npm install
+
+pages:
+  stage: deploy
+  script:
+    - npm run build
+    - rm -rf public
+    - mv build public
+  artifacts:
+    paths:
+      - public # GitLab pages serves from a 'public' directory
+  only:
+    - master # Run on master branch
