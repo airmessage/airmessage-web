@@ -3,7 +3,7 @@ import React from 'react';
 import Onboarding from '../onboarding/Onboarding';
 import Messaging from '../messaging/master/Messaging';
 
-import * as firebase from "firebase/app";
+import firebase from "firebase/app";
 import "firebase/auth";
 import * as config from "../../secure/config";
 

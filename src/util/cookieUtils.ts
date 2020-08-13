@@ -1,3 +1,5 @@
+export const cookieDomain = "airmessage.org";
+
 export function hasCookie(name: string): boolean {
 	return document.cookie.match(new RegExp(
 		"(?:^|; )" + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + "=([^;]*)"

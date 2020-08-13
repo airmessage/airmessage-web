@@ -12,8 +12,6 @@ import AirMessageLogo from '../logo/AirMessageLogo';
 
 import * as config from "../../secure/config";
 
-import "firebase/auth";
-
 export default function Build() {
 	return (
 		<div className={styles.root}>

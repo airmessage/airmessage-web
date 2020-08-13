@@ -1,14 +1,15 @@
 import DataProxy from "./dataProxy";
 
-import * as firebase from "firebase/app";
 import * as CloseFrame from "./webSocketCloseEventCodes";
 import * as NHT from "./nht";
-import "firebase/auth";
 import ByteBuffer from "bytebuffer";
+import firebase from "firebase/app";
+import "firebase/auth";
 
 import {communicationsVersion} from "./connectionConstants";
 import {getInstallationID} from "../util/installationUtils";
 import {ConnectionErrorCode} from "../data/stateCodes";
+import {cookieDomain} from "../util/cookieUtils";
 
 const connectHostname = "wss://connect.airmessage.org";
 //const connectHostname = "ws://localhost:1259";
@@ -24,9 +25,9 @@ export default class DataProxyConnect extends DataProxy {
 		firebase.auth().currentUser?.getIdToken().then((idToken: string) => {
 			//Assigning other temporary Connect cookies
 			//these cookies get cleared on browser restart
-			document.cookie = `communications=${NHT.commVer}`;
-			document.cookie = `isServer=${false}`;
-			document.cookie = `idToken=${idToken}`;
+			document.cookie = `communications=${NHT.commVer}; domain=${cookieDomain}`;
+			document.cookie = `isServer=${false}; domain=${cookieDomain}`;
+			document.cookie = `idToken=${idToken}; domain=${cookieDomain}`;
 			getInstallationID(); //This function saves the installation ID to cookies for us
 			
 			//Starting the WebSocket connection

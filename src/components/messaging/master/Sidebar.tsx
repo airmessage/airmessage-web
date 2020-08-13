@@ -1,7 +1,7 @@
 import React from "react";
 import styles from './Sidebar.module.css';
 
-import * as firebase from "firebase/app";
+import firebase from "firebase/app";
 import "firebase/auth";
 
 import AirMessageLogo from "../../logo/AirMessageLogo";

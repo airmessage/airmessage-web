@@ -4,8 +4,9 @@ import styles from "./ConnectionBanner.module.css";
 import {Button, Paper, Typography} from "@material-ui/core";
 import WifiOffRoundedIcon from "@material-ui/icons/WifiOffRounded";
 import {ConnectionErrorCode} from "../../../data/stateCodes";
-import * as firebase from "firebase";
 import {connect as connectToServer} from "../../../connection/connectionManager";
+import firebase from "firebase/app";
+import "firebase/auth";
 
 interface ErrorDisplay {
 	message: string;
