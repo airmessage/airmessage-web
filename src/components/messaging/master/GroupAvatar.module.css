@@ -1,0 +1,96 @@
+.avatarContainer {
+	width: 40px;
+	height: 40px;
+	position: relative;
+}
+
+.avatar {
+	position: absolute !important;
+}
+
+.avatar2 {
+	composes: avatar;
+	
+	width: 55% !important;
+	height: 55% !important;
+}
+
+.avatar2first {
+	composes: avatar2;
+	
+	top: 0 !important;
+	left: 0 !important;
+}
+
+.avatar2second {
+	composes: avatar2;
+	
+	bottom: 0 !important;
+	right: 0 !important;
+}
+
+.avatar3 {
+	composes: avatar;
+	
+	width: 46% !important;
+	height: 46% !important;
+}
+
+.avatar3first {
+	composes: avatar3;
+	
+	top: 0 !important;
+	left: 0 !important;
+	right: 0 !important;
+	margin-left: auto !important;
+	margin-right: auto !important;
+}
+
+.avatar3second {
+	composes: avatar3;
+	
+	bottom: 0 !important;
+	left: 0 !important;
+}
+
+.avatar3third {
+	composes: avatar3;
+	
+	bottom: 0 !important;
+	right: 0 !important;
+}
+
+.avatar4 {
+	composes: avatar;
+	
+	width: 46% !important;
+	height: 46% !important;
+}
+
+.avatar4first {
+	composes: avatar4;
+	
+	top: 0 !important;
+	left: 0 !important;
+}
+
+.avatar4second {
+	composes: avatar4;
+	
+	top: 0 !important;
+	right: 0 !important;
+}
+
+.avatar4third {
+	composes: avatar4;
+	
+	bottom: 0 !important;
+	left: 0 !important;
+}
+
+.avatar4fourth {
+	composes: avatar4;
+	
+	bottom: 0 !important;
+	right: 0 !important;
+}

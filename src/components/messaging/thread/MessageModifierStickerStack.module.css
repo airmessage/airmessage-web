@@ -1,0 +1,26 @@
+.sticker {
+	position: absolute;
+	
+	max-width: 100px;
+	max-height: 100px;
+	
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.container {
+	z-index: 2;
+	
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	
+	transition: opacity 0.3s;
+	pointer-events: none;
+}
+
+.transparent {
+	opacity: 0.05;
+}

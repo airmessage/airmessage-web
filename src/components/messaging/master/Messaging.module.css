@@ -1,0 +1,17 @@
+.split {
+	width: 100vw;
+	height: 100vh;
+	
+	display: flex;
+	align-content: stretch;
+}
+
+.splitMaster {
+	flex: 1;
+	height: 100%;
+}
+
+.splitDetail {
+	width: 400px;
+	height: 100%;
+}

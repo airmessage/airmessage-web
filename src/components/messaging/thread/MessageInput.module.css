@@ -1,0 +1,93 @@
+.root {
+	border-radius: 20px;
+	overflow: hidden;
+	max-width: 1000px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.textfield {
+	font-size: 14px !important;
+	padding: 12px 16px !important;
+}
+
+/* .root textarea {
+	flex-grow: 1;
+	display: block;
+	
+	background: transparent;
+	border: none;
+	outline: none;
+	margin: 0;
+	padding: 12px 16px;
+	
+	resize: none;
+	font-family: inherit;
+	font-size: 14px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+} */
+
+.root button {
+	flex-shrink: 0;
+	align-self: flex-end;
+	
+	width: 40px;
+	height: 40px;
+}
+
+.control {
+	display: flex;
+	flex-direction: row;
+}
+
+.attachmentqueue {
+	display: flex;
+	flex-direction: row;
+	overflow-x: scroll;
+	overflow-y: hidden;
+}
+
+.queuedattachmentContainer {
+	width: 80px;
+	height: 80px;
+	padding-top: 16px;
+	padding-left: 16px;
+	
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.queuedattachmentSubcontainer {
+	position: relative;
+}
+
+.queuedattachmentContent {
+	display: block;
+	white-space: pre-wrap;
+	
+	border-radius: 4px;
+	width: calc(80px - 16px);
+	height: calc(80px - 16px);
+	
+	object-fit: cover;
+}
+
+.queuedattachmentClose {
+	position: absolute !important;
+	top: 0;
+	right: 0;
+	transform: translate(50%, -50%);
+}
+
+@media(prefers-color-scheme: dark) {
+	.messageinput textarea {
+		color: white;
+	}
+	
+	.messageinput textarea::placeholder {
+		color: white;
+	}
+}

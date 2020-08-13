@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg">
+	<g fill="none" fill-rule="evenodd">
+		<g id="icon-stroke" stroke="currentColor">
+			<g transform="translate(1 1)">
+				<circle cx="12" cy="12" r="11.864" stroke-width="2.2857"/>
+				<g transform="translate(7 5.3636)" stroke-linecap="square" stroke-width="2.29">
+					<line x1="5" x2="10" y2="5" />
+					<line x1="5" y2="5"/>
+					<line x1="5.2455" x2="5.2455" y1="1" y2="14"/>
+				</g>
+			</g>
+		</g>
+	</g>
+</svg>

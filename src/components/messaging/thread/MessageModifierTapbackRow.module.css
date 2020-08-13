@@ -1,0 +1,33 @@
+.tapbackGroup {
+	z-index: 1;
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	transform: translateY(12px);
+}
+
+.tapback {
+	display: inline-flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	
+	border-style: solid;
+	border-radius: 12px;
+	border-width: 2px;
+	min-width: 28px;
+	height: 18px;
+	
+	padding-left: 6px;
+	padding-right: 6px;
+}
+
+.icon {
+	width: 12px !important;
+	height: 12px !important;
+}
+
+.label {
+	margin-left: 2px;
+	font-size: 10px;
+}

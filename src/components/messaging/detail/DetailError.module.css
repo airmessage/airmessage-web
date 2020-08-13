@@ -1,0 +1,40 @@
+.container {
+	height: 100%;
+	
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.main {
+	margin: 16px;
+	max-width: 1000px;
+	
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: center;
+}
+
+.split {
+	display: flex;
+	flex-direction: column;
+	
+	margin-inline-start: 16px;
+}
+
+.icon {
+	width: 64px !important;
+	height: 64px !important;
+}
+
+.buttonRow {
+	display: flex;
+	flex-direction: row;
+	
+	margin-top: 12px;
+}
+
+.buttonRow > button:not(:first-child) {
+	margin-left: 16px;
+}
