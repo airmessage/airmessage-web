@@ -3,7 +3,7 @@ import {AttachmentRequestErrorCode, ConnectionErrorCode, CreateChatErrorCode, Me
 import {Conversation, ConversationItem, MessageModifier} from "../data/blocks";
 
 export interface CommunicationsManagerListener {
-	onOpen: () => void;
+	onOpen: (systemVersion: string, softwareVersion: string) => void;
 	onClose: (reason: ConnectionErrorCode) => void;
 	onMessageUpdate: (data: ConversationItem[]) => void;
 	onConversationUpdate: (data: [string, Conversation | undefined][]) => void;
@@ -65,7 +65,7 @@ export default abstract class CommunicationsManager {
 	
 	public onHandshake(installationID: string, deviceName: string, systemVersion: string, softwareVersion: string): void {
 		//Forwarding the event to the listener
-		this.listener?.onOpen();
+		this.listener?.onOpen(systemVersion, softwareVersion);
 	}
 	
 	/**
@@ -146,4 +146,9 @@ export default abstract class CommunicationsManager {
 	 * @return whether or not the request was successfully sent
 	 */
 	public abstract requestChatCreation(requestID: number, members: string[], service: string): boolean;
+	
+	/**
+	 * Get the current active communications version for this connection
+	 */
+	public abstract get communicationsVersion(): string | undefined;
 }

@@ -14,6 +14,7 @@ const nhtInformation = 100;
 export default class ClientComm5 extends CommunicationsManager {
 	//Protocol manager
 	private protocolManager: ProtocolManager | null = null;
+	private protocolManagerVer: number | undefined;
 	
 	//State
 	private handshakeTimeout : any | undefined;
@@ -29,6 +30,7 @@ export default class ClientComm5 extends CommunicationsManager {
 		
 		//Invalidating the protocol manager
 		this.protocolManager = null;
+		this.protocolManagerVer = undefined;
 	}
 	
 	startTimeoutTimer() {
@@ -86,6 +88,7 @@ export default class ClientComm5 extends CommunicationsManager {
 		
 		//Setting the protocol manager
 		this.protocolManager = protocolManager;
+		this.protocolManagerVer = commSubVer;
 	}
 
 	findProtocolManager(subVersion: number): ProtocolManager | null {
@@ -140,5 +143,9 @@ export default class ClientComm5 extends CommunicationsManager {
 		
 		//Disconnecting
 		this.disconnect(ConnectionErrorCode.Internet)
+	}
+	
+	get communicationsVersion(): string | undefined {
+		return targetCommVer + "." + (this.protocolManagerVer ?? "X");
 	}
 }

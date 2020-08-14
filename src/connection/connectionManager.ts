@@ -15,11 +15,23 @@ import EventEmitter from "../util/eventEmitter";
 import ProgressPromise from "../util/progressPromise";
 import promiseTimeout from "../util/promiseTimeout";
 
+export const targetCommVer = "5.1";
+
 //How often to try reconnecting when disconnected
 const reconnectInterval = 8 * 1000;
 const requestTimeoutMillis = 10 * 1000;
 
 type ConnectionState = "disconnected" | "connecting" | "connected";
+
+//Server information
+let _serverSystemVersion: string | undefined;
+export function getServerSystemVersion(): string | undefined {
+	return _serverSystemVersion;
+}
+let _serverSoftwareVersion: string | undefined;
+export function getServerSoftwareVersion(): string | undefined {
+	return _serverSoftwareVersion;
+}
 
 //Communications manager constructor shape
 interface CreatesCommunicationsManager {
@@ -124,9 +136,13 @@ let isConnectingPassively = false;
 let nextRequestID: number = 0;
 
 const communicationsManagerListener: CommunicationsManagerListener = {
-	onOpen(): void {
+	onOpen(systemVersion: string, softwareVersion: string): void {
 		//Updating the state
 		updateStateConnected();
+		
+		//Recording the server information
+		_serverSystemVersion = systemVersion;
+		_serverSoftwareVersion = softwareVersion;
 	}, onClose(reason: ConnectionErrorCode): void {
 		//Failing all pending promises
 		rejectAndClear(liteConversationPromiseArray, messageErrorNetwork);
@@ -466,6 +482,10 @@ export function addConnectionListener(listener: ConnectionListener) {
 export function removeConnectionListener(listener: ConnectionListener) {
 	const index = connectionListenerArray.indexOf(listener, 0);
 	if(index > -1) connectionListenerArray.splice(index, 1);
+}
+
+export function getActiveCommVer(): string | undefined {
+	return communicationsManager?.communicationsVersion;
 }
 
 function pushKeyedArray<K, R>(map: Map<K, R[]>, key: K, value: R): void {

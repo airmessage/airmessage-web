@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import styles from './Sidebar.module.css';
 
 import firebase from "firebase/app";
@@ -6,7 +6,7 @@ import "firebase/auth";
 
 import AirMessageLogo from "../../logo/AirMessageLogo";
 import {
-	Button,
+	Button, CircularProgress,
 	Dialog,
 	DialogActions,
 	DialogContent,
@@ -15,7 +15,7 @@ import {
 	IconButton,
 	Menu,
 	MenuItem,
-	Toolbar
+	Toolbar, Typography
 } from "@material-ui/core";
 import AddRoundedIcon from "@material-ui/icons/AddRounded";
 import MoreVertRoundedIcon from "@material-ui/icons/MoreVertRounded";
@@ -27,6 +27,15 @@ import {Flipped, Flipper} from "react-flip-toolkit";
 import {Skeleton} from "@material-ui/lab";
 import ConnectionBanner from "./ConnectionBanner";
 import {ConnectionErrorCode} from "../../../data/stateCodes";
+import {communityPage, supportEmail} from "../../../data/linkConstants";
+import {appVersion, getAppVersionReleaseString} from "../../../data/releaseInfo";
+import {
+	getActiveCommVer,
+	getServerSoftwareVersion,
+	getServerSystemVersion,
+	targetCommVer
+} from "../../../connection/connectionManager";
+import Markdown from "../../Markdown";
 
 interface Props {
 	conversations: Conversation[] | undefined;
@@ -38,12 +47,16 @@ interface Props {
 
 interface State {
 	overflowMenuElement: HTMLElement | null;
+	showChangelogDialog: boolean;
+	showFeedbackDialog: boolean;
 	showLogOutDialog: boolean;
 }
 
 export default class Sidebar extends React.Component<Props, State> {
 	state = {
 		overflowMenuElement: null,
+		showChangelogDialog: false,
+		showFeedbackDialog: false,
 		showLogOutDialog: false
 	}
 	
@@ -61,20 +74,40 @@ export default class Sidebar extends React.Component<Props, State> {
 		})
 	}
 	
+	private readonly handleOverflowChangelog = () => {
+		//Closing the menu
+		this.handleOverflowClose();
+		
+		//Showing the changelog dialog
+		this.setState({showChangelogDialog: true});
+	}
+	
+	private readonly dismissOverflowChangelog = () => {
+		this.setState({showChangelogDialog: false});
+	}
+	
+	private readonly handleOverflowFeedback = () => {
+		//Closing the menu
+		this.handleOverflowClose();
+		
+		//Showing the feedback dialog
+		this.setState({showFeedbackDialog: true});
+	};
+	
+	private readonly dismissOverflowFeedback = () => {
+		this.setState({showFeedbackDialog: false});
+	}
+	
 	private readonly handleOverflowLogOut = () => {
 		//Closing the menu
 		this.handleOverflowClose();
 		
 		//Prompting the user to log out
-		this.setState({
-			showLogOutDialog: true
-		})
+		this.setState({showLogOutDialog: true});
 	}
 	
 	private readonly dismissLogOut = () => {
-		this.setState({
-			showLogOutDialog: false
-		})
+		this.setState({showLogOutDialog: false});
 	}
 	
 	private readonly confirmLogOut = () => {
@@ -88,7 +121,9 @@ export default class Sidebar extends React.Component<Props, State> {
 	render() {
 		return (
 			<div className={styles.sidebar}>
-				<SignOutAlert isOpen={this.state.showLogOutDialog} onConfirm={this.confirmLogOut} onDismiss={this.dismissLogOut} />
+				<ChangelogDialog isOpen={this.state.showChangelogDialog} onDismiss={this.dismissOverflowChangelog} />
+				<FeedbackDialog isOpen={this.state.showFeedbackDialog} onDismiss={this.dismissOverflowFeedback} />
+				<SignOutDialog isOpen={this.state.showLogOutDialog} onDismiss={this.dismissLogOut} />
 				
 				<Toolbar className={styles.sidebarToolbar}>
 					<AirMessageLogo />
@@ -121,8 +156,8 @@ export default class Sidebar extends React.Component<Props, State> {
 						open={Boolean(this.state.overflowMenuElement)}
 						onClose={this.handleOverflowClose}>
 						{/*<MenuItem onClick={this.handleOverflowClose}>Settings</MenuItem>*/}
-						{/*<MenuItem onClick={this.handleOverflowClose}>App info</MenuItem>*/}
-						{/*<MenuItem onClick={this.handleOverflowClose}>Send feedback</MenuItem>*/}
+						<MenuItem onClick={this.handleOverflowChangelog}>What's new</MenuItem>
+						<MenuItem onClick={this.handleOverflowFeedback}>Help and feedback</MenuItem>
 						<MenuItem onClick={this.handleOverflowLogOut}>Sign out</MenuItem>
 					</Menu>
 				</Toolbar>
@@ -155,7 +190,92 @@ export default class Sidebar extends React.Component<Props, State> {
 	}
 }
 
-function SignOutAlert(props: {isOpen: boolean, onConfirm: () => void, onDismiss: () => void}) {
+function ChangelogDialog(props: {isOpen: boolean, onDismiss: () => void}) {
+	const [changelog, setChangelog] = useState<string | undefined>();
+	
+	//Loading the changelog
+	useEffect(() => {
+		const xhr = new XMLHttpRequest();
+		xhr.responseType = "text";
+		xhr.open("GET", "/data/changes.md");
+		xhr.send();
+		xhr.onload = () => {
+			if(xhr.status !== 200) return;
+			setChangelog(xhr.responseText);
+		};
+	}, []);
+	
+	return (
+		<Dialog
+			open={props.isOpen}
+			onClose={props.onDismiss}
+			fullWidth>
+			<DialogTitle>Release notes</DialogTitle>
+			<DialogContent dividers>
+				{
+					changelog === undefined ?
+						<CircularProgress /> :
+						<React.Fragment>
+							<Typography variant="overline" color="textSecondary" gutterBottom>{`AirMessage for web ${appVersion}, released ${getAppVersionReleaseString()}`}</Typography>
+							<Markdown markdown={changelog} />
+						</React.Fragment>
+				}
+			</DialogContent>
+		</Dialog>
+	);
+}
+
+function FeedbackDialog(props: {isOpen: boolean, onDismiss: () => void}) {
+	function onClickEmail() {
+		const url = `mailto:${supportEmail}?subject=${encodeURIComponent("AirMessage feedback")}&body=${encodeURIComponent(
+			`
+			---------- DEVICE INFORMATION ----------
+			User agent: ${navigator.userAgent}
+			Client version: ${appVersion}
+			Current protocol version: ${getActiveCommVer()}
+			Target protocol version: ${targetCommVer}
+			Server system version: ${getServerSystemVersion()}
+			Server software version: ${getServerSoftwareVersion()}`)}`
+		window.open(url, "_blank");
+		props.onDismiss();
+	}
+	
+	function onClickCommunity() {
+		window.open(communityPage, "_blank");
+		props.onDismiss();
+	}
+	
+	return (
+		<Dialog
+			open={props.isOpen}
+			onClose={props.onDismiss}>
+			<DialogTitle>Help and feedback</DialogTitle>
+			<DialogContent>
+				<DialogContentText>
+					Have a bug to report, a feature to suggest, or anything else to say? Contact us or discuss with others using the links below.
+				</DialogContentText>
+			</DialogContent>
+			<DialogActions>
+				<Button onClick={onClickEmail} color="primary">
+					Send E-Mail
+				</Button>
+				<Button onClick={onClickCommunity} color="primary" autoFocus>
+					Open community subreddit
+				</Button>
+			</DialogActions>
+		</Dialog>
+	);
+}
+
+function SignOutDialog(props: {isOpen: boolean, onDismiss: () => void}) {
+	function onConfirm() {
+		//Dismissing the dialog
+		props.onDismiss();
+		
+		//Logging out
+		firebase.auth().signOut();
+	}
+	
 	return (
 		<Dialog
 			open={props.isOpen}
@@ -170,7 +290,7 @@ function SignOutAlert(props: {isOpen: boolean, onConfirm: () => void, onDismiss:
 				<Button onClick={props.onDismiss} color="primary">
 					Cancel
 				</Button>
-				<Button onClick={props.onConfirm} color="primary" autoFocus>
+				<Button onClick={onConfirm} color="primary" autoFocus>
 					Sign out
 				</Button>
 			</DialogActions>
