@@ -228,8 +228,7 @@ function ChangelogDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 function FeedbackDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 	function onClickEmail() {
 		const url = `mailto:${supportEmail}?subject=${encodeURIComponent("AirMessage feedback")}&body=${encodeURIComponent(
-			`
-			---------- DEVICE INFORMATION ----------
+			`\n\n---------- DEVICE INFORMATION ----------
 			User agent: ${navigator.userAgent}
 			Client version: ${appVersion}
 			Current protocol version: ${getActiveCommVer()}

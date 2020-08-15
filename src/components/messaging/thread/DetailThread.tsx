@@ -20,6 +20,7 @@ import {ConversationItemType, MessageError, MessageStatusCode} from "../../../da
 import {DetailFrame} from "../master/DetailFrame";
 import EventEmitter from "../../../util/eventEmitter";
 import {dismissMessageNotifications} from "../../../util/notifyUtils";
+import {playSoundMessageOut} from "../../../util/soundUtils";
 
 type HistoryLoadState = "idle" | "loading" | "complete";
 
@@ -244,9 +245,14 @@ export default class DetailThread extends React.Component<Props, State> {
 			addedItems.push(...messages);
 		}
 		
-		//Notifying message listeners
-		messageUpdateEmitter.notify(addedItems);
-		this.messageSubmitEmitter.notify(undefined);
+		if(addedItems.length > 0) {
+			//Notifying message listeners
+			messageUpdateEmitter.notify(addedItems);
+			this.messageSubmitEmitter.notify(undefined);
+			
+			//Playing a sound
+			playSoundMessageOut();
+		}
 	}
 	
 	private handleAttachmentRemove(file: QueuedFile) {

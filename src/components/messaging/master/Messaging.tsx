@@ -30,6 +30,7 @@ import DetailLoading from "../detail/DetailLoading";
 import DetailError from "../detail/DetailError";
 import SnackbarProvider from "../../control/SnackbarProvider";
 import {initializeNotifications, notificationClickEmitter, sendMessageNotification} from "../../../util/notifyUtils";
+import {playSoundMessageIn, playSoundNotification} from "../../../util/soundUtils";
 
 interface Props {
 	theme: Theme;
@@ -70,6 +71,13 @@ function isDetailPaneThread(pane: DetailPane): pane is DetailPaneThread {
 
 function isDetailPaneError(pane: DetailPane): pane is DetailPaneError {
 	return pane.type === DetailType.Error;
+}
+
+interface PendingConversationData {
+	latestMessage: MessageItem;
+	notifyMessage?: MessageItem;
+	messageCount: number;
+	notificationCount: number;
 }
 
 class Messaging extends React.Component<Props, State> {
@@ -120,7 +128,7 @@ class Messaging extends React.Component<Props, State> {
 		}
 	}
 	//Used to hold loose messages received from message updates until their conversation information is received, so it can be applied
-	private readonly pendingConversationPreviews: Map<string, ConversationPreviewMessage> = new Map();
+	private readonly pendingConversationDataMap: Map<string, PendingConversationData> = new Map();
 	
 	state: Readonly<State> = {
 		conversations: [],
@@ -249,49 +257,121 @@ class Messaging extends React.Component<Props, State> {
 	}
 	
 	private readonly onMessageUpdate = (itemArray: ConversationItem[]): void => {
+		function accumulateMessageItem(accumulator: {[index: string]: [MessageItem, number]}, item: MessageItem) {
+			if(accumulator[item.chatGuid]) {
+				if(item.date > accumulator[item.chatGuid][0].date) accumulator[item.chatGuid][0] = item;
+				accumulator[item.chatGuid][1]++;
+			} else {
+				accumulator[item.chatGuid] = [item, 1];
+			}
+			
+			return accumulator;
+		}
+		
+		const selectedConversationGUID: string | undefined = isDetailPaneThread(this.state.detailPane) ? this.state.detailPane.conversationGUID : undefined;
+		
 		//Finding the most recent item per chat
-		const sortedItems = itemArray.reduce((accumulator: {[index: string]: MessageItem}, item: ConversationItem) => {
+		const topItems = itemArray.reduce((accumulator: {[index: string]: [MessageItem, number]}, item: ConversationItem) => {
 			//If the new item isn't a message, ignore it
 			if(isConversationItemMessage(item)) {
-				accumulator[item.chatGuid] = accumulator[item.chatGuid] && accumulator[item.chatGuid].date > item.date ? accumulator[item.chatGuid] : item;
+				accumulateMessageItem(accumulator, item);
+			}
+			
+			return accumulator;
+		}, {});
+		
+		//Used to determine if there is a new message for a selected conversation and deselected conversation respectively
+		let newSelectedIncomingMessages = false;
+		
+		//Finding the most recent notification-applicable item per chat
+		const topItemsNotification = itemArray.reduce((accumulator: {[index: string]: [MessageItem, number]}, item: ConversationItem) => {
+			//If the new item isn't an incoming message, ignore it
+			//if(isConversationItemMessage(item)) {
+			if(isConversationItemMessage(item) && item.sender !== undefined) {
+				if(item.chatGuid === selectedConversationGUID) {
+					newSelectedIncomingMessages = true;
+					//Don't display a desktop notification if the message's conversation is selected
+				} else {
+					accumulateMessageItem(accumulator, item);
+				}
 			}
 			
 			return accumulator;
 		}, {});
 		
 		//Finding all chat GUIDs that we don't have indexed
-		const newChatGUIDs = Object.keys(sortedItems).filter((chatGUID) => !this.state.conversations.find((conversation) => conversation.guid === chatGUID));
-		if(newChatGUIDs.length > 0) {
+		const unlinkedTopItems = Object.entries(topItems).reduce((accumulator: {[index: string]: [MessageItem, number]}, [chatGUID, entry]) => {
+			if(!this.state.conversations.find((conversation) => conversation.guid === chatGUID)) {
+				accumulator[chatGUID] = entry;
+			}
+			return accumulator;
+		}, {});
+
+		if(Object.keys(unlinkedTopItems).length > 0) {
 			//Saving the items for later reference when we have conversation information
-			for(const chatGUID of newChatGUIDs) this.pendingConversationPreviews.set(chatGUID, messageItemToConversationPreview(sortedItems[chatGUID]));
+			for(const [chatGUID, [latestMessage, messageCount]] of Object.entries(unlinkedTopItems)) {
+				//Finding the latest notification
+				const topNotificationEntry: [MessageItem, number] | undefined = topItemsNotification[chatGUID] ?? [];
+				const notificationMessage = topNotificationEntry ? topNotificationEntry[0] : undefined;
+				const notificationCount = topNotificationEntry ? topNotificationEntry[1] : 0;
+				
+				const existingValue = this.pendingConversationDataMap.get(chatGUID);
+				if(existingValue) {
+					if(existingValue.latestMessage.date < latestMessage.date) existingValue.latestMessage = latestMessage;
+					if(notificationMessage && (!existingValue.notifyMessage || existingValue.notifyMessage.date < notificationMessage.date)) existingValue.notifyMessage = notificationMessage;
+					existingValue.messageCount += messageCount;
+					existingValue.notificationCount += notificationCount;
+				} else {
+					this.pendingConversationDataMap.set(chatGUID, {
+						latestMessage: latestMessage,
+						notifyMessage: notificationMessage,
+						messageCount: messageCount,
+						notificationCount: notificationCount
+					});
+				}
+			}
 			
 			//Requesting information for new chats
-			ConnectionManager.fetchConversationInfo(newChatGUIDs)
+			ConnectionManager.fetchConversationInfo(Object.keys(unlinkedTopItems))
 				.then((result) => {
+					let notificationSent = false;
 					const newConversationArray: Conversation[] = [];
 					
 					//Filter out failed conversations and map to conversation map
 					for(const [chatGUID, conversation] of result) {
+						
 						//Checking if the conversation request failed
 						if(!conversation) {
 							//Ignoring this conversation and removing its associated preview
-							this.pendingConversationPreviews.delete(chatGUID);
+							this.pendingConversationDataMap.delete(chatGUID);
 							continue;
 						}
 						
-						//Finding and the associated preview
-						const preview = this.pendingConversationPreviews.get(chatGUID);
-						if(preview) {
-							conversation.preview = preview;
-							this.pendingConversationPreviews.delete(chatGUID);
+						//Finding and the associated message data
+						if(this.pendingConversationDataMap.has(chatGUID)) {
+							const data = this.pendingConversationDataMap.get(chatGUID)!;
+							this.pendingConversationDataMap.delete(chatGUID);
+							
+							//Applying the data to the conversation
+							conversation.preview = messageItemToConversationPreview(data.latestMessage);
+							if(data.notificationCount > 0) conversation.unreadMessages = true;
+							
+							//Sending a notification
+							if(document.hidden && data.notifyMessage) {
+								sendMessageNotification(conversation, data.notifyMessage, data.notificationCount);
+								notificationSent = true;
+							}
 						}
 						
 						//Adding the conversation to the array
 						newConversationArray.push(conversation);
 					}
 					
-					//Adding the new conversations
+					//Playing a notification sound
+					if(notificationSent) playSoundNotification();
+					
 					if(newConversationArray.length > 0) {
+						//Adding the new conversations
 						this.setState((prevState) => {
 							//Cloning the conversation array
 							const pendingConversationArray: Conversation[] = [...prevState.conversations];
@@ -319,7 +399,7 @@ class Messaging extends React.Component<Props, State> {
 			const pendingConversationArray: Conversation[] = [...prevState.conversations];
 			
 			//Updating the conversation previews
-			for(const [chatGUID, conversationItem] of Object.entries(sortedItems)) {
+			for(const [chatGUID, [conversationItem]] of Object.entries(topItems)) {
 				const matchedConversationIndex = pendingConversationArray.findIndex((conversation) => conversation.guid === chatGUID);
 				if(matchedConversationIndex === -1) continue;
 				
@@ -378,34 +458,24 @@ class Messaging extends React.Component<Props, State> {
 		});
 		
 		{
-			const sortedItemsNotification = itemArray.reduce((accumulator: {[index: string]: [MessageItem, number]}, item: ConversationItem) => {
-				//If the new item isn't an incoming message, ignore it
-				//if(isConversationItemMessage(item)) {
-				if(isConversationItemMessage(item) && item.sender) {
-					if(accumulator[item.chatGuid]) {
-						if(item.date > accumulator[item.chatGuid][0].date) accumulator[item.chatGuid][0] = item;
-						accumulator[item.chatGuid][1]++;
-					} else {
-						accumulator[item.chatGuid] = [item, 1];
+			const entries = Object.entries(topItemsNotification);
+			if(entries.length > 0) {
+				//Playing a notification sound
+				playSoundNotification();
+				
+				//Only show notifications if the window isn't focused
+				if(document.hidden) {
+					for(const [chatGUID, [message, messageCount]] of entries) {
+						//Finding the chat
+						const conversation = this.state.conversations.find((conversation) => conversation.guid === chatGUID);
+						if(!conversation) continue;
+						
+						//Sending a notification
+						sendMessageNotification(conversation, message, messageCount);
 					}
 				}
-				
-				return accumulator;
-			}, {});
-			
-			const entries = Object.entries(sortedItemsNotification);
-			if(entries.length > 0) {
-				for(const [chatGUID, [message, messageCount]] of entries) {
-					//Finding the chat
-					const conversation = this.state.conversations.find((conversation) => conversation.guid === chatGUID);
-					if(!conversation) continue;
-					
-					//Sending a notification
-					sendMessageNotification(conversation, message, messageCount);
-				}
-				
-				//Playing a notification sound
-				new Audio(process.env.PUBLIC_URL + "/audio/notification.wav").play();
+			} else {
+				if(newSelectedIncomingMessages) playSoundMessageIn();
 			}
 		}
 	}
