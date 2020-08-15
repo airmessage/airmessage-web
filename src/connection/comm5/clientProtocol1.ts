@@ -130,6 +130,9 @@ type AMBrowser = "chrome" | "safari" | "firefox" | "edge" | "browser";
 
 export default class ClientProtocol1 extends ProtocolManager {
 	processData(data: ArrayBuffer): void {
+		//Notifying the communications manager of a new incoming message
+		this.communicationsManager.listener?.onPacket();
+		
 		//Unpacking the message
 		const unpacker = new AirUnpacker(data);
 		const messageType = unpacker.unpackInt();
@@ -491,24 +494,20 @@ export default class ClientProtocol1 extends ProtocolManager {
 		return true;
 	}
 	
-	requestRetrievalAll(requestID: number, params: any): boolean {
-		return false;
-	}
-	
 	requestRetrievalTime(timeLower: Date, timeUpper: Date): boolean {
-		return false;
-	}
-	
-	sendConversationInfoRequest(list: any[]): boolean {
-		return false;
-	}
-	
-	uploadFilePacket(requestID: number, requestIndex: number, conversationGUID: string, data: ArrayBuffer, fileName: string, isLast: boolean): boolean {
-		return false;
-	}
-	
-	uploadFilePacketNew(requestID: number, requestIndex: number, conversationMembers: string[], service: string, data: ArrayBuffer, fileName: string, isLast: boolean): boolean {
-		return false;
+		const packer = AirPacker.get();
+		try {
+			packer.packInt(nhtTimeRetrieval);
+			
+			packer.packLong(timeLower.getTime());
+			packer.packLong(timeUpper.getTime());
+			
+			this.dataProxy.send(packer.toArrayBuffer());
+		} finally {
+			packer.reset();
+		}
+		
+		return true;
 	}
 }
 

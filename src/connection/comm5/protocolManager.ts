@@ -13,14 +13,14 @@ export default abstract class ProtocolManager {
 	 *
 	 * @param data the data received from the network
 	 */
-	abstract processData(data: ArrayBuffer): void;
+	public abstract processData(data: ArrayBuffer): void;
 	
 	/**
 	 * Sends a ping packet to the server
 	 *
 	 * @return whether or not the message was successfully sent
 	 */
-	abstract sendPing(): boolean;
+	public abstract sendPing(): boolean;
 	
 	/**
 	 * Sends an authentication request to the server
@@ -28,7 +28,7 @@ export default abstract class ProtocolManager {
 	 * @param unpacker The unpacker of the server's info data, after reading the communications versions
 	 * @return whether or not the message was successfully sent
 	 */
-	abstract sendAuthenticationRequest(unpacker: AirUnpacker): boolean;
+	public abstract sendAuthenticationRequest(unpacker: AirUnpacker): boolean;
 	
 	/**
 	 * Requests a message to be sent to the specified conversation
@@ -83,33 +83,6 @@ export default abstract class ProtocolManager {
 	public abstract requestAttachmentDownload(requestID: number, attachmentGUID: string): boolean;
 	
 	/**
-	 * Uploads a file chunk to be sent to the specified conversation
-	 *
-	 * @param requestID the ID of the request
-	 * @param requestIndex the index of the request
-	 * @param conversationGUID the conversation to send the file to
-	 * @param data the transmission-ready bytes of the file chunk
-	 * @param fileName the name of the file to send
-	 * @param isLast whether or not this is the last file packet
-	 * @return whether or not the action was successful
-	 */
-	public abstract uploadFilePacket(requestID: number, requestIndex: number, conversationGUID: string, data: ArrayBuffer, fileName: string, isLast: boolean): boolean;
-	
-	/**
-	 * Uploads a file chunk to be sent to the specified conversation members
-	 *
-	 * @param requestID the ID of the request
-	 * @param requestIndex the index of the request
-	 * @param conversationMembers the members of the conversation to send the file to
-	 * @param service the service to send the file across
-	 * @param data the transmission-ready bytes of the file chunk
-	 * @param fileName the name of the file to send
-	 * @param isLast whether or not this is the last file packet
-	 * @return whether or not the action was successful
-	 */
-	public abstract uploadFilePacketNew(requestID: number, requestIndex: number, conversationMembers: string[], service: string, data: ArrayBuffer, fileName: string, isLast: boolean): boolean;
-	
-	/**
 	 * Sends a request to retrieve a list of conversations to present to the user
 	 *
 	 * @return whether or not the action was successful
@@ -134,14 +107,6 @@ export default abstract class ProtocolManager {
 	public abstract requestLiteThread(chatGUID: string, firstMessageID?: number): boolean;
 	
 	/**
-	 * Sends a request to fetch conversation information
-	 *
-	 * @param list the list of conversation requests
-	 * @return whether or not the request was successfully sent
-	 */
-	public abstract sendConversationInfoRequest(list: any[]): boolean;
-	
-	/**
 	 * Requests a time range-based message retrieval
 	 *
 	 * @param timeLower the lower time range limit
@@ -157,7 +122,7 @@ export default abstract class ProtocolManager {
 	 * @param params the mass retrieval parameters to use
 	 * @return whether or not the request was successfully sent
 	 */
-	public abstract requestRetrievalAll(requestID: number, params: any): boolean;
+	//public abstract requestRetrievalAll(requestID: number, params: any): boolean;
 	
 	/**
 	 * Requests the creation of a new conversation on the server

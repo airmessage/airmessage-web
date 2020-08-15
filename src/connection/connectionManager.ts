@@ -133,6 +133,7 @@ const messageErrorNetwork: MessageError = {code: MessageErrorCode.LocalNetwork};
 //State values
 let connState: ConnectionState = "disconnected";
 let isConnectingPassively = false;
+let lastConnectionUpdateTime: Date | undefined = undefined; //The last time the client received a message from the server
 let nextRequestID: number = 0;
 
 const communicationsManagerListener: CommunicationsManagerListener = {
@@ -162,6 +163,11 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		if(reason === ConnectionErrorCode.Internet || reason === ConnectionErrorCode.ConnectOtherLocation) {
 			//Scheduling a passive reconnection
 			reconnectTimeoutID = setTimeout(connectPassive, reconnectInterval);
+		}
+	}, onPacket(): void {
+		if(connState === "connected") {
+			//Recording the last connection update time
+			lastConnectionUpdateTime = new Date();
 		}
 	}, onMessageUpdate(data: ConversationItem[]): void {
 		//Notifying the listeners
@@ -473,6 +479,17 @@ export function createChat(members: string[], service: string): Promise<string> 
 		//Recording the promise
 		chatCreatePromiseMap.set(requestID, {resolve: resolve, reject: reject});
 	}));
+}
+
+export function requestMissedMessages() {
+	//Failing if there is no last connection time
+	if(!lastConnectionUpdateTime) {
+		console.warn("Trying to fetch missed messages with no last connection update time!");
+		return;
+	}
+	
+	//Sending the request
+	communicationsManager!.requestRetrievalTime(lastConnectionUpdateTime, new Date());
 }
 
 export function addConnectionListener(listener: ConnectionListener) {

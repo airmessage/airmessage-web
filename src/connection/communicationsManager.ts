@@ -5,6 +5,7 @@ import {Conversation, ConversationItem, MessageModifier} from "../data/blocks";
 export interface CommunicationsManagerListener {
 	onOpen: (systemVersion: string, softwareVersion: string) => void;
 	onClose: (reason: ConnectionErrorCode) => void;
+	onPacket: () => void;
 	onMessageUpdate: (data: ConversationItem[]) => void;
 	onConversationUpdate: (data: [string, Conversation | undefined][]) => void;
 	onModifierUpdate: (data: MessageModifier[]) => void;
