@@ -9,3 +9,7 @@ export function playSoundMessageIn() {
 export function playSoundMessageOut() {
 	new Audio(process.env.PUBLIC_URL + "/audio/message_out.wav").play();
 }
+
+export function playSoundTapback() {
+	new Audio(process.env.PUBLIC_URL + "/audio/tapback.wav").play();
+}

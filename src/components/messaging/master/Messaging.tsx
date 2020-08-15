@@ -22,7 +22,7 @@ import SoftDivider from "../../SoftDivider";
 import {
 	isConversationItemChatRenameAction,
 	isConversationItemMessage,
-	isConversationItemParticipantAction,
+	isConversationItemParticipantAction, isModifierTapback,
 	messageItemToConversationPreview
 } from "../../../util/conversationUtils";
 import DetailCreate from "../create/DetailCreate";
@@ -30,7 +30,7 @@ import DetailLoading from "../detail/DetailLoading";
 import DetailError from "../detail/DetailError";
 import SnackbarProvider from "../../control/SnackbarProvider";
 import {initializeNotifications, notificationClickEmitter, sendMessageNotification} from "../../../util/notifyUtils";
-import {playSoundMessageIn, playSoundNotification} from "../../../util/soundUtils";
+import {playSoundMessageIn, playSoundNotification, playSoundTapback} from "../../../util/soundUtils";
 
 interface Props {
 	theme: Theme;
@@ -481,7 +481,10 @@ class Messaging extends React.Component<Props, State> {
 	}
 	
 	private readonly onModifierUpdate = (itemArray: MessageModifier[]): void => {
-		//TODO notifications
+		//Playing a tapback sound
+		if(itemArray.some((modifier) => isModifierTapback(modifier) && modifier.isAddition)) {
+			playSoundTapback();
+		}
 	}
 }
 

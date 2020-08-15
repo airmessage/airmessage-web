@@ -530,9 +530,14 @@ export default class DetailThread extends React.Component<Props, State> {
 						stickers: (pendingItemArray[matchingIndex] as MessageItem).stickers.concat(modifier),
 					} as MessageItem;
 				} else if(isModifierTapback(modifier)) {
+					const pendingTapbacks = [...(pendingItemArray[matchingIndex] as MessageItem).tapbacks];
+					const matchingTapbackIndex = pendingTapbacks.findIndex((tapback) => tapback.sender === modifier.sender);
+					if(matchingTapbackIndex !== -1) pendingTapbacks[matchingTapbackIndex] = modifier;
+					else pendingTapbacks.push(modifier);
+					
 					pendingItemArray[matchingIndex] = {
 						...pendingItemArray[matchingIndex],
-						tapbacks: (pendingItemArray[matchingIndex] as MessageItem).tapbacks.concat(modifier),
+						tapbacks: pendingTapbacks
 					} as MessageItem;
 				}
 			}
