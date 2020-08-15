@@ -11,18 +11,13 @@ import * as ConnectionManager from "../../../connection/connectionManager";
 import {ConnectionListener, messageUpdateEmitter, modifierUpdateEmitter} from "../../../connection/connectionManager";
 import {initializePeople} from "../../../util/peopleUtils";
 import {ConnectionErrorCode, ParticipantActionType} from "../../../data/stateCodes";
-import {
-	Conversation,
-	ConversationItem,
-	ConversationPreviewMessage,
-	MessageItem,
-	MessageModifier
-} from "../../../data/blocks";
+import {Conversation, ConversationItem, MessageItem, MessageModifier} from "../../../data/blocks";
 import SoftDivider from "../../SoftDivider";
 import {
 	isConversationItemChatRenameAction,
 	isConversationItemMessage,
-	isConversationItemParticipantAction, isModifierTapback,
+	isConversationItemParticipantAction,
+	isModifierTapback,
 	messageItemToConversationPreview
 } from "../../../util/conversationUtils";
 import DetailCreate from "../create/DetailCreate";
@@ -112,6 +107,9 @@ class Messaging extends React.Component<Props, State> {
 			} else {
 				//Clearing the error from the sidebar
 				this.setState({sidebarBanner: undefined});
+				
+				//Fetching missed messages
+				ConnectionManager.requestMissedMessages();
 			}
 		},
 		onClose: (error: ConnectionErrorCode) => {

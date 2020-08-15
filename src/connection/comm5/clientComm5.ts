@@ -109,7 +109,7 @@ export default class ClientComm5 extends CommunicationsManager {
 	}
 	
 	requestRetrievalTime(timeLower: Date, timeUpper: Date): boolean {
-		return false;
+		return this.protocolManager?.requestRetrievalTime(timeLower, timeUpper) ?? false;
 	}
 	
 	sendMessage(requestID: number, chatGUID: string, message: string): boolean {

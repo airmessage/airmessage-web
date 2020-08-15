@@ -1,6 +1,7 @@
 import {Conversation, MessageItem} from "../data/blocks";
 import {getNamedTitle, mimeTypeToPreview} from "./conversationUtils";
 import EventEmitter from "./eventEmitter";
+import {appleSendStyleBubbleInvisibleInk} from "../data/appleConstants";
 
 const notificationBacklog: Map<string, [Notification, number]> = new Map();
 export const notificationClickEmitter: EventEmitter<string> = new EventEmitter();
@@ -70,7 +71,11 @@ async function getConversationTitle(conversation: Conversation) {
 }
 
 function getMessagePreview(message: MessageItem) {
-	if(message.text) return message.text;
-	else if(message.attachments.length > 0) return mimeTypeToPreview(message.attachments[0].type);
+	if(message.sendStyle === appleSendStyleBubbleInvisibleInk) return "Message sent with Invisible Ink";
+	else if(message.text) return message.text;
+	else if(message.attachments.length > 0) {
+		if(message.attachments.length === 1) return mimeTypeToPreview(message.attachments[0].type);
+		else return `${message.attachments.length} attachments`;
+	}
 	else return "Unknown message";
 }
