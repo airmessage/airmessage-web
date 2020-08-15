@@ -4,6 +4,7 @@
 	bottom: 0;
 	right: 0;
 	transform: translateY(12px);
+	white-space: nowrap;
 }
 
 .tapback {

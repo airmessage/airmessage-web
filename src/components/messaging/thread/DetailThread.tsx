@@ -20,6 +20,7 @@ import {ConversationItemType, MessageError, MessageStatusCode} from "../../../da
 import {DetailFrame} from "../master/DetailFrame";
 import EventEmitter from "../../../util/eventEmitter";
 import {dismissMessageNotifications} from "../../../util/notifyUtils";
+import {playSoundMessageOut} from "../../../util/soundUtils";
 
 type HistoryLoadState = "idle" | "loading" | "complete";
 
@@ -244,9 +245,14 @@ export default class DetailThread extends React.Component<Props, State> {
 			addedItems.push(...messages);
 		}
 		
-		//Notifying message listeners
-		messageUpdateEmitter.notify(addedItems);
-		this.messageSubmitEmitter.notify(undefined);
+		if(addedItems.length > 0) {
+			//Notifying message listeners
+			messageUpdateEmitter.notify(addedItems);
+			this.messageSubmitEmitter.notify(undefined);
+			
+			//Playing a sound
+			playSoundMessageOut();
+		}
 	}
 	
 	private handleAttachmentRemove(file: QueuedFile) {
@@ -524,9 +530,14 @@ export default class DetailThread extends React.Component<Props, State> {
 						stickers: (pendingItemArray[matchingIndex] as MessageItem).stickers.concat(modifier),
 					} as MessageItem;
 				} else if(isModifierTapback(modifier)) {
+					const pendingTapbacks = [...(pendingItemArray[matchingIndex] as MessageItem).tapbacks];
+					const matchingTapbackIndex = pendingTapbacks.findIndex((tapback) => tapback.sender === modifier.sender);
+					if(matchingTapbackIndex !== -1) pendingTapbacks[matchingTapbackIndex] = modifier;
+					else pendingTapbacks.push(modifier);
+					
 					pendingItemArray[matchingIndex] = {
 						...pendingItemArray[matchingIndex],
-						tapbacks: (pendingItemArray[matchingIndex] as MessageItem).tapbacks.concat(modifier),
+						tapbacks: pendingTapbacks
 					} as MessageItem;
 				}
 			}

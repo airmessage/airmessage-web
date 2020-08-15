@@ -255,7 +255,7 @@ export default class ClientProtocol1 extends ProtocolManager {
 	}
 	
 	private handleMessageLiteConversationRetrieval(unpacker: AirUnpacker) {
-		let conversations = unpackArray(unpacker, unpackPreviewConversation);
+		const conversations = unpackArray(unpacker, unpackPreviewConversation);
 		
 		this.communicationsManager.listener?.onMessageConversations(conversations);
 	}

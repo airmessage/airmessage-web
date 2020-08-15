@@ -155,8 +155,18 @@ function googlePersonToPersonData(person: gapi.client.people.Person): PersonData
 	const name = person.names[0]?.displayName;
 	const avatar = person.photos ? person.photos[0].url : undefined;
 	const addresses: AddressData[] = [
-		...person.emailAddresses?.map((address): AddressData => ({value: address.value, displayValue: address.value, label: address.formattedType, type: AddressType.Email})) ?? [],
-		...person.phoneNumbers?.map((address): AddressData => ({value: address.canonicalForm, displayValue: formatAddress(address.canonicalForm), label: address.formattedType, type: AddressType.Phone})) ?? [],
+		...person.emailAddresses?.reduce((accumulator: AddressData[], address) => {
+			if(address.value !== undefined) {
+				accumulator.push({value: address.value, displayValue: address.value, label: address.formattedType, type: AddressType.Email});
+			}
+			return accumulator;
+		}, []) ?? [],
+		...person.phoneNumbers?.reduce((accumulator: AddressData[], address) => {
+			if(address.canonicalForm !== undefined) {
+				accumulator.push({value: address.canonicalForm, displayValue: formatAddress(address.canonicalForm), label: address.formattedType, type: AddressType.Phone});
+			}
+			return accumulator;
+		}, []) ?? [],
 	];
 	
 	return {
