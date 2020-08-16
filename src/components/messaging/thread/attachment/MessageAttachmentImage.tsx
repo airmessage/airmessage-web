@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import styles from "./Message.module.css";
+import styles from "../item/Message.module.css";
 import stylesImage from "./MessageAttachmentImage.module.css";
 
 import {
@@ -15,9 +15,9 @@ import {
 import {ThemeProvider} from "@material-ui/core/styles";
 import ArrowBackIcon from "@material-ui/icons/ArrowBack";
 import SaveAltIcon from "@material-ui/icons/SaveAlt";
-import {downloadURL} from "../../../util/browserUtils";
-import {DecorativeMessageBubble, MessagePartProps} from "./Message";
-import {StickerItem, TapbackItem} from "../../../data/blocks";
+import {downloadURL} from "../../../../util/browserUtils";
+import {DecorativeMessageBubble, MessagePartProps} from "../item/Message";
+import {StickerItem, TapbackItem} from "../../../../data/blocks";
 
 export default function MessageAttachmentImage(props: {data: ArrayBuffer | Blob, name: string, type: string, partProps: MessagePartProps, tapbacks?: TapbackItem[], stickers?: StickerItem[]}) {
 	const [imageURL, setImageURL] = useState<string | undefined>(undefined);

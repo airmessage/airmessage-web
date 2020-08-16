@@ -8,7 +8,7 @@ import {
 	ParticipantAction, StatusUpdate, StickerItem, TapbackItem
 } from "../data/blocks";
 import {ConversationItemType, ConversationPreviewType, MessageModifierType} from "../data/stateCodes";
-import {MessageFlow} from "../components/messaging/thread/Message";
+import {MessageFlow} from "../components/messaging/thread/item/Message";
 import {findPerson} from "./peopleUtils";
 import {parsePhoneNumberFromString} from "libphonenumber-js";
 

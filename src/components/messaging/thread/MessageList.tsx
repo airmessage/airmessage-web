@@ -1,14 +1,14 @@
 import React from "react";
 import styles from "./MessageList.module.css";
 
-import Message from "./Message";
+import Message from "./item/Message";
 import * as ConversationUtils from "../../../util/conversationUtils";
 import {Conversation, ConversationItem} from "../../../data/blocks";
 import {getMessageFlow} from "../../../util/conversationUtils";
 import {MessageStatusCode} from "../../../data/stateCodes";
 import EventEmitter from "../../../util/eventEmitter";
-import ConversationActionParticipant from "./ConversationActionParticipant";
-import ConversationActionRename from "./ConversationActionRename";
+import ConversationActionParticipant from "./item/ConversationActionParticipant";
+import ConversationActionRename from "./item/ConversationActionRename";
 import {CircularProgress} from "@material-ui/core";
 
 interface Props {

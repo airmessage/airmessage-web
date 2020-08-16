@@ -1,8 +1,8 @@
 import React, {CSSProperties, useEffect, useState} from "react";
 import styles from "./Message.module.css";
 
-import * as Blocks from "../../../data/blocks";
-import {StickerItem, TapbackItem} from "../../../data/blocks";
+import * as Blocks from "../../../../data/blocks";
+import {StickerItem, TapbackItem} from "../../../../data/blocks";
 import {useTheme} from "@material-ui/core/styles";
 import {
 	Avatar, Button,
@@ -13,17 +13,17 @@ import {
 	IconButton,
 	Typography
 } from "@material-ui/core";
-import {getDeliveryStatusTime, getTimeDivider} from "../../../util/dateUtils";
-import {ContactData, findPerson} from "../../../util/peopleUtils";
-import {MessageErrorCode, MessageStatusCode} from "../../../data/stateCodes";
-import MessageAttachmentDownloadable from "./MessageAttachmentDownloadable";
-import MessageAttachmentImage from "./MessageAttachmentImage";
-import {downloadArrayBuffer} from "../../../util/browserUtils";
+import {getDeliveryStatusTime, getTimeDivider} from "../../../../util/dateUtils";
+import {ContactData, findPerson} from "../../../../util/peopleUtils";
+import {MessageErrorCode, MessageStatusCode} from "../../../../data/stateCodes";
+import MessageAttachmentDownloadable from "../attachment/MessageAttachmentDownloadable";
+import MessageAttachmentImage from "../attachment/MessageAttachmentImage";
+import {downloadArrayBuffer, downloadBlob} from "../../../../util/browserUtils";
 import {AlignSelfProperty, BorderRadiusProperty, ColorProperty, MarginTopProperty, OpacityProperty} from "csstype";
-import ErrorRoundedIcon from '@material-ui/icons/ErrorRounded';
-import MessageModifierTapbackRow from "./MessageModifierTapbackRow";
-import MessageModifierStickerStack from "./MessageModifierStickerStack";
-import {colorFromContact} from "../../../util/avatarUtils";
+import ErrorRoundedIcon from "@material-ui/icons/ErrorRounded";
+import MessageModifierTapbackRow from "../modifier/MessageModifierTapbackRow";
+import MessageModifierStickerStack from "../modifier/MessageModifierStickerStack";
+import {colorFromContact} from "../../../../util/avatarUtils";
 import {Anchorme} from "react-anchorme";
 
 const radiusLinked = "4px";
@@ -132,6 +132,15 @@ export default function Message(props: Props) {
 		}
 	}
 	
+	function downloadData(attachmentIndex: number, data: ArrayBuffer | Blob) {
+		const attachment = props.message.attachments[attachmentIndex];
+		if(data instanceof ArrayBuffer) {
+			downloadArrayBuffer(data, attachment.type, attachment.name);
+		} else {
+			downloadBlob(data, attachment.type, attachment.name);
+		}
+	}
+	
 	//Adding the attachments
 	for(let i = 0; i < props.message.attachments.length; i++) {
 		const index = props.message.text ? i + 1 : i;
@@ -145,7 +154,7 @@ export default function Message(props: Props) {
 		
 		//Checking if the attachment has data
 		const attachmentData = attachment.data ?? attachmentDataArray[i];
-		if(attachmentData) {
+		if(attachmentData && isAttachmentPreviewable(attachment.type)) {
 			//Custom background color
 			const imagePartProps = {
 				...partProps,
@@ -157,7 +166,18 @@ export default function Message(props: Props) {
 			}
 		} else {
 			//Adding a generic download attachment
-			components.push(<MessageAttachmentDownloadable key={attachment.guid ?? attachment.localID} name={attachment.name} type={attachment.type} size={attachment.size} guid={attachment.guid!} onDataAvailable={(data) => onAttachmentData(i, !isAttachmentPreviewable(attachment.type), data)} partProps={partProps} stickers={stickerGroups[index]} tapbacks={tapbackGroups[index]} />);
+			components.push(<MessageAttachmentDownloadable
+				key={attachment.guid ?? attachment.localID}
+				data={attachmentData}
+				name={attachment.name}
+				type={attachment.type}
+				size={attachment.size}
+				guid={attachment.guid!}
+				onDataAvailable={(data) => onAttachmentData(i, !isAttachmentPreviewable(attachment.type), data)}
+				onDataClicked={(data) => downloadData(i, data)}
+				partProps={partProps}
+				stickers={stickerGroups[index]}
+				tapbacks={tapbackGroups[index]} />);
 		}
 	}
 	
@@ -184,8 +204,8 @@ export default function Message(props: Props) {
 				<div className={styles.messageParts}>
 					{components}
 				</div>
-				{props.message.progress && !props.message.error && <CircularProgress className={styles.messageStatus} size={24} variant={props.message.progress === -1 ? "indeterminate" : "determinate"} value={props.message.progress} />}
-				{props.message.error && <IconButton className={styles.messageStatus} style={{color: theme.palette.error.main}} size="small" onClick={openDialogError}>
+				{props.message.progress && !props.message.error && <CircularProgress className={styles.messageProgress} size={24} variant={props.message.progress === -1 ? "indeterminate" : "determinate"} value={props.message.progress} />}
+				{props.message.error && <IconButton className={styles.messageError} style={{color: theme.palette.error.main}} size="small" onClick={openDialogError}>
 					<ErrorRoundedIcon />
 				</IconButton>}
 				<Dialog open={dialogOpen === "error"}
@@ -287,7 +307,8 @@ function getStatusString(message: Blocks.MessageItem): string | undefined {
 }
 
 function isAttachmentPreviewable(mimeType: string): boolean {
-	return mimeType.startsWith("image/") || mimeType.startsWith("video/") || mimeType.startsWith("audio/");
+	//return mimeType.startsWith("image/") || mimeType.startsWith("video/") || mimeType.startsWith("audio/");
+	return mimeType.startsWith("image/");
 }
 
 function messageErrorToUserString(error: MessageErrorCode): string {
