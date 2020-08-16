@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
-import {ParticipantAction} from "../../../data/blocks";
-import {ParticipantActionType} from "../../../data/stateCodes";
-import {findPerson} from "../../../util/peopleUtils";
+import {ParticipantAction} from "../../../../data/blocks";
+import {ParticipantActionType} from "../../../../data/stateCodes";
+import {findPerson} from "../../../../util/peopleUtils";
 import ConversationActionLine from "./ConversationActionLine";
 
 export default function ConversationActionParticipant(props: {action: ParticipantAction}) {

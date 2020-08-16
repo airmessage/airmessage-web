@@ -35,7 +35,11 @@
 	flex-direction: column;
 }
 
-.messageStatus {
+.messageProgress {
+	margin: 1px 8px !important;
+}
+
+.messageError {
 	margin: 1px !important;
 }
 

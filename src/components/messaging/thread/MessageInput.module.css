@@ -47,39 +47,13 @@
 	flex-direction: row;
 	overflow-x: scroll;
 	overflow-y: hidden;
-}
-
-.queuedattachmentContainer {
-	width: 80px;
-	height: 80px;
-	padding-top: 16px;
-	padding-left: 16px;
 	
-	display: flex;
-	justify-content: center;
-	align-items: center;
+	scrollbar-width: none; /* Firefox */
 }
 
-.queuedattachmentSubcontainer {
-	position: relative;
-}
-
-.queuedattachmentContent {
-	display: block;
-	white-space: pre-wrap;
-	
-	border-radius: 4px;
-	width: calc(80px - 16px);
-	height: calc(80px - 16px);
-	
-	object-fit: cover;
-}
-
-.queuedattachmentClose {
-	position: absolute !important;
-	top: 0;
-	right: 0;
-	transform: translate(50%, -50%);
+/* Chromium */
+.attachmentqueue::-webkit-scrollbar {
+	display: none;
 }
 
 @media(prefers-color-scheme: dark) {

@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import styles from "./MessageModifierStickerStack.module.css";
-import {StickerItem} from "../../../data/blocks";
+import {StickerItem} from "../../../../data/blocks";
 
 export default function MessageModifierStickerStack(props: {modifiers: StickerItem[], reveal?: boolean}) {
 	return (

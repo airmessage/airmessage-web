@@ -1,18 +1,18 @@
 import React, {useContext, useState} from "react";
-import styles from "./Message.module.css";
+import styles from "../item/Message.module.css";
 import stylesAttachment from "./MessageAttachmentDownloadable.module.css";
 
-import {mimeTypeToPreview} from "../../../util/conversationUtils";
+import {mimeTypeToPreview} from "../../../../util/conversationUtils";
 import {ButtonBase, CircularProgress} from "@material-ui/core";
 import GetAppRoundedIcon from "@material-ui/icons/GetAppRounded";
-import {formatFileSize} from "../../../util/fileUtils";
-import * as ConnectionManager from "../../../connection/connectionManager";
-import {DecorativeMessageBubble, MessagePartProps} from "./Message";
-import {StickerItem, TapbackItem} from "../../../data/blocks";
-import {SnackbarContext} from "../../control/SnackbarProvider";
-import {AttachmentRequestErrorCode} from "../../../data/stateCodes";
+import {formatFileSize} from "../../../../util/fileUtils";
+import * as ConnectionManager from "../../../../connection/connectionManager";
+import {DecorativeMessageBubble, MessagePartProps} from "../item/Message";
+import {StickerItem, TapbackItem} from "../../../../data/blocks";
+import {SnackbarContext} from "../../../control/SnackbarProvider";
+import {AttachmentRequestErrorCode} from "../../../../data/stateCodes";
 
-export default function MessageAttachmentDownloadable(props: {name: string | undefined, type: string, size: number, guid: string, onDataAvailable: (data: ArrayBuffer) => void, partProps: MessagePartProps, tapbacks?: TapbackItem[], stickers?: StickerItem[]}) {
+export default function MessageAttachmentDownloadable(props: {data?: ArrayBuffer | Blob, name: string | undefined, type: string, size: number, guid: string, onDataAvailable: (data: ArrayBuffer) => void, onDataClicked: (data: ArrayBuffer | Blob) => void, partProps: MessagePartProps, tapbacks?: TapbackItem[], stickers?: StickerItem[]}) {
 	//State
 	const [isDownloading, setIsDownloading] = useState(false);
 	const [sizeAvailable, setSizeAvailable] = useState(props.size);
@@ -24,6 +24,12 @@ export default function MessageAttachmentDownloadable(props: {name: string | und
 	const nameDisplay = props.name ?? mimeTypeToPreview(props.type);
 	
 	function startDownload() {
+		//Checking if data is already available
+		if(props.data) {
+			props.onDataClicked(props.data);
+			return;
+		}
+		
 		//Setting the state as downloading
 		setIsDownloading(true);
 		
