@@ -227,14 +227,15 @@ function ChangelogDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 
 function FeedbackDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 	function onClickEmail() {
-		const url = `mailto:${supportEmail}?subject=${encodeURIComponent("AirMessage feedback")}&body=${encodeURIComponent(
-			`\n\n---------- DEVICE INFORMATION ----------
-			User agent: ${navigator.userAgent}
-			Client version: ${appVersion}
-			Current protocol version: ${getActiveCommVer()}
-			Target protocol version: ${targetCommVer}
-			Server system version: ${getServerSystemVersion()}
-			Server software version: ${getServerSoftwareVersion()}`)}`
+		const body =
+			`\n\n---------- DEVICE INFORMATION ----------` +
+			`\nUser agent: ${navigator.userAgent}` +
+			`\nClient version: ${appVersion}` +
+			`\nCurrent protocol version: ${getActiveCommVer()}` +
+			`\nTarget protocol version: ${targetCommVer}` +
+			`\nServer system version: ${getServerSystemVersion()}` +
+			`\nServer software version: ${getServerSoftwareVersion()}`;
+		const url = `mailto:${supportEmail}?subject=${encodeURIComponent("AirMessage feedback")}&body=${encodeURIComponent(body)}`
 		window.open(url, "_blank");
 		props.onDismiss();
 	}
