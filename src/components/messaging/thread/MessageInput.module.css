@@ -47,6 +47,13 @@
 	flex-direction: row;
 	overflow-x: scroll;
 	overflow-y: hidden;
+	
+	scrollbar-width: none; /* Firefox */
+}
+
+/* Chromium */
+.attachmentqueue::-webkit-scrollbar {
+	display: none;
 }
 
 .queuedattachmentContainer {
