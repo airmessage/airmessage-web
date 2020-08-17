@@ -258,7 +258,7 @@ export default class DetailThread extends React.Component<Props, State> {
 	private handleAttachmentRemove(file: QueuedFile) {
 		this.setState(state => {
 			const attachments = [...state.attachments];
-			const itemIndex = attachments.indexOf(file);
+			const itemIndex = attachments.findIndex((queuedFile) => file.id === queuedFile.id);
 			if(itemIndex !== -1) {
 				state.attachments.splice(itemIndex, 1);
 			}
