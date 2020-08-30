@@ -47,7 +47,7 @@ export function getLastUpdateStatusTime(date: Date): string {
 	
 	//Anytime (Dec 2018)
 	//return dayjs(date).format("MMM YYYY")
-	return DateTime.fromJSDate(date).toFormat("LLL yyyy")
+	return DateTime.fromJSDate(date).toFormat("LLL yyyy");
 }
 
 //Used in time separators between messages
@@ -83,13 +83,13 @@ export function getTimeDivider(date: Date): string {
 	{
 		const compareDate = new Date(dateNow.getFullYear() - 1, dateNow.getMonth(), dateNow.getDate()); //Today (now) -> One year ago
 		if(compareDates(date, compareDate) > 0) {
-			return luxon.toFormat("cccc, LLLL d" + bulletSeparator + formattedTime);
+			return luxon.toFormat("cccc, LLLL d") + bulletSeparator + formattedTime;
 			//return dayjs(date).format("dddd, MMMM D") + bulletSeparator + formattedTime;
 		}
 	}
 	
 	//Different years (December 9, 2018 • 12:30)
-	return luxon.toFormat("LLLL d, yyyy" + bulletSeparator + formattedTime);
+	return luxon.toFormat("LLLL d, yyyy") + bulletSeparator + formattedTime;
 	//return dayjs(date).format("ll") + bulletSeparator + formattedTime;
 }
 
@@ -129,7 +129,7 @@ export function getDeliveryStatusTime(date: Date): string {
 	}
 	
 	//Different years (Dec 9, 2018)
-	return luxon.toFormat("LLL d, yyyy" + bulletSeparator + formattedTime);
+	return luxon.toFormat("LLL d, yyyy") + bulletSeparator + formattedTime;
 }
 
 function checkSameDay(date1: Date, date2: Date): boolean {

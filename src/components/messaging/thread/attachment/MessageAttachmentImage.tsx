@@ -58,7 +58,7 @@ export default function MessageAttachmentImage(props: {data: ArrayBuffer | Blob,
 	}
 	
 	//All of the styles, without the border radius
-	const buttonStyle = {...props.partProps};
+	const buttonStyle: Partial<MessagePartProps> = {...props.partProps};
 	delete buttonStyle["borderRadius"];
 	
 	return (
