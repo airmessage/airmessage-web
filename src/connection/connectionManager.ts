@@ -136,6 +136,16 @@ let isConnectingPassively = false;
 let lastConnectionUpdateTime: Date | undefined = undefined; //The last time the client received a message from the server
 let nextRequestID: number = 0;
 
+function onOnline() {
+	//Reconnecting
+	connect();
+}
+
+function onOffline() {
+	//Disconnecting
+	disconnect();
+}
+
 const communicationsManagerListener: CommunicationsManagerListener = {
 	onOpen(systemVersion: string, softwareVersion: string): void {
 		//Updating the state
@@ -144,6 +154,10 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		//Recording the server information
 		_serverSystemVersion = systemVersion;
 		_serverSoftwareVersion = softwareVersion;
+		
+		//Listening for network events
+		window.addEventListener("online", onOnline);
+		window.addEventListener("offline", onOffline);
 	}, onClose(reason: ConnectionErrorCode): void {
 		//Failing all pending promises
 		rejectAndClear(liteConversationPromiseArray, messageErrorNetwork);
@@ -164,6 +178,10 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 			//Scheduling a passive reconnection
 			reconnectTimeoutID = setTimeout(connectPassive, reconnectInterval);
 		}
+		
+		//Removing the network event listeners
+		window.removeEventListener("online", onOnline);
+		window.removeEventListener("offline", onOffline);
 	}, onPacket(): void {
 		if(connState === "connected") {
 			//Recording the last connection update time
