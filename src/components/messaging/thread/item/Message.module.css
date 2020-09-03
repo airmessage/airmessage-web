@@ -69,6 +69,16 @@
 	
 	max-width: 60%;
 	padding: 6px 12px !important;
+	
+	/* These are technically the same, but use both */
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+	
+	/* Instead use this non-standard one: */
+	word-break: break-word;
+	
+	/* Adds a hyphen where the word breaks, if supported (No Blink) */
+	hyphens: auto;
 }
 
 .textBubble a {
