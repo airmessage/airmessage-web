@@ -33,8 +33,12 @@ export default class MessageList extends React.Component<Props, State> {
 	//Reference to the message scroll list element
 	readonly scrollRef = React.createRef<HTMLDivElement>();
 	
+	//List scroll position snapshot values
+	private snapshotScrollHeight = 0;
+	private snapshotScrollTop = 0;
+	
 	//Used to track whether the message list should be scrolled to the bottom when the component is next updated
-	shouldScrollNextUpdate = false;
+	private shouldScrollNextUpdate = false;
 	
 	private readonly handleScroll = (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
 		if(event.currentTarget.scrollTop < historyLoadScrollThreshold) {
@@ -86,6 +90,10 @@ export default class MessageList extends React.Component<Props, State> {
 	getSnapshotBeforeUpdate() {
 		this.shouldScrollNextUpdate = this.checkScrolledToBottom();
 		
+		const element = this.scrollRef.current!;
+		this.snapshotScrollHeight = element.scrollHeight;
+		this.snapshotScrollTop = element.scrollTop;
+		
 		return null;
 	}
 	
@@ -94,6 +102,11 @@ export default class MessageList extends React.Component<Props, State> {
 		if(this.shouldScrollNextUpdate) {
 			this.scrollToBottom();
 			this.shouldScrollNextUpdate = false;
+		}
+		//Restoring the scroll position when new items are added at the top
+		else if(this.props.showHistoryLoader !== prevProps.showHistoryLoader) {
+			const element = this.scrollRef.current!;
+			this.setScroll(this.snapshotScrollTop + (element.scrollHeight - this.snapshotScrollHeight), true);
 		}
 		
 		//Updating the submit emitter
@@ -114,9 +127,13 @@ export default class MessageList extends React.Component<Props, State> {
 	};
 	
 	private scrollToBottom(disableAnimation: boolean = false): void {
+		this.setScroll(this.scrollRef.current!.scrollHeight, disableAnimation);
+	}
+	
+	private setScroll(scrollTop: number, disableAnimation: boolean = false) {
 		const element = this.scrollRef.current!;
 		if(disableAnimation) element.style.scrollBehavior = "auto";
-		element.scrollTop = element.scrollHeight;
+		element.scrollTop = scrollTop;
 		if(disableAnimation) element.style.scrollBehavior = "";
 	}
 	
