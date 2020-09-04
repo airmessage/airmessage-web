@@ -104,7 +104,7 @@ export default class MessageList extends React.Component<Props, State> {
 			this.shouldScrollNextUpdate = false;
 		}
 		//Restoring the scroll position when new items are added at the top
-		else if(this.props.showHistoryLoader !== prevProps.showHistoryLoader) {
+		else if(this.props.showHistoryLoader !== prevProps.showHistoryLoader && this.checkScrolledToTop()) {
 			const element = this.scrollRef.current!;
 			this.setScroll(this.snapshotScrollTop + (element.scrollHeight - this.snapshotScrollHeight), true);
 		}
@@ -140,6 +140,11 @@ export default class MessageList extends React.Component<Props, State> {
 	private checkScrolledToBottom(): boolean {
 		const element = this.scrollRef.current!;
 		return element.scrollHeight - element.scrollTop - element.clientHeight <= 0;
+	}
+	
+	private checkScrolledToTop(): boolean {
+		const element = this.scrollRef.current!;
+		return element.scrollTop <= 0;
 	}
 }
 
