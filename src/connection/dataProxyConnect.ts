@@ -9,7 +9,6 @@ import "firebase/auth";
 import {communicationsVersion} from "./connectionConstants";
 import {getInstallationID} from "../util/installationUtils";
 import {ConnectionErrorCode} from "../data/stateCodes";
-import {cookieDomain} from "../util/cookieUtils";
 
 const connectHostname = "wss://connect.airmessage.org";
 //const connectHostname = "ws://localhost:1259";
@@ -23,15 +22,15 @@ export default class DataProxyConnect extends DataProxy {
 	start(): void {
 		//Getting the user's ID token
 		firebase.auth().currentUser?.getIdToken().then((idToken: string) => {
-			//Assigning other temporary Connect cookies
-			//these cookies get cleared on browser restart
-			document.cookie = `communications=${NHT.commVer}; domain=${cookieDomain}`;
-			document.cookie = `isServer=${false}; domain=${cookieDomain}`;
-			document.cookie = `idToken=${idToken}; domain=${cookieDomain}`;
-			getInstallationID(); //This function saves the installation ID to cookies for us
+			//Building the URL
+			const url = new URL(connectHostname);
+			url.searchParams.set("communications", String(NHT.commVer));
+			url.searchParams.set("is_server", String(false));
+			url.searchParams.set("installation_id", getInstallationID());
+			url.searchParams.set("id_token", idToken);
 			
 			//Starting the WebSocket connection
-			this.socket = new WebSocket(connectHostname);
+			this.socket = new WebSocket(url.toString());
 			this.socket.binaryType = "arraybuffer";
 			
 			//Registering the listeners
