@@ -12,7 +12,7 @@ import AirMessageLogo from '../logo/AirMessageLogo';
 
 import * as config from "../../secure/config";
 
-export default function Build() {
+export default function Onboarding() {
 	return (
 		<div className={styles.root}>
 			<div style={{padding: 16}}>
