@@ -40,6 +40,10 @@ export default function AppTheme(props: {children: React.ReactNode}) {
 				main: "#448AFF",
 				contrastText: "#FFF",
 			},
+			messageOutgoingTextMessage: {
+				main: "#2ECC71",
+				contrastText: "#FFF",
+			},
 			divider: prefersDarkMode ? "rgba(255, 255, 255, 0.1)" : "#EEEEEE",
 			background: {
 				default: prefersDarkMode ? "#1E1E1E" : "#FFFFFF",
@@ -70,11 +74,13 @@ declare module "@material-ui/core/styles/createPalette" {
 	interface Palette {
 		messageIncoming: Palette['primary'];
 		messageOutgoing: Palette['primary'];
+		messageOutgoingTextMessage: Palette['primary'];
 	}
 	
 	interface PaletteOptions {
 		messageIncoming: PaletteOptions['primary'];
 		messageOutgoing: PaletteOptions['primary'];
+		messageOutgoingTextMessage: PaletteOptions['primary'];
 	}
 	
 	interface TypeBackground {

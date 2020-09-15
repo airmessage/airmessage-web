@@ -64,7 +64,7 @@ export default class MessageList extends React.Component<Props, State> {
 				<div className={styles.list}>
 					{this.props.items.map((item, i, array) => {
 						if(ConversationUtils.isConversationItemMessage(item)) {
-							return <Message key={(item.localID ?? item.guid)} message={item} isGroupChat={this.props.conversation.members.length > 1} flow={getMessageFlow(item, array[i + 1], array[i - 1])} showStatus={i === readTargetIndex || i === deliveredTargetIndex} />
+							return <Message key={(item.localID ?? item.guid)} message={item} isGroupChat={this.props.conversation.members.length > 1} service={this.props.conversation.service} flow={getMessageFlow(item, array[i + 1], array[i - 1])} showStatus={i === readTargetIndex || i === deliveredTargetIndex} />
 						} else if(ConversationUtils.isConversationItemParticipantAction(item)) {
 							return <ConversationActionParticipant key={(item.localID ?? item.guid)} action={item} />;
 						} else if(ConversationUtils.isConversationItemChatRenameAction(item)) {

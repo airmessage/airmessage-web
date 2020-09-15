@@ -25,6 +25,8 @@ import MessageModifierTapbackRow from "../modifier/MessageModifierTapbackRow";
 import MessageModifierStickerStack from "../modifier/MessageModifierStickerStack";
 import {colorFromContact} from "../../../../util/avatarUtils";
 import {Anchorme} from "react-anchorme";
+import {PaletteColor} from "@material-ui/core/styles/createPalette";
+import {appleServiceAppleMessage} from "../../../../data/appleConstants";
 
 const radiusLinked = "4px";
 const radiusUnlinked = "16px";
@@ -55,6 +57,7 @@ export interface MessagePartProps {
 interface Props {
 	message: Blocks.MessageItem;
 	isGroupChat: boolean;
+	service: string;
 	flow: MessageFlow;
 	showStatus?: boolean;
 }
@@ -86,10 +89,17 @@ export default function Message(props: Props) {
 	
 	//Building the message style
 	const theme = useTheme();
+	let colorPalette: PaletteColor;
+	if(isOutgoing) {
+		if(props.service === appleServiceAppleMessage) colorPalette = theme.palette.messageOutgoing;
+		else colorPalette = theme.palette.messageOutgoingTextMessage;
+	} else {
+		colorPalette = theme.palette.messageIncoming;
+	}
 	const messagePartPropsBase: Partial<MessagePartProps> = {
 		alignSelf: isOutgoing ? "flex-end" : "flex-start",
-		color: isOutgoing ? theme.palette.messageOutgoing.contrastText : theme.palette.messageIncoming.contrastText,
-		backgroundColor: isOutgoing ? theme.palette.messageOutgoing.main : theme.palette.messageIncoming.main,
+		color: colorPalette.contrastText,
+		backgroundColor: colorPalette.main,
 		opacity: messageConfirmed ? opacityConfirmed : opacityUnconfirmed
 	}
 	

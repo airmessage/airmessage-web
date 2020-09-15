@@ -26,14 +26,9 @@ export default function MessageAttachmentImage(props: {data: ArrayBuffer | Blob,
 	const theme = createMuiTheme({
 		palette: {
 			type: "dark",
-			messageIncoming: {
-				main: "#393939",
-				contrastText: "#FFF"
-			},
-			messageOutgoing: {
-				main: "#448AFF",
-				contrastText: "#FFF",
-			}
+			messageIncoming: undefined,
+			messageOutgoing: undefined,
+			messageOutgoingTextMessage: undefined
 		}
 	})
 	
