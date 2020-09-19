@@ -11,3 +11,6 @@ export const appleSendStyleScrnLasers = "com.apple.messages.effect.CKLasersEffec
 export const appleSendStyleScrnFireworks = "com.apple.messages.effect.CKFireworksEffect";
 export const appleSendStyleScrnShootingStar = "com.apple.messages.effect.CKShootingStarEffect";
 export const appleSendStyleScrnCelebration = "com.apple.messages.effect.CKSparklesEffect";
+
+export const appleServiceAppleMessage = "iMessage";
+export const appleServiceTextMessageForwarding = "SMS";

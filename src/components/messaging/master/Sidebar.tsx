@@ -231,8 +231,8 @@ function FeedbackDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 			`\n\n---------- DEVICE INFORMATION ----------` +
 			`\nUser agent: ${navigator.userAgent}` +
 			`\nClient version: ${appVersion}` +
-			`\nCurrent protocol version: ${getActiveCommVer()}` +
-			`\nTarget protocol version: ${targetCommVer}` +
+			`\nCommunications version: ${getActiveCommVer()} (target ${targetCommVer})` +
+			`\nProxy type: Connect` +
 			`\nServer system version: ${getServerSystemVersion()}` +
 			`\nServer software version: ${getServerSoftwareVersion()}`;
 		const url = `mailto:${supportEmail}?subject=${encodeURIComponent("AirMessage feedback")}&body=${encodeURIComponent(body)}`

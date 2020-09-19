@@ -98,7 +98,8 @@ function errorCodeToDisplay(error: ConnectionErrorCode): ErrorDisplay {
 			};
 		case ConnectionErrorCode.ConnectNoSubscription:
 			return {
-				message: "Subscription expired"
+				//message: "Subscription expired"
+				message: "Account not enrolled"
 			};
 		case ConnectionErrorCode.ConnectOtherLocation:
 			return {

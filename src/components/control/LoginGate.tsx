@@ -32,7 +32,6 @@ export default class LoginGate extends React.Component<any, State> {
 		}
 	}
 	
-	
 	componentDidMount() {
 		gapi.load('auth2', () => {
 			gapi.auth2.init({

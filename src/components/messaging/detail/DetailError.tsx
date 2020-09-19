@@ -42,7 +42,7 @@ export default function DetailError(props: {error: ConnectionErrorCode}) {
 				<WifiOffRoundedIcon className={styles.icon} />
 				<div className={styles.split}>
 					<Typography variant="h4" gutterBottom>{errorDisplay.title}</Typography>
-					<Typography color="textSecondary" gutterBottom>{errorDisplay.subtitle}</Typography>
+					<Typography color="textSecondary" gutterBottom dangerouslySetInnerHTML={{__html: errorDisplay.subtitle}} />
 					<div className={styles.buttonRow}>
 						{errorDisplay.buttonPrimary && <Button variant="contained" disableElevation onClick={errorDisplay.buttonPrimary.onClick}>{errorDisplay.buttonPrimary.label}</Button>}
 						{errorDisplay.buttonSecondary && <Button onClick={errorDisplay.buttonSecondary.onClick}>{errorDisplay.buttonSecondary.label}</Button>}
@@ -123,10 +123,14 @@ function errorCodeToDisplay(error: ConnectionErrorCode): ErrorDisplay {
 				}
 			};
 		case ConnectionErrorCode.ConnectNoSubscription:
-			return {
+			/* return {
 				title: "Your account has no active subscription",
 				subtitle: "Please subscribe to AirMessage+ to use AirMessage for web"
-			};
+			}; */
+			return {
+				title: "Your account isn't registered",
+				subtitle: "Please enroll your account in the early access program at <a href='https://airmessage.org/cloud' style='text-decoration: none; color: #448AFF;'>airmessage.org/cloud</a>.",
+			}
 		case ConnectionErrorCode.ConnectOtherLocation:
 			return {
 				title: "A change was detected in your server computer",

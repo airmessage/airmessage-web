@@ -21,6 +21,7 @@ import {DetailFrame} from "../master/DetailFrame";
 import EventEmitter from "../../../util/eventEmitter";
 import {dismissMessageNotifications} from "../../../util/notifyUtils";
 import {playSoundMessageOut} from "../../../util/soundUtils";
+import {appleServiceAppleMessage} from "../../../data/appleConstants";
 
 type HistoryLoadState = "idle" | "loading" | "complete";
 
@@ -369,12 +370,19 @@ export default class DetailThread extends React.Component<Props, State> {
 			);
 		}
 		
+		let inputPlaceholder: string;
+		if(this.props.conversation.service === appleServiceAppleMessage) {
+			inputPlaceholder = "iMessage";
+		} else {
+			inputPlaceholder = "Text message";
+		}
+		
 		//Returning the element
 		return (
 			<DetailFrame title={this.state.title ?? ""} ref={this.dragDropRef}>
 				<div className={styles.body}>{body}</div>
 				<div className={styles.input}>
-					<MessageInput placeholder="iMessage" message={this.state.message} attachments={this.state.attachments}
+					<MessageInput placeholder={inputPlaceholder} message={this.state.message} attachments={this.state.attachments}
 								  onMessageChange={this.handleMessageChange.bind(this)} onMessageSubmit={this.handleMessageSubmit.bind(this)} onAttachmentRemove={this.handleAttachmentRemove.bind(this)} />
 				</div>
 			</DetailFrame>

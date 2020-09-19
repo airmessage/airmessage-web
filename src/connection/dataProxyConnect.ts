@@ -122,8 +122,9 @@ export default class DataProxyConnect extends DataProxy {
 			case CloseFrame.ABNORMAL_CLOSURE:
 				return ConnectionErrorCode.Internet;
 			case CloseFrame.PROTOCOL_ERROR:
-				return ConnectionErrorCode.BadRequest;
 			case CloseFrame.POLICY_VIOLATION:
+				return ConnectionErrorCode.BadRequest;
+			case NHT.closeCodeIncompatibleProtocol:
 				return ConnectionErrorCode.ClientOutdated;
 			case NHT.closeCodeNoGroup:
 				return ConnectionErrorCode.ConnectNoGroup;
