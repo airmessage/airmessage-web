@@ -1,11 +1,12 @@
 {
   "name": "airmessage-react",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "dependencies": {
     "@material-ui/core": "^4.11.0",
     "@material-ui/icons": "^4.9.1",
     "@material-ui/lab": "^4.0.0-alpha.56",
+    "@sentry/react": "^5.24.2",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.0.4",
     "@testing-library/user-event": "^12.1.6",
@@ -39,9 +40,10 @@
     "uuid": "^8.3.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "REACT_APP_VERSION=$npm_package_version react-scripts start",
+    "build": "REACT_APP_VERSION=$npm_package_version REACT_APP_RELEASE_HASH=$(git rev-parse --short HEAD) REACT_APP_BUILD_DATE=$(date +%s) react-scripts build",
+    "publish": "npm run build && node sentry.js",
+    "test": "REACT_APP_VERSION=$npm_package_version react-scripts test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -59,5 +61,7 @@
       "last 1 safari version"
     ]
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@sentry/cli": "^1.58.0"
+  }
 }
