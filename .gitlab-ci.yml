@@ -12,7 +12,7 @@ pages:
   script:
     - mkdir src/secure
     - base64 -d <<< $SECURE_CONFIG > src/secure/config.ts
-    - CI= npm run build
+    - CI= npm run publish
     - rm -rf public
     - mv build public
   artifacts:

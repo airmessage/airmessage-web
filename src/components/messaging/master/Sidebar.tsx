@@ -28,7 +28,7 @@ import {Skeleton} from "@material-ui/lab";
 import ConnectionBanner from "./ConnectionBanner";
 import {ConnectionErrorCode} from "../../../data/stateCodes";
 import {communityPage, supportEmail} from "../../../data/linkConstants";
-import {appVersion, getAppVersionReleaseString} from "../../../data/releaseInfo";
+import {appVersion, getFormattedBuildDate, releaseHash} from "../../../data/releaseInfo";
 import {
 	getActiveCommVer,
 	getServerSoftwareVersion,
@@ -36,6 +36,8 @@ import {
 	targetCommVer
 } from "../../../connection/connectionManager";
 import Markdown from "../../Markdown";
+import {DateTime} from "luxon";
+import {changelog} from "../../../data/changelog";
 
 interface Props {
 	conversations: Conversation[] | undefined;
@@ -191,19 +193,11 @@ export default class Sidebar extends React.Component<Props, State> {
 }
 
 function ChangelogDialog(props: {isOpen: boolean, onDismiss: () => void}) {
-	const [changelog, setChangelog] = useState<string | undefined>();
-	
-	//Loading the changelog
-	useEffect(() => {
-		const xhr = new XMLHttpRequest();
-		xhr.responseType = "text";
-		xhr.open("GET", "/data/changes.md");
-		xhr.send();
-		xhr.onload = () => {
-			if(xhr.status !== 200) return;
-			setChangelog(xhr.responseText);
-		};
-	}, []);
+	//Generating the build details
+	const buildDate = getFormattedBuildDate();
+	const buildVersion = `AirMessage for web ${appVersion}`;
+	const detailedBuildVersion = buildVersion + ` (${releaseHash ?? "unlinked"})`;
+	const buildTitle = buildVersion + (buildDate ? (`, ${process.env.NODE_ENV === "production" ? "released" : "built"} ${buildDate}`) : "");
 	
 	return (
 		<Dialog
@@ -212,14 +206,8 @@ function ChangelogDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 			fullWidth>
 			<DialogTitle>Release notes</DialogTitle>
 			<DialogContent dividers>
-				{
-					changelog === undefined ?
-						<CircularProgress /> :
-						<React.Fragment>
-							<Typography variant="overline" color="textSecondary" gutterBottom>{`AirMessage for web ${appVersion}, released ${getAppVersionReleaseString()}`}</Typography>
-							<Markdown markdown={changelog} />
-						</React.Fragment>
-				}
+				<Typography variant="overline" color="textSecondary" gutterBottom title={detailedBuildVersion}>{buildTitle}</Typography>
+				<Markdown markdown={changelog} />
 			</DialogContent>
 		</Dialog>
 	);

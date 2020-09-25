@@ -174,7 +174,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		updateStateDisconnected(reason);
 		
 		//Checking if the error is automatically recoverable
-		if(reason === ConnectionErrorCode.Internet || reason === ConnectionErrorCode.ConnectOtherLocation) {
+		if(reason === ConnectionErrorCode.Connection || reason === ConnectionErrorCode.Internet) {
 			//Scheduling a passive reconnection
 			reconnectTimeoutID = setTimeout(connectPassive, reconnectInterval);
 		}

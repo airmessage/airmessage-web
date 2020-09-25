@@ -103,7 +103,13 @@ function errorCodeToDisplay(error: ConnectionErrorCode): ErrorDisplay {
 			};
 		case ConnectionErrorCode.ConnectOtherLocation:
 			return {
-				message: "Server computer swapped"
+				message: "Server computer swapped",
+				button: {
+					label: "Refresh",
+					onClick: () => {
+						window.location.reload();
+					}
+				}
 			};
 	}
 }

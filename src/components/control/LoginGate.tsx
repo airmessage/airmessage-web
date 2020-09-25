@@ -5,7 +5,10 @@ import Messaging from '../messaging/master/Messaging';
 
 import firebase from "firebase/app";
 import "firebase/auth";
+//import "firebase/analytics";
 import * as config from "../../secure/config";
+
+import * as Sentry from "@sentry/react";
 
 type LoginState = "waiting" | "logged-out" | "logged-in";
 
@@ -53,23 +56,10 @@ export default class LoginGate extends React.Component<any, State> {
 			
 			//Checking if the user is logged in
 			if(user) {
-				firebase.auth().getRedirectResult().then(function(result) {
-					if(result.credential) {
-						// This gives you a Google Access Token. You can use it to access the Google API.
-						const token = (result.credential as firebase.auth.OAuthCredential).accessToken;
-						alert(token);
-						// ...
-					}
-					// The signed-in user info.
-					const user = result.user;
-				}).catch(function(error) {
-					// Handle Errors here.
-					const errorCode = error.code;
-					const errorMessage = error.message;
-					// The email of the user's account used.
-					const email = error.email;
-					// The firebase.auth.AuthCredential type that was used.
-					const credential = error.credential;
+				//Updating Sentry
+				Sentry.setUser({
+					id: user.uid,
+					email: user.email ?? undefined
 				});
 			} else {
 				//Signing out of Google
@@ -101,6 +91,8 @@ export default class LoginGate extends React.Component<any, State> {
 					console.warn(`Unable to authenticate Google Sign-In token with Firebase: ${error.code}: ${error.message}`);
 					this.googleAuthInstance!.signOut();
 				});
+				
+				//firebase.analytics().logEvent("login", {method: firebase.auth.GoogleAuthProvider.PROVIDER_ID});
 			});
 		} else {
 			//Signing out of Firebase
