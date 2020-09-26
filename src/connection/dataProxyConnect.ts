@@ -44,8 +44,9 @@ export default class DataProxyConnect extends DataProxy {
 			this.socket.onclose = (event: CloseEvent) => {
 				this.notifyClose(DataProxyConnect.mapErrorCode(event.code));
 			}
-		}).catch((error: Error) => {
-			this.notifyClose(communicationsVersion)
+		}).catch((error) => {
+			console.warn(error);
+			this.notifyClose(ConnectionErrorCode.InternalError);
 		});
 	}
 	

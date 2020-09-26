@@ -8,6 +8,7 @@ export type DataProxyListener = {
 
 export default abstract class DataProxy {
 	public listener?: DataProxyListener;
+	private pendingErrorCode: ConnectionErrorCode | undefined = undefined;
 	
 	/**
 	 * Start this proxy's connection to the server
@@ -26,12 +27,23 @@ export default abstract class DataProxy {
 	 */
 	abstract send(data: ArrayBuffer): boolean;
 	
+	stopWithReason(reason: ConnectionErrorCode) {
+		this.pendingErrorCode = reason;
+		this.stop();
+	}
+	
 	protected notifyOpen() {
 		this.listener?.onOpen();
 	}
 	
 	protected notifyClose(reason: ConnectionErrorCode) {
-		this.listener?.onClose(reason);
+		//Consuming the pending error code if it is available
+		if(this.pendingErrorCode) {
+			this.listener?.onClose(this.pendingErrorCode);
+			this.pendingErrorCode = undefined;
+		} else {
+			this.listener?.onClose(reason);
+		}
 	}
 
 	protected notifyMessage(data: ArrayBuffer) {

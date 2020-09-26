@@ -54,9 +54,10 @@ export default abstract class CommunicationsManager {
 	/**
 	 * Disconnects the connection manager from the server
 	 */
-	public disconnect(code: ConnectionErrorCode) {
+	public disconnect(code?: ConnectionErrorCode) {
 		//Disconnecting the proxy
-		this.dataProxy.stop();
+		if(code) this.dataProxy.stopWithReason(code);
+		else this.dataProxy.stop();
 	}
 	
 	//Used in implementations
