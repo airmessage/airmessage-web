@@ -1,10 +1,9 @@
-import React, {ChangeEvent, useEffect, useState} from "react";
+import React, {ChangeEvent} from "react";
 import styles from "./MessageInput.module.css";
 
 import {useTheme} from '@material-ui/core/styles';
 import {IconButton, InputBase} from "@material-ui/core";
 import PushIcon from "../../icon/PushIcon";
-import BorderedCloseIcon from "../../icon/BorderedCloseIcon";
 import {QueuedFile} from "../../../data/blocks";
 import {Flipped, Flipper, spring} from "react-flip-toolkit";
 import {QueuedAttachmentImage} from "./queue/QueuedAttachmentImage";

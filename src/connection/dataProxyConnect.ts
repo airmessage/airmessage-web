@@ -6,7 +6,6 @@ import ByteBuffer from "bytebuffer";
 import firebase from "firebase/app";
 import "firebase/auth";
 
-import {communicationsVersion} from "./connectionConstants";
 import {getInstallationID} from "../util/installationUtils";
 import {ConnectionErrorCode} from "../data/stateCodes";
 

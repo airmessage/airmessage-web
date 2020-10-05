@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 import styles from './Sidebar.module.css';
 
 import firebase from "firebase/app";
@@ -6,7 +6,7 @@ import "firebase/auth";
 
 import AirMessageLogo from "../../logo/AirMessageLogo";
 import {
-	Button, CircularProgress,
+	Button,
 	Dialog,
 	DialogActions,
 	DialogContent,
@@ -15,7 +15,8 @@ import {
 	IconButton,
 	Menu,
 	MenuItem,
-	Toolbar, Typography
+	Toolbar,
+	Typography
 } from "@material-ui/core";
 import AddRoundedIcon from "@material-ui/icons/AddRounded";
 import MoreVertRoundedIcon from "@material-ui/icons/MoreVertRounded";
@@ -36,7 +37,6 @@ import {
 	targetCommVer
 } from "../../../connection/connectionManager";
 import Markdown from "../../Markdown";
-import {DateTime} from "luxon";
 import {changelog} from "../../../data/changelog";
 
 interface Props {

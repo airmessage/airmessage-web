@@ -1,7 +1,6 @@
 import AirUnpacker from "./airUnpacker";
 import ClientComm5 from "./clientComm5";
 import DataProxy from "../dataProxy";
-import ProgressPromise from "../../util/progressPromise";
 
 export default abstract class ProtocolManager {
 	constructor(protected communicationsManager: ClientComm5, protected dataProxy: DataProxy) {

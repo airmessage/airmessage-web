@@ -1,4 +1,4 @@
-import React, {CSSProperties} from "react";
+import React from "react";
 import styles from "./MessageModifierTapbackRow.module.css";
 
 import {TapbackItem} from "../../../../data/blocks";

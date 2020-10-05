@@ -26,12 +26,12 @@ const buttonActionRetry: ButtonAction = {
 	}
 };
 
-const buttonActionMoreInfo: ButtonAction = {
+/* const buttonActionMoreInfo: ButtonAction = {
 	label: "More info",
 	onClick: () => {
 	
 	}
-};
+}; */
 
 export default function DetailError(props: {error: ConnectionErrorCode}) {
 	const errorDisplay = errorCodeToDisplay(props.error);
