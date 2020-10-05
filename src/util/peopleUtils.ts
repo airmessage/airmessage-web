@@ -152,8 +152,8 @@ export async function findPerson(address: string): Promise<ContactData> {
 }
 
 function googlePersonToPersonData(person: gapi.client.people.Person): PersonData {
-	const name = person.names[0]?.displayName;
-	const avatar = person.photos ? person.photos[0].url : undefined;
+	const name = person.names?.[0].displayName;
+	const avatar = person.photos?.[0]?.url;
 	const addresses: AddressData[] = [
 		...person.emailAddresses?.reduce((accumulator: AddressData[], address) => {
 			if(address.value !== undefined) {
