@@ -2,16 +2,7 @@ import React, {useEffect, useState} from "react";
 import styles from "../item/Message.module.css";
 import stylesImage from "./MessageAttachmentImage.module.css";
 
-import {
-	Backdrop,
-	Button,
-	ButtonBase,
-	createMuiTheme,
-	IconButton,
-	Toolbar,
-	Tooltip,
-	Typography
-} from "@material-ui/core";
+import {Backdrop, ButtonBase, createMuiTheme, IconButton, Toolbar, Tooltip, Typography} from "@material-ui/core";
 import {ThemeProvider} from "@material-ui/core/styles";
 import ArrowBackIcon from "@material-ui/icons/ArrowBack";
 import SaveAltIcon from "@material-ui/icons/SaveAlt";
