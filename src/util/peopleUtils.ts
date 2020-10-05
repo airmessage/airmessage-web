@@ -74,6 +74,9 @@ async function loadPeople(): Promise<{personArray: PersonData[], contactMap: Map
 			sources: ["READ_SOURCE_TYPE_CONTACT"]
 		} as object as gapi.client.people.people.connections.ListParameters);
 		
+		//Ignoring if the request failed
+		if(!response.result.connections) break;
+		
 		//Iterating over the retrieved people
 		for(const person of response.result.connections) {
 			//Reading the person data
