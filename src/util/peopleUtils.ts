@@ -63,16 +63,27 @@ async function loadPeople(): Promise<{personArray: PersonData[], contactMap: Map
 	const personArray: PersonData[] = [];
 	const contactMap: Map<string, ContactData> = new Map();
 	
-	let nextPageToken: string | undefined;
+	let nextPageToken: string | undefined = undefined;
+	let requestIndex = 0;
 	do {
+		//Sleeping
+		if(requestIndex > 0 && requestIndex % 2 === 0) {
+			await new Promise(r => setTimeout(r, 1000));
+		}
+		
 		//Fetching contacts from Google
-		const response = await gapi.client.people.people.connections.list({
+		const parameters = {
 			resourceName: "people/me",
 			personFields: "names,photos,emailAddresses,phoneNumbers",
+			pageToken: nextPageToken,
 			pageSize: 1000,
 			sortOrder: "FIRST_NAME_ASCENDING",
 			sources: ["READ_SOURCE_TYPE_CONTACT"]
-		} as object as gapi.client.people.people.connections.ListParameters);
+		} as gapi.client.people.people.connections.ListParameters;
+		const response = await gapi.client.people.people.connections.list(parameters);
+		
+		//Ignoring if the request failed
+		if(!response.result.connections) break;
 		
 		//Iterating over the retrieved people
 		for(const person of response.result.connections) {
@@ -91,6 +102,12 @@ async function loadPeople(): Promise<{personArray: PersonData[], contactMap: Map
 		
 		//Setting the next page token
 		nextPageToken = response.result.nextPageToken;
+		
+		//Logging the event
+		console.log("Loaded contacts request index " + requestIndex + " / " + nextPageToken);
+		
+		//Incrementing the request index
+		requestIndex++;
 	} while(nextPageToken);
 	
 	//Returning the data
