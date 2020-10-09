@@ -50,9 +50,11 @@ export function initializePeople() {
 						contactMap = data.contactMap;
 						
 						resolve();
+					}).catch((error) => {
+						console.warn("Error loading Google people", error);
 					});
 				}).catch((error) => {
-					console.error("Error loading GAPI client for API", error);
+					console.warn("Error initializing GAPI client", error);
 				});
 		});
 	});
@@ -66,7 +68,7 @@ async function loadPeople(): Promise<{personArray: PersonData[], contactMap: Map
 	let nextPageToken: string | undefined = undefined;
 	let requestIndex = 0;
 	do {
-		//Sleeping
+		//Sleeping every 2 requests
 		if(requestIndex > 0 && requestIndex % 2 === 0) {
 			await new Promise(r => setTimeout(r, 1000));
 		}
