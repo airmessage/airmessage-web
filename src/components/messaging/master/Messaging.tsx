@@ -10,7 +10,7 @@ import DetailWelcome from "../detail/DetailWelcome";
 import * as ConnectionManager from "../../../connection/connectionManager";
 import {ConnectionListener, messageUpdateEmitter, modifierUpdateEmitter} from "../../../connection/connectionManager";
 import {initializePeople} from "../../../util/peopleUtils";
-import {ConnectionErrorCode, ParticipantActionType} from "../../../data/stateCodes";
+import {ConnectionErrorCode, MessageError, ParticipantActionType} from "../../../data/stateCodes";
 import {Conversation, ConversationItem, MessageItem, MessageModifier} from "../../../data/blocks";
 import SoftDivider from "../../SoftDivider";
 import {
@@ -103,6 +103,9 @@ class Messaging extends React.Component<Props, State> {
 							detailPane: {type: DetailType.Welcome}
 						});
 					}
+				}).catch((reason: MessageError) => {
+					console.error("Failed to fetch conversations", reason);
+					ConnectionManager.disconnect();
 				});
 			} else {
 				//Clearing the error from the sidebar
