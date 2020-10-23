@@ -1,3 +1,4 @@
 export const changelog = `
-Initial release
+- Dropped support for older browsers
+- The app will now disconnect if conversations couldn't be loaded
 `;
