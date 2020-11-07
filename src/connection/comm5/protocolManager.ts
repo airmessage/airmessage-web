@@ -40,17 +40,6 @@ export default abstract class ProtocolManager {
 	public abstract sendMessage(requestID: number, chatGUID: string, message: string): boolean;
 	
 	/**
-	 * Requests a message to be send to the specified conversation members via the service
-	 *
-	 * @param requestID the ID of the request
-	 * @param chatMembers the members to send the message to
-	 * @param message the message to send
-	 * @param service the service to send the message across
-	 * @return whether or not the request was successfully sent
-	 */
-	public abstract sendMessageNew(requestID: number, chatMembers: String[], message: String, service: String): boolean;
-	
-	/**
 	 * Sends an attachment file to the specified conversation
 	 *
 	 * @param requestID the ID of the request
@@ -60,17 +49,6 @@ export default abstract class ProtocolManager {
 	 * @return a promise that completes with the file hash once the file has been fully uploaded
 	 */
 	public abstract async sendFile(requestID: number, chatGUID: string, file: File, progressCallback: (bytesUploaded: number) => void): Promise<string>;
-	
-	/**
-	 * Sends an attachment file to the specified conversation members via the service
-	 *
-	 * @param requestID the ID of the request
-	 * @param chatMembers the members to send the message to
-	 * @param file the file to send
-	 * @param service the service to send the message across
-	 * @return whether or not the request was successfully sent
-	 */
-	public abstract sendFileNew(requestID: number, chatMembers: String[], file: Blob, service: String): boolean;
 	
 	/**
 	 * Requests the download of a remote attachment

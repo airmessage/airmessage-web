@@ -201,8 +201,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 	}, onModifierUpdate(data: MessageModifier[]): void {
 		//Notifying the listeners
 		modifierUpdateEmitter.notify(data);
-	},
-	onFileRequestStart(requestID: number, dataLength: number): void {
+	}, onFileRequestStart(requestID: number, dataLength: number): void {
 		//Finding the local request
 		const state = fileDownloadStateMap.get(requestID);
 		if(!state) return;
@@ -212,8 +211,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		
 		//Updating the progress
 		state.promise.progress({type: "size", value: dataLength});
-	},
-	onFileRequestData(requestID: number, data: ArrayBuffer): void {
+	}, onFileRequestData(requestID: number, data: ArrayBuffer): void {
 		//Finding the local request
 		const state = fileDownloadStateMap.get(requestID);
 		if(!state) return;
@@ -244,8 +242,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		
 		//Removing the request
 		fileDownloadStateMap.delete(requestID);
-	},
-	onMessageConversations(data: Conversation[]): void {
+	}, onMessageConversations(data: Conversation[]): void {
 		//Resolving pending promises
 		for(let promise of liteConversationPromiseArray) promise.resolve(data);
 		
@@ -268,8 +265,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		else promise.resolve();
 		
 		chatCreatePromiseMap.delete(requestID);
-	},
-	onCreateChatResponse(requestID: number, error: CreateChatErrorCode | undefined, details: string | undefined): void {
+	}, onCreateChatResponse(requestID: number, error: CreateChatErrorCode | undefined, details: string | undefined): void {
 		//Resolving pending promises
 		const promise = chatCreatePromiseMap.get(requestID);
 		if(!promise) return;
@@ -342,7 +338,7 @@ function connectPassive() {
 	//Recording the state
 	isConnectingPassively = true;
 	
-	//Clearing the timeout ID
+	//Clearing the timeout ID (this function can only be called when the timer expires)
 	reconnectTimeoutID = undefined;
 	
 	//Connecting from the top of the priority list

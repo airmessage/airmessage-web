@@ -357,10 +357,6 @@ export default class ClientProtocol1 extends ProtocolManager {
 		return true;
 	}
 	
-	sendMessageNew(requestID: number, chatMembers: String[], message: String, service: String): boolean {
-		return false;
-	}
-	
 	async sendFile(requestID: number, chatGUID: string, file: File, progressCallback: (bytesUploaded: number) => void): Promise<string> {
 		const spark = new SparkMD5.ArrayBuffer();
 		
@@ -406,10 +402,6 @@ export default class ClientProtocol1 extends ProtocolManager {
 		
 		//Returning with the file's MD5 hash
 		return spark.end(false);
-	}
-	
-	sendFileNew(requestID: number, chatMembers: String[], file: Blob, service: String): boolean {
-		return false;
 	}
 	
 	requestAttachmentDownload(requestID: number, attachmentGUID: string): boolean {
