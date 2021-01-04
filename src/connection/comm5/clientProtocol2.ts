@@ -31,7 +31,7 @@ import {
 } from "../../data/stateCodes";
 import {arrayBufferToHex, blobToArrayBuffer} from "../../util/fileUtils";
 import SparkMD5 from "spark-md5";
-import {BasicAccumulator} from "../transferAccumulator";
+import {InflatorAccumulator} from "../transferAccumulator";
 
 const attachmentChunkSize = 2 * 1024 * 1024; //2 MiB
 
@@ -44,14 +44,15 @@ const nhtAuthentication = 101;
 
 const nhtMessageUpdate = 200;
 const nhtTimeRetrieval = 201;
-const nhtMassRetrieval = 202;
-const nhtMassRetrievalFile = 203;
-const nhtMassRetrievalFinish = 204;
-const nhtConversationUpdate = 205;
-const nhtModifierUpdate = 206;
-const nhtAttachmentReq = 207;
-const nhtAttachmentReqConfirm = 208;
-const nhtAttachmentReqFail = 209;
+const nhtIDRetrieval = 202;
+const nhtMassRetrieval = 203;
+const nhtMassRetrievalFile = 204;
+const nhtMassRetrievalFinish = 205;
+const nhtConversationUpdate = 206;
+const nhtModifierUpdate = 207;
+const nhtAttachmentReq = 208;
+const nhtAttachmentReqConfirm = 209;
+const nhtAttachmentReqFail = 210;
 
 const nhtLiteConversationRetrieval = 300;
 const nhtLiteThreadRetrieval = 301;
@@ -129,7 +130,7 @@ enum NSTGroupActionType {
 
 type AMBrowser = "chrome" | "safari" | "firefox" | "edge" | "browser";
 
-export default class ClientProtocol1 extends ProtocolManager {
+export default class ClientProtocol2 extends ProtocolManager {
 	processData(data: ArrayBuffer): void {
 		//Notifying the communications manager of a new incoming message
 		this.communicationsManager.listener?.onPacket();
@@ -237,9 +238,9 @@ export default class ClientProtocol1 extends ProtocolManager {
 		const isLast = unpacker.unpackBoolean();
 		
 		const fileGUID = unpacker.unpackString();
-		const fileData = pako.ungzip(new Uint8Array(unpacker.unpackPayload()));
+		const fileData = unpacker.unpackPayload();
 		
-		if(requestIndex === 0) this.communicationsManager.listener?.onFileRequestStart(requestID, fileLength!, new BasicAccumulator(fileLength!));
+		if(requestIndex === 0) this.communicationsManager.listener?.onFileRequestStart(requestID, fileLength!, new InflatorAccumulator());
 		this.communicationsManager.listener?.onFileRequestData(requestID, fileData);
 		if(isLast) this.communicationsManager.listener?.onFileRequestComplete(requestID);
 	}
@@ -379,7 +380,7 @@ export default class ClientProtocol1 extends ProtocolManager {
 					packer.packBoolean(newOffset >= file.size); //Is this the last part?
 					
 					packer.packString(chatGUID);
-					packer.packPayload(pako.gzip(new Uint8Array(chunkData)));
+					packer.packPayload(pako.deflate(new Uint8Array(chunkData)));
 					if(chunkIndex === 0) packer.packString(file.name);
 					
 					this.dataProxy.send(packer.toArrayBuffer());
@@ -684,6 +685,7 @@ function unpackAttachment(unpacker: AirUnpacker): AttachmentItem {
 	const size = unpacker.unpackLong();
 	const checksum = unpacker.unpackNullablePayload();
 	const checksumString = checksum && arrayBufferToHex(checksum);
+	const sort = unpacker.unpackLong();
 	
 	return {
 		guid: guid,
@@ -719,7 +721,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 			/*const fileGUID = */unpacker.unpackString();
 			const sender = unpacker.unpackNullableString();
 			const date = new Date(unpacker.unpackLong());
-			const data = pako.ungzip(new Uint8Array(unpacker.unpackPayload()));
+			const data = pako.inflate(new Uint8Array(unpacker.unpackPayload()));
 			const dataType = unpacker.unpackString();
 			
 			return {
