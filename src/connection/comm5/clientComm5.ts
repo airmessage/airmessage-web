@@ -3,6 +3,7 @@ import ProtocolManager from "./protocolManager";
 import AirUnpacker from "./airUnpacker";
 import ClientProtocol1 from "./clientProtocol1";
 import {ConnectionErrorCode, MessageError, MessageErrorCode} from "../../data/stateCodes";
+import ClientProtocol2 from "./clientProtocol2";
 
 const targetCommVer = 5;
 
@@ -95,6 +96,8 @@ export default class ClientComm5 extends CommunicationsManager {
 		switch(subVersion) {
 			case 1:
 				return new ClientProtocol1(this, this.dataProxy);
+			case 2:
+				return new ClientProtocol2(this, this.dataProxy);
 			default:
 				return null;
 		}

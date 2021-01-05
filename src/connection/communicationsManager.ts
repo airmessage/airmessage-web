@@ -1,6 +1,7 @@
 import DataProxy from "./dataProxy";
 import {AttachmentRequestErrorCode, ConnectionErrorCode, CreateChatErrorCode, MessageError} from "../data/stateCodes";
 import {Conversation, ConversationItem, MessageModifier} from "../data/blocks";
+import {TransferAccumulator} from "./transferAccumulator";
 
 export interface CommunicationsManagerListener {
 	onOpen: (systemVersion: string, softwareVersion: string) => void;
@@ -9,7 +10,7 @@ export interface CommunicationsManagerListener {
 	onMessageUpdate: (data: ConversationItem[]) => void;
 	onConversationUpdate: (data: [string, Conversation | undefined][]) => void;
 	onModifierUpdate: (data: MessageModifier[]) => void;
-	onFileRequestStart: (requestID: number, dataLength: number) => void;
+	onFileRequestStart: (requestID: number, dataLength: number, accumulator: TransferAccumulator) => void;
 	onFileRequestData: (requestID: number, data: ArrayBuffer) => void;
 	onFileRequestComplete: (requestID: number) => void;
 	onFileRequestFail: (requestID: number, error: AttachmentRequestErrorCode) => void;
