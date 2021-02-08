@@ -26,17 +26,19 @@ export default function SnackbarProvider(props: {children: React.ReactNode}) {
 		setOpen(false);
 	}
 	
-	return <SnackbarContext.Provider value={displaySnackbar}>
-		<Snackbar
-			anchorOrigin={{
-				vertical: "bottom",
-				horizontal: "left",
-			}}
-			open={open}
-			autoHideDuration={6000}
-			onClose={handleClose}
-			message={data?.message}
-			action={data?.action} />
-		{props.children}
-	</SnackbarContext.Provider>
+	return (
+		<SnackbarContext.Provider value={displaySnackbar}>
+			<Snackbar
+				anchorOrigin={{
+					vertical: "bottom",
+					horizontal: "left",
+				}}
+				open={open}
+				autoHideDuration={6000}
+				onClose={handleClose}
+				message={data?.message}
+				action={data?.action} />
+			{props.children}
+		</SnackbarContext.Provider>
+	);
 }
