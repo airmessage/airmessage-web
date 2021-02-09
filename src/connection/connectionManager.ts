@@ -16,7 +16,7 @@ import ProgressPromise from "../util/progressPromise";
 import promiseTimeout from "../util/promiseTimeout";
 import {TransferAccumulator} from "./transferAccumulator";
 
-export const targetCommVer = "5.1";
+export const targetCommVer = "5.2";
 
 //How often to try reconnecting when disconnected
 const reconnectInterval = 8 * 1000;
