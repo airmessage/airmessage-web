@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import "./index.css";
 import * as config from "./secure/config";
 
 import AppTheme from "./components/control/AppTheme";
@@ -11,37 +10,52 @@ import firebase from "firebase/app";
 import "firebase/auth";
 
 import * as Sentry from "@sentry/react";
-import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
-import reportWebVitals from "./reportWebVitals";
 
 //Initializing Firebase
 firebase.initializeApp(config.firebaseConfig);
 
+export let promiseGAPI: Promise<any>;
+
 //Initializing Sentry
-if(process.env.NODE_ENV === "production") {
+if(import.meta.env.NODE_ENV === "production") {
 	Sentry.init({
 		dsn: config.sentryDSN,
-		release: "airmessage-web@" + process.env.REACT_APP_VERSION,
-		environment: process.env.NODE_ENV
+		release: "airmessage-web@" + import.meta.env.SNOWPACK_PUBLIC_VERSION,
+		environment: import.meta.env.NODE_ENV
+	});
+}
+
+//Browser-specific features
+if(!import.meta.env.SNOWPACK_PUBLIC_ELECTRON) {
+	// Check that service workers are supported
+	if(import.meta.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
+		// Use the window load event to keep the page load performant
+		window.addEventListener("load", () => {
+			navigator.serviceWorker.register("/sw.js");
+		});
+	}
+	
+	//Loading the Google platform script
+	promiseGAPI = new Promise<any>((resolve) => {
+		const script = document.createElement("script");
+		script.setAttribute("src","https://apis.google.com/js/platform.js");
+		script.onload = resolve;
+		document.head.appendChild(script);
 	});
 }
 
 //Initializing React
 ReactDOM.render(
-    <React.StrictMode>
+	<React.StrictMode>
 		<AppTheme>
-        	<LoginGate />
+			<LoginGate />
 		</AppTheme>
-    </React.StrictMode>,
-    document.getElementById("root")
+	</React.StrictMode>,
+	document.getElementById("root")
 );
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://cra.link/PWA
-serviceWorkerRegistration.register();
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+// Hot Module Replacement (HMR) - Remove this snippet to remove HMR.
+// Learn more: https://www.snowpack.dev/concepts/hot-module-replacement
+if(import.meta.hot) {
+	import.meta.hot.accept();
+}

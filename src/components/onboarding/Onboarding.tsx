@@ -4,9 +4,9 @@ import styles from './Onboarding.module.css';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 
-import iconAirMessage from 'icons/tile-airmessage.svg';
-import iconMac from 'icons/tile-mac.svg';
-import iconGoogle from 'icons/logo-google.svg';
+import iconAirMessage from '../../icons/tile-airmessage.svg';
+import iconMac from '../../icons/tile-mac.svg';
+import iconGoogle from '../../icons/logo-google.svg';
 
 import AirMessageLogo from '../logo/AirMessageLogo';
 

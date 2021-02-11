@@ -49,7 +49,7 @@ export function initializePeople() {
 						personArray = data.personArray;
 						contactMap = data.contactMap;
 						
-						resolve();
+						resolve(undefined);
 					}).catch((error) => {
 						console.warn("Error loading Google people", error);
 					});
