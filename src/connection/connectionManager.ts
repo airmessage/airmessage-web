@@ -1,4 +1,4 @@
-import DataProxyConnect from "./dataProxyConnect";
+import DataProxyImpl from "platform-components/connection/dataProxy";
 import CommunicationsManager, {CommunicationsManagerListener} from "./communicationsManager";
 import ClientComm5 from "./comm5/clientComm5";
 import DataProxy from "./dataProxy";
@@ -44,7 +44,7 @@ const communicationsPriorityList: ReadonlyArray<CreatesCommunicationsManager> = 
 let reconnectTimeoutID: any | undefined;
 
 let communicationsManager: CommunicationsManager | null = null;
-const dataProxy = new DataProxyConnect();
+const dataProxy = new DataProxyImpl();
 
 //Listener values
 export interface ConnectionListener {
@@ -56,7 +56,7 @@ let connectionListenerArray: ConnectionListener[] = [];
 
 //Promise response values
 interface PromiseExecutor<T> {
-	resolve: (value?: T | PromiseLike<T>) => void;
+	resolve: (value: T | PromiseLike<T>) => void;
 	reject: (reason?: any) => void;
 }
 interface ProgressPromiseExecutor<T, P> {
@@ -261,7 +261,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		if(!promise) return;
 		
 		if(error) promise.reject(error);
-		else promise.resolve();
+		else promise.resolve(undefined);
 		
 		chatCreatePromiseMap.delete(requestID);
 	}, onCreateChatResponse(requestID: number, error: CreateChatErrorCode | undefined, details: string | undefined): void {
@@ -356,6 +356,10 @@ export function disconnect() {
 
 export function isConnected(): boolean {
 	return connState === "connected";
+}
+
+export function isDisconnected(): boolean {
+	return connState === "disconnected";
 }
 
 function requestTimeoutMap<T, K>(key: K, map: Map<K, any>, timeoutReason: any | undefined = messageErrorNetwork, promise: Promise<T>): Promise<T> {

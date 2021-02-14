@@ -1,13 +1,13 @@
-import DataProxy from "./dataProxy";
+import DataProxy from "shared/connection/dataProxy";
 
-import * as CloseFrame from "./webSocketCloseEventCodes";
-import * as NHT from "./nht";
+import * as CloseFrame from "shared/connection/webSocketCloseEventCodes";
+import * as NHT from "shared/connection/nht";
 import ByteBuffer from "bytebuffer";
 import firebase from "firebase/app";
 import "firebase/auth";
 
-import {getInstallationID} from "../util/installationUtils";
-import {ConnectionErrorCode} from "../data/stateCodes";
+import {getInstallationID} from "shared/util/installationUtils";
+import {ConnectionErrorCode} from "shared/data/stateCodes";
 
 const connectHostname = "wss://connect.airmessage.org";
 //const connectHostname = "ws://localhost:1259";
@@ -54,14 +54,13 @@ export default class DataProxyConnect extends DataProxy {
 		this.socket.close();
 	}
 	
-	send(data: ArrayBuffer): boolean {
+	send(data: ArrayBuffer) {
 		const byteBuffer = ByteBuffer.allocate(4 + data.byteLength)
 			.writeInt(NHT.nhtClientProxy)
 			.append(data);
 		
 		if(!this.socket) return false;
 		this.socket.send(byteBuffer.flip().toArrayBuffer());
-		return true;
 	}
 	
 	sendTokenAdd(token: string) {
@@ -102,7 +101,7 @@ export default class DataProxyConnect extends DataProxy {
 				const data = byteBuffer.compact().toArrayBuffer();
 				
 				//Handling the message
-				this.notifyMessage(data);
+				this.notifyMessage(data, true);
 				
 				break;
 			}

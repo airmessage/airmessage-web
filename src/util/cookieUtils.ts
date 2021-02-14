@@ -1,4 +1,6 @@
-export const cookieDomain = "airmessage.org";
+export function setCookie(name: string, value: string) {
+	document.cookie = `${name}=${value};samesite=strict`;
+}
 
 export function hasCookie(name: string): boolean {
 	return document.cookie.match(new RegExp(

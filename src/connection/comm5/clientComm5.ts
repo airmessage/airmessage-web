@@ -42,10 +42,10 @@ export default class ClientComm5 extends CommunicationsManager {
 		if(this.handshakeTimeout) clearTimeout(this.handshakeTimeout);
 	}
 	
-	protected handleMessage(data: ArrayBuffer): void {
+	protected handleMessage(data: ArrayBuffer, isEncrypted: boolean): void {
 		//Letting the protocol manager handle the data if it is available
 		if(this.protocolManager) {
-			this.protocolManager.processData(data);
+			this.protocolManager.processData(data, isEncrypted);
 			return;
 		}
 		

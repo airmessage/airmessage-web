@@ -3,7 +3,7 @@ import {ConnectionErrorCode} from "../data/stateCodes";
 export type DataProxyListener = {
 	onOpen: () => void,
 	onClose: (reason: ConnectionErrorCode) => void,
-	onMessage: (data: ArrayBuffer) => void,
+	onMessage: (data: ArrayBuffer, isEncrypted: boolean) => void,
 };
 
 export default abstract class DataProxy {
@@ -23,9 +23,10 @@ export default abstract class DataProxy {
 	/**
 	 * Send a packet to the server
 	 * @param data The packet to send
+	 * @param encrypt Whether to encrypt the data before sending
 	 * @return TRUE if the packet was successfully queued
 	 */
-	abstract send(data: ArrayBuffer): boolean;
+	abstract send(data: ArrayBuffer, encrypt: boolean): void;
 	
 	stopWithReason(reason: ConnectionErrorCode) {
 		this.pendingErrorCode = reason;
@@ -46,7 +47,7 @@ export default abstract class DataProxy {
 		}
 	}
 
-	protected notifyMessage(data: ArrayBuffer) {
-		this.listener?.onMessage(data);
+	protected notifyMessage(data: ArrayBuffer, isEncrypted: boolean) {
+		this.listener?.onMessage(data, isEncrypted);
 	}
 }

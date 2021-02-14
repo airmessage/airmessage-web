@@ -1,0 +1,8 @@
+.bottomBar {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+
+    margin-bottom: 16px;
+    margin-top: 16px;
+}

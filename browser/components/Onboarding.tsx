@@ -8,9 +8,8 @@ import iconAirMessage from '../../icons/tile-airmessage.svg';
 import iconMac from '../../icons/tile-mac.svg';
 import iconGoogle from '../../icons/logo-google.svg';
 
-import AirMessageLogo from '../logo/AirMessageLogo';
-
-import * as config from "../../secure/config";
+import * as config from "shared/secure/config";
+import AirMessageLogo from "shared/components/logo/AirMessageLogo";
 
 export default function Onboarding() {
 	return (

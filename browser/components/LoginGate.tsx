@@ -1,15 +1,14 @@
 import React from 'react';
 
-import Onboarding from '../onboarding/Onboarding';
-import Messaging from '../messaging/master/Messaging';
+import Onboarding from "./Onboarding";
+import Messaging from "shared/components/messaging/master/Messaging";
 
 import firebase from "firebase/app";
 import "firebase/auth";
-//import "firebase/analytics";
-import * as config from "../../secure/config";
+import * as config from "shared/secure/config";
 
 import * as Sentry from "@sentry/react";
-import {promiseGAPI} from "../../index";
+import {promiseGAPI} from "shared/index";
 
 type LoginState = "waiting" | "logged-out" | "logged-in";
 

@@ -4,7 +4,7 @@ import ReactDOM from "react-dom";
 import * as config from "./secure/config";
 
 import AppTheme from "./components/control/AppTheme";
-import LoginGate from "./components/control/LoginGate";
+import LoginGate from "platform-components/components/LoginGate";
 
 import firebase from "firebase/app";
 import "firebase/auth";

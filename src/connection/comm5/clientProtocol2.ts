@@ -32,6 +32,7 @@ import {
 import {arrayBufferToHex, blobToArrayBuffer} from "../../util/fileUtils";
 import SparkMD5 from "spark-md5";
 import {InflatorAccumulator} from "../transferAccumulator";
+import {decryptData, encryptData} from "shared/util/encryptionUtils";
 
 const attachmentChunkSize = 2 * 1024 * 1024; //2 MiB
 
@@ -131,7 +132,7 @@ enum NSTGroupActionType {
 type AMBrowser = "chrome" | "safari" | "firefox" | "edge" | "browser";
 
 export default class ClientProtocol2 extends ProtocolManager {
-	processData(data: ArrayBuffer): void {
+	processData(data: ArrayBuffer, wasEncrypted: boolean): void {
 		//Notifying the communications manager of a new incoming message
 		this.communicationsManager.listener?.onPacket();
 		
@@ -139,6 +140,15 @@ export default class ClientProtocol2 extends ProtocolManager {
 		const unpacker = new AirUnpacker(data);
 		const messageType = unpacker.unpackInt();
 		
+		//Processing the message data
+		if(wasEncrypted) {
+			this.processDataSecure(messageType, unpacker);
+		} else {
+			this.processDataInsecure(messageType, unpacker);
+		}
+	}
+	
+	private processDataInsecure(messageType: number, unpacker: AirUnpacker) {
 		switch(messageType) {
 			case nhtClose:
 				this.communicationsManager.disconnect(ConnectionErrorCode.Connection);
@@ -148,7 +158,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 				const packer = AirPacker.get();
 				try {
 					packer.packInt(nhtPong);
-					this.dataProxy.send(packer.toArrayBuffer());
+					this.dataProxy.send(packer.toArrayBuffer(), false);
 				} finally {
 					packer.reset();
 				}
@@ -158,6 +168,11 @@ export default class ClientProtocol2 extends ProtocolManager {
 			case nhtAuthentication:
 				this.handleMessageAuthentication(unpacker);
 				break;
+		}
+	}
+	
+	private processDataSecure(messageType: number, unpacker: AirUnpacker) {
+		switch(messageType) {
 			case nhtMessageUpdate:
 			case nhtTimeRetrieval:
 				this.handleMessageUpdate(unpacker);
@@ -188,6 +203,9 @@ export default class ClientProtocol2 extends ProtocolManager {
 				break;
 			case nhtCreateChat:
 				this.handleMessageCreateChat(unpacker);
+				break;
+			default:
+				this.processDataInsecure(messageType, unpacker);
 				break;
 		}
 	}
@@ -296,7 +314,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 		const packer = AirPacker.get();
 		try {
 			packer.packInt(nhtPing);
-			this.dataProxy.send(packer.toArrayBuffer());
+			this.dataProxy.send(packer.toArrayBuffer(), false);
 		} finally {
 			packer.reset();
 		}
@@ -304,7 +322,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 		return true;
 	}
 	
-	sendAuthenticationRequest(unpacker: AirUnpacker): boolean {
+	async sendAuthenticationRequest(unpacker: AirUnpacker): Promise<boolean> {
 		//Assembling the device information
 		const uaParser = new UAParser();
 		const browser = uaParser.getBrowser();
@@ -323,8 +341,31 @@ export default class ClientProtocol2 extends ProtocolManager {
 		
 		//Checking if the current protocol requires authentication
 		if(unpacker.unpackBoolean()) {
-			//Uh-oh. How did we get here?
-			return false;
+			//Reading the transmission check
+			const transmissionCheck = unpacker.unpackPayload();
+			
+			const packer = AirPacker.get();
+			try {
+				packer.packInt(nhtAuthentication);
+				
+				//Building the secure data
+				let secureData: ArrayBuffer;
+				{
+					const securePacker = AirPacker.initialize(1024);
+					securePacker.packPayload(transmissionCheck);
+					securePacker.packString(installationID);
+					securePacker.packString(clientName);
+					securePacker.packString(platformID);
+					secureData = securePacker.toArrayBuffer();
+				}
+				
+				//Encrypting the secure data and adding it to the original message
+				packer.packPayload(await encryptData(secureData));
+				
+				this.dataProxy.send(packer.toArrayBuffer(), false);
+			} finally {
+				packer.reset();
+			}
 		}
 		
 		//Sending a response
@@ -335,7 +376,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 			packer.packString(clientName);
 			packer.packString(platformID);
 			
-			this.dataProxy.send(packer.toArrayBuffer());
+			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
@@ -351,7 +392,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 			packer.packString(chatGUID);
 			packer.packString(message);
 			
-			this.dataProxy.send(packer.toArrayBuffer());
+			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
@@ -383,7 +424,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 					packer.packPayload(pako.deflate(new Uint8Array(chunkData)));
 					if(chunkIndex === 0) packer.packString(file.name);
 					
-					this.dataProxy.send(packer.toArrayBuffer());
+					this.dataProxy.send(packer.toArrayBuffer(), true);
 				} finally {
 					packer.reset();
 				}
@@ -415,7 +456,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 			packer.packInt(attachmentChunkSize);
 			packer.packString(attachmentGUID);
 			
-			this.dataProxy.send(packer.toArrayBuffer());
+			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
@@ -427,7 +468,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 		const packer = AirPacker.get();
 		try {
 			packer.packInt(nhtLiteConversationRetrieval);
-			this.dataProxy.send(packer.toArrayBuffer());
+			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
@@ -443,7 +484,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 			packer.packArrayHeader(chatGUIDs.length);
 			for(const chatGUID of chatGUIDs) packer.packString(chatGUID);
 			
-			this.dataProxy.send(packer.toArrayBuffer());
+			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
@@ -462,7 +503,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 			} else {
 				packer.packBoolean(false);
 			}
-			this.dataProxy.send(packer.toArrayBuffer());
+			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
@@ -480,7 +521,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 			for(const member of members) packer.packString(member);
 			packer.packString(service);
 			
-			this.dataProxy.send(packer.toArrayBuffer());
+			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
@@ -496,7 +537,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 			packer.packLong(timeLower.getTime());
 			packer.packLong(timeUpper.getTime());
 			
-			this.dataProxy.send(packer.toArrayBuffer());
+			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}

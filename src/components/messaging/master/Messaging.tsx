@@ -233,7 +233,9 @@ class Messaging extends React.Component<Props, State> {
 		notificationClickEmitter.registerListener(this.onConversationSelected);
 		
 		//Connecting
-		ConnectionManager.connect();
+		if(ConnectionManager.isDisconnected()) {
+			ConnectionManager.connect();
+		}
 		
 		//Loading people
 		initializePeople();
