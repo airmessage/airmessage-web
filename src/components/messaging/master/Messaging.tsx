@@ -173,7 +173,7 @@ class Messaging extends React.Component<Props, State> {
 					<div className={styles.splitMaster}>{masterNode}</div>
 				</div>
 			</SnackbarProvider>
-		)
+		);
 	}
 	
 	private readonly onConversationSelected = (conversationID: string): void => {

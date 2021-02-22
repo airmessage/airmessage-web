@@ -15,7 +15,6 @@ export async function setPassword(password: string) {
 
 export async function encryptData(inData: ArrayBuffer): Promise<ArrayBuffer> {
 	//Generating random data
-	const crypto = new Crypto();
 	const salt = new Uint8Array(saltLen);
 	crypto.getRandomValues(salt);
 	const iv = new Uint8Array(ivLen);

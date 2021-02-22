@@ -44,7 +44,16 @@ const communicationsPriorityList: ReadonlyArray<CreatesCommunicationsManager> = 
 let reconnectTimeoutID: any | undefined;
 
 let communicationsManager: CommunicationsManager | null = null;
-const dataProxy = new DataProxyImpl();
+let dataProxy: DataProxy = new DataProxyImpl();
+export function setDataProxy(value: DataProxy) {
+	dataProxy = value;
+}
+
+//Config values
+let disableAutomaticReconnections = false;
+export function setDisableAutomaticReconnections(value: boolean) {
+	disableAutomaticReconnections = value;
+}
 
 //Listener values
 export interface ConnectionListener {
@@ -173,7 +182,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		updateStateDisconnected(reason);
 		
 		//Checking if the error is automatically recoverable
-		if(reason === ConnectionErrorCode.Connection || reason === ConnectionErrorCode.Internet) {
+		if((reason === ConnectionErrorCode.Connection || reason === ConnectionErrorCode.Internet) && !disableAutomaticReconnections) {
 			//Scheduling a passive reconnection
 			reconnectTimeoutID = setTimeout(connectPassive, reconnectInterval);
 		}

@@ -6,8 +6,22 @@ import {decryptData, encryptData} from "shared/util/encryptionUtils";
 
 const net = require("net");
 
+interface AddressOverride {
+	port?: number;
+	host: string;
+}
+
 export default class DataProxyTCP extends DataProxy {
-	private socket = new net.Socket();
+	private socket: any;
+	private readonly override: AddressOverride | undefined;
+	
+	constructor(override?: AddressOverride) {
+		super();
+		
+		this.socket = new net.Socket();
+		this.socket.setTimeout(10 * 1000);
+		this.override = override;
+	}
 	
 	//previousEncrypt ensures that all send messages are sent in parallel
 	private previousEncrypt: Promise<any> | undefined;
@@ -33,18 +47,30 @@ export default class DataProxyTCP extends DataProxy {
 	
 	//Writes data to the socket without any sort of processing
 	private writeSync(data: ArrayBuffer, isEncrypted: boolean) {
-		const byteBuffer = ByteBuffer.allocate(4 * 2 + data.byteLength)
+		const byteBuffer = ByteBuffer.allocate(4 + 1 + data.byteLength)
 			.writeInt(data.byteLength)
 			.writeByte(isEncrypted ? 1 : 0)
 			.append(data);
 		
-		this.socket.write(byteBuffer.buffer);
+		this.socket.write(new Uint8Array(byteBuffer.buffer));
 	}
 	
 	//previousDecrypt ensures that all read messages are decrypted in parallel
 	private previousDecrypt: Promise<any> | undefined;
 	start(): void {
-		this.socket.connect(1359, "localhost");
+		//Reading address data
+		let port: number;
+		let host: string;
+		
+		if(this.override) {
+			port = this.override.port ?? 1359;
+			host = this.override.host;
+		} else {
+			port = 1359;
+			host = "localhost";
+		}
+		
+		this.socket.connect(port, host);
 		
 		let messageData: {size: number, isEncrypted: boolean} | undefined = undefined;
 		this.socket.on("connect", () => {

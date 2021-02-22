@@ -366,19 +366,19 @@ export default class ClientProtocol2 extends ProtocolManager {
 			} finally {
 				packer.reset();
 			}
-		}
-		
-		//Sending a response
-		const packer = AirPacker.get();
-		try {
-			packer.packInt(nhtAuthentication);
-			packer.packString(installationID);
-			packer.packString(clientName);
-			packer.packString(platformID);
-			
-			this.dataProxy.send(packer.toArrayBuffer(), true);
-		} finally {
-			packer.reset();
+		} else {
+			//Sending a response
+			const packer = AirPacker.get();
+			try {
+				packer.packInt(nhtAuthentication);
+				packer.packString(installationID);
+				packer.packString(clientName);
+				packer.packString(platformID);
+				
+				this.dataProxy.send(packer.toArrayBuffer(), true);
+			} finally {
+				packer.reset();
+			}
 		}
 		
 		return true;

@@ -46,6 +46,7 @@
     "@material-ui/lab": "^4.0.0-alpha.57",
     "@sentry/react": "^6.1.0",
     "bytebuffer": "^5.0.1",
+    "electron-context-menu": "^2.4.0",
     "firebase": "^8.2.6",
     "libphonenumber-js": "^1.9.10",
     "luxon": "^1.25.0",

@@ -10,7 +10,6 @@ import {getInstallationID} from "shared/util/installationUtils";
 import {ConnectionErrorCode} from "shared/data/stateCodes";
 
 const connectHostname = "wss://connect2.airmessage.org";
-//const connectHostname = "ws://localhost:1259";
 
 const handshakeTimeoutTime = 8 * 1000;
 
@@ -20,7 +19,7 @@ export default class DataProxyConnect extends DataProxy {
 	
 	start(): void {
 		//Getting the user's ID token
-		firebase.auth().currentUser?.getIdToken().then((idToken: string) => {
+		firebase.auth().currentUser!.getIdToken().then((idToken: string) => {
 			//Building the URL
 			const url = new URL(connectHostname);
 			url.searchParams.set("communications", String(NHT.commVer));

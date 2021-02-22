@@ -1,10 +1,13 @@
 const { app, BrowserWindow } = require("electron");
 const path = require("path");
+const contextMenu = require("electron-context-menu");
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
 app.commandLine.appendSwitch("allow-insecure-localhost", "true");
 
 function createWindow() {
+	contextMenu();
+	
 	const win = new BrowserWindow({
 		width: 1000,
 		height: 600,
