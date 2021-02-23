@@ -9,6 +9,6 @@ export default function LoginGate() {
 	if(hasConfig) {
 		return <Messaging />;
 	} else {
-		return <Onboarding />;
+		return <Onboarding onApplyConfig={() => setHasConfig(true)} />;
 	}
 }

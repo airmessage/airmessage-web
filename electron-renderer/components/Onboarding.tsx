@@ -13,7 +13,7 @@ import ConnectionConfigDialog from "./ConnectionConfigDialog";
 
 const {shell} = require("electron");
 
-export default function Onboarding() {
+export default function Onboarding(props: {onApplyConfig: VoidFunction}) {
 	const [showConfigDialog, setShowConfigDialog] = useState(false);
 	
 	const navigateWebsite = useCallback((event: React.MouseEvent) => {
@@ -23,7 +23,7 @@ export default function Onboarding() {
 	
 	return (
 		<div className={styles.root}>
-			<ConnectionConfigDialog isOpen={showConfigDialog} onDismiss={() => setShowConfigDialog(false)} />
+			<ConnectionConfigDialog isOpen={showConfigDialog} onDismiss={() => setShowConfigDialog(false)} onApplyConfig={props.onApplyConfig} />
 			
 			<div style={{padding: 16}}>
 				<AirMessageLogo />

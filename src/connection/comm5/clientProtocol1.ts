@@ -218,7 +218,18 @@ export default class ClientProtocol1 extends ProtocolManager {
 		
 		//Disconnecting if the authentication didn't go through
 		if(resultCode !== NRCAuthenticationResult.OK) {
-			this.communicationsManager.disconnect(ConnectionErrorCode.BadRequest)
+			switch(resultCode) {
+				case NRCAuthenticationResult.BadRequest:
+					this.communicationsManager.disconnect(ConnectionErrorCode.BadRequest);
+					break;
+				case NRCAuthenticationResult.Unauthorized:
+					this.communicationsManager.disconnect(ConnectionErrorCode.DirectUnauthorized);
+					break;
+				default:
+					this.communicationsManager.disconnect(ConnectionErrorCode.Connection);
+					break;
+			}
+			
 			return;
 		}
 		

@@ -219,7 +219,18 @@ export default class ClientProtocol2 extends ProtocolManager {
 		
 		//Disconnecting if the authentication didn't go through
 		if(resultCode !== NRCAuthenticationResult.OK) {
-			this.communicationsManager.disconnect(ConnectionErrorCode.BadRequest)
+			switch(resultCode) {
+				case NRCAuthenticationResult.BadRequest:
+					this.communicationsManager.disconnect(ConnectionErrorCode.BadRequest);
+					break;
+				case NRCAuthenticationResult.Unauthorized:
+					this.communicationsManager.disconnect(ConnectionErrorCode.DirectUnauthorized);
+					break;
+				default:
+					this.communicationsManager.disconnect(ConnectionErrorCode.Connection);
+					break;
+			}
+			
 			return;
 		}
 		
@@ -824,7 +835,6 @@ function mapCodeMessageStatus(code: number): MessageStatusCode {
 			return MessageStatusCode.Read;
 	}
 }
-
 
 function mapCodeDBError(code: number): MessageErrorCode | undefined {
 	switch(code) {

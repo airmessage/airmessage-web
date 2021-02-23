@@ -60,6 +60,11 @@ export function errorCodeToShortDisplay(error: ConnectionErrorCode): ErrorDispla
 				message: "Server is out-of-date",
 				button: buttonActionRetry
 			};
+		case ConnectionErrorCode.DirectUnauthorized:
+			return {
+				message: "Password not accepted",
+				button: buttonActionRetry
+			};
 		case ConnectionErrorCode.ConnectNoGroup:
 			return {
 				message: "Personal server not reachable",

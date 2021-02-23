@@ -21,7 +21,7 @@ type ConnectionState =
 	{type: "connected"} |
 	{type: "disconnected", reason?: ConnectionErrorCode};
 
-export default function ConnectionConfigDialog(props: {isOpen: boolean, onDismiss: () => void}) {
+export default function ConnectionConfigDialog(props: {isOpen: boolean, onDismiss: VoidFunction, onApplyConfig: VoidFunction}) {
 	const [connectionState, setConnectionState] = useState<ConnectionState>({type: "disconnected"});
 	
 	const [address, setAddress] = useState("");
@@ -93,7 +93,7 @@ export default function ConnectionConfigDialog(props: {isOpen: boolean, onDismis
 							<span className={styles.bottomBarSpacer} />
 							
 							<Button className={styles.bottomBarButton} variant="text" color="primary">Back</Button>
-							<Button className={styles.bottomBarButton} variant="contained" color="primary">Done</Button>
+							<Button className={styles.bottomBarButton} variant="contained" color="primary" onClick={props.onApplyConfig}>Done</Button>
 						</>) : (<>
 							{connectionState.type === "disconnected" && connectionState.reason && <ConnectionCard connected={false}>{errorCodeToShortDisplay(connectionState.reason).message}</ConnectionCard>}
 							

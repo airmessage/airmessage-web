@@ -99,6 +99,12 @@ function errorCodeToDisplay(error: ConnectionErrorCode): ErrorDisplay {
 				subtitle: "AirMessage Server is out of date - please update AirMessage Server on your Mac and try again",
 				buttonPrimary: buttonActionRetry
 			};
+		case ConnectionErrorCode.DirectUnauthorized:
+			return {
+				title: "Your password was not accepted",
+				subtitle: "Please check your password and try again",
+				buttonPrimary: buttonActionRetry
+			};
 		case ConnectionErrorCode.ConnectNoGroup:
 			return {
 				title: "Your personal server can't be reached",

@@ -235,6 +235,12 @@ class Messaging extends React.Component<Props, State> {
 		//Connecting
 		if(ConnectionManager.isDisconnected()) {
 			ConnectionManager.connect();
+		} else {
+			if(ConnectionManager.isConnected()) {
+				this.connectionListener.onOpen();
+			} else {
+				this.connectionListener.onConnecting();
+			}
 		}
 		
 		//Loading people
