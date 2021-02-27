@@ -1,3 +1,3 @@
 export const changelog = `
-- Added support for protocol 5.2
+This update includes lots of under-the-hood changes to enable a more flexible build system for AirMessage for web.
 `;
