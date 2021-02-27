@@ -293,4 +293,4 @@ snowpack.crt
 snowpack.key
 
 # Private config
-/src/secure
+/src/secure/config.ts

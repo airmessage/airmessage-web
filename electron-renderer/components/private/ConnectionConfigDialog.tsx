@@ -3,7 +3,7 @@ import styles from "./ConnectionConfigDialog.module.css";
 import {Button, Card, CardContent, Dialog, DialogContent, DialogTitle, TextField, Typography} from "@material-ui/core";
 import * as ConnectionManager from "shared/connection/connectionManager";
 import * as EncryptionUtils from "shared/util/encryptionUtils";
-import DataProxyTCP from "../connection/dataProxy";
+import DataProxyTCP from "../../connection/dataProxy";
 import {ConnectionListener} from "shared/connection/connectionManager";
 import {ConnectionErrorCode} from "shared/data/stateCodes";
 import {CheckCircleOutline, CloudOff} from "@material-ui/icons";

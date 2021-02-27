@@ -1,7 +1,7 @@
 import DataProxy from "shared/connection/dataProxy";
 
-import * as CloseFrame from "shared/connection/webSocketCloseEventCodes";
-import * as NHT from "shared/connection/nht";
+import * as CloseFrame from "./private/webSocketCloseEventCodes";
+import * as NHT from "./private/nht";
 import ByteBuffer from "bytebuffer";
 import firebase from "firebase/app";
 import "firebase/auth";

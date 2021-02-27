@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 
-import Onboarding from "./Onboarding";
+import Onboarding from "./private/Onboarding";
 import Messaging from "shared/components/messaging/master/Messaging";
 
 export default function LoginGate() {

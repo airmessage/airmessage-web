@@ -1,6 +1,6 @@
 import React from "react";
 
-import Onboarding from "./Onboarding";
+import Onboarding from "./private/Onboarding";
 import Messaging from "shared/components/messaging/master/Messaging";
 
 import * as config from "shared/secure/config";

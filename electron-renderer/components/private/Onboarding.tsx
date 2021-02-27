@@ -8,7 +8,7 @@ import iconAirMessage from "shared/icons/tile-airmessage.svg";
 import iconMac from "shared/icons/tile-mac.svg";
 
 import AirMessageLogo from "shared/components/logo/AirMessageLogo";
-import EthernetIcon from "../icon/EthernetIcon";
+import EthernetIcon from "../../private/icon/EthernetIcon";
 import ConnectionConfigDialog from "./ConnectionConfigDialog";
 
 const {shell} = require("electron");

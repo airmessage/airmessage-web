@@ -10,9 +10,6 @@ import firebase from "firebase/app";
 
 import * as Sentry from "@sentry/react";
 
-//Initializing Firebase
-firebase.initializeApp(config.firebaseConfig);
-
 export let promiseGAPI: Promise<any>;
 
 //Initializing Sentry
@@ -26,6 +23,9 @@ if(import.meta.env.NODE_ENV === "production") {
 
 //Browser-specific features
 if(import.meta.env.SNOWPACK_PUBLIC_ELECTRON !== "true") {
+	//Initializing Firebase
+	firebase.initializeApp(config.firebaseConfig);
+	
 	// Check that service workers are supported
 	if(import.meta.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
 		// Use the window load event to keep the page load performant
