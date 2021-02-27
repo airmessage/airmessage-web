@@ -1,16 +1,15 @@
-import React from 'react';
-import styles from './Onboarding.module.css';
+import React from "react";
+import styles from "./Onboarding.module.css";
 
-import Typography from '@material-ui/core/Typography';
-import Button from '@material-ui/core/Button';
+import Typography from "@material-ui/core/Typography";
+import Button from "@material-ui/core/Button";
 
-import iconAirMessage from 'icons/tile-airmessage.svg';
-import iconMac from 'icons/tile-mac.svg';
-import iconGoogle from 'icons/logo-google.svg';
+import iconAirMessage from "shared/icons/tile-airmessage.svg";
+import iconMac from "shared/icons/tile-mac.svg";
+import iconGoogle from "shared/icons/logo-google.svg";
 
-import AirMessageLogo from '../logo/AirMessageLogo';
-
-import * as config from "../../secure/config";
+import * as config from "shared/secure/config";
+import AirMessageLogo from "shared/components/logo/AirMessageLogo";
 
 export default function Onboarding() {
 	return (

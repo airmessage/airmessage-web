@@ -11,8 +11,9 @@ export default abstract class ProtocolManager {
 	 * Handles incoming data received from the server
 	 *
 	 * @param data the data received from the network
+	 * @param wasEncrypted whether this data was encrypted when it was received
 	 */
-	public abstract processData(data: ArrayBuffer): void;
+	public abstract processData(data: ArrayBuffer, wasEncrypted: boolean): void;
 	
 	/**
 	 * Sends a ping packet to the server
@@ -27,7 +28,7 @@ export default abstract class ProtocolManager {
 	 * @param unpacker The unpacker of the server's info data, after reading the communications versions
 	 * @return whether or not the message was successfully sent
 	 */
-	public abstract sendAuthenticationRequest(unpacker: AirUnpacker): boolean;
+	public abstract sendAuthenticationRequest(unpacker: AirUnpacker): Promise<boolean>;
 	
 	/**
 	 * Requests a message to be sent to the specified conversation
@@ -48,7 +49,7 @@ export default abstract class ProtocolManager {
 	 * @param progressCallback a callback called periodically with the number of bytes uploaded
 	 * @return a promise that completes with the file hash once the file has been fully uploaded
 	 */
-	public abstract async sendFile(requestID: number, chatGUID: string, file: File, progressCallback: (bytesUploaded: number) => void): Promise<string>;
+	public abstract sendFile(requestID: number, chatGUID: string, file: File, progressCallback: (bytesUploaded: number) => void): Promise<string>;
 	
 	/**
 	 * Requests the download of a remote attachment

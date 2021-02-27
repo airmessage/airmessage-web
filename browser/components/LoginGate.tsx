@@ -1,14 +1,14 @@
-import React from 'react';
+import React from "react";
 
-import Onboarding from '../onboarding/Onboarding';
-import Messaging from '../messaging/master/Messaging';
+import Onboarding from "./Onboarding";
+import Messaging from "shared/components/messaging/master/Messaging";
 
-import firebase from "firebase/app";
-import "firebase/auth";
-//import "firebase/analytics";
-import * as config from "../../secure/config";
+import * as config from "shared/secure/config";
 
 import * as Sentry from "@sentry/react";
+import {promiseGAPI} from "shared/index";
+import firebase from "firebase/app";
+import "firebase/auth";
 
 type LoginState = "waiting" | "logged-out" | "logged-in";
 
@@ -36,15 +36,16 @@ export default class LoginGate extends React.Component<any, State> {
 	}
 	
 	componentDidMount() {
-		gapi.load('auth2', () => {
-			gapi.auth2.init({
-				client_id: config.googleClientID,
-				scope: config.googleScope,
-				cookie_policy: "single_host_origin"
-			}).then(authInstance => {
-				this.googleAuthInstance = authInstance;
-				//authInstance.isSignedIn.listen(this.updateGoogleSignIn.bind(this));
-				this.updateGoogleSignIn(authInstance.isSignedIn.get());
+		promiseGAPI.then(() => {
+			gapi.load("auth2", () => {
+				gapi.auth2.init({
+					client_id: config.googleClientID,
+					scope: config.googleScope,
+				}).then(authInstance => {
+					this.googleAuthInstance = authInstance;
+					//authInstance.isSignedIn.listen(this.updateGoogleSignIn.bind(this));
+					this.updateGoogleSignIn(authInstance.isSignedIn.get());
+				});
 			});
 		});
 		
@@ -52,7 +53,7 @@ export default class LoginGate extends React.Component<any, State> {
 			//Updating the state
 			this.setState({
 				state: user ? "logged-in" : "logged-out"
-			})
+			});
 			
 			//Checking if the user is logged in
 			if(user) {

@@ -1,4 +1,4 @@
-import {DateTime} from 'luxon';
+import {DateTime} from "luxon";
 
 const timeMinute = 60 * 1000;
 const timeHour = timeMinute * 60;

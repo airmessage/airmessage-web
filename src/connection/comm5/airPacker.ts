@@ -13,6 +13,10 @@ export default class AirPacker {
 		return this.instance;
 	}
 	
+	public static initialize(bufferSize: number) {
+		return new AirPacker(ByteBuffer.allocate(bufferSize));
+	}
+	
 	private constructor(private readonly buffer: ByteBuffer) {
 	
 	}

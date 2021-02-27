@@ -29,7 +29,7 @@ const options = {
 		p: { component: Typography, props: { paragraph: true } },
 		a: { component: Link },
 		li: {
-			component: withStyles(styles)(({...props }) => (
+			component: withStyles(styles)(({...props}) => (
 				<li className={(props as any).classes.listItem}>
 					<Typography component="span" {...props} />
 				</li>
@@ -39,5 +39,5 @@ const options = {
 };
 
 export default function Markdown(props: {markdown: string}) {
-	return <ReactMarkdown options={options} children={props.markdown} />;
+	return <ReactMarkdown options={options}>{props.markdown}</ReactMarkdown>;
 }

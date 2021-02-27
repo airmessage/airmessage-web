@@ -45,7 +45,7 @@ export function sendMessageNotification(conversation: Conversation, message: Mes
 		notification.onclick = () => {
 			window.focus(); //Chromium
 			notificationClickEmitter.notify(chatGUID);
-		}
+		};
 		
 		//Remove the notification from the backlog when the notification is closed
 		notification.onclose = () => notificationBacklog.delete(chatGUID);

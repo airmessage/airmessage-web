@@ -97,6 +97,6 @@ function errorCodeToMessage(error: AttachmentRequestErrorCode): string {
 		case AttachmentRequestErrorCode.ServerUnreadable:
 			return "No permission to read file";
 		case AttachmentRequestErrorCode.ServerIO:
-			return "Failed to read file"
+			return "Failed to read file";
 	}
 }

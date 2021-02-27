@@ -13,6 +13,7 @@ import {TypographyProps} from "@material-ui/core/Typography";
 import {ConversationPreviewType} from "../../../data/stateCodes";
 import {isConversationPreviewMessage} from "../../../util/conversationUtils";
 
+//eslint-disable-next-line @typescript-eslint/ban-types
 export default function ListConversation(props: {conversation: Conversation, selected?: boolean, highlighted?: boolean, onSelected: () => void, flippedProps?: object}) {
 	//Getting the conversation title
 	const [title, setConversationTitle] = useState(ConversationUtils.getFallbackTitle(props.conversation));
