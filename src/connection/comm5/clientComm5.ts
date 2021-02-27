@@ -145,7 +145,7 @@ export default class ClientComm5 extends CommunicationsManager {
 		this.handshakeTimeout = undefined;
 		
 		//Disconnecting
-		this.disconnect(ConnectionErrorCode.Internet)
+		this.disconnect(ConnectionErrorCode.Internet);
 	}
 	
 	get communicationsVersion(): string | undefined {

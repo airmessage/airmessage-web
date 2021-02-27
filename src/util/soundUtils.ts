@@ -7,7 +7,7 @@ export function playSoundNotification() {
 export function playSoundMessageIn() {
 	new Audio(import.meta.env.SNOWPACK_PUBLIC_URL_PREFIX + "audio/message_in.wav").play()?.catch((reason) => {
 		console.log("Failed to play incoming message audio: " + reason);
-	})
+	});
 }
 
 export function playSoundMessageOut() {

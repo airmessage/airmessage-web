@@ -27,5 +27,5 @@ function MessageModifierSticker(props: {sticker: StickerItem, reveal?: boolean})
 	
 	return (
 		<img className={styles.sticker} src={imageURL} alt="" />
-	)
+	);
 }

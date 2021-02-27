@@ -1,6 +1,7 @@
 import {ConnectionErrorCode} from "shared/data/stateCodes";
-import firebase from "firebase";
 import {connect as connectToServer} from "shared/connection/connectionManager";
+import firebase from "firebase/app";
+import "firebase/auth";
 
 export interface ErrorDisplay {
 	message: string;
@@ -87,7 +88,7 @@ export function errorCodeToShortDisplay(error: ConnectionErrorCode): ErrorDispla
 			};
 		case ConnectionErrorCode.ConnectNoSubscription:
 			return {
-				//message: "Subscription expired"
+			//message: "Subscription expired"
 				message: "Account not enrolled"
 			};
 		case ConnectionErrorCode.ConnectOtherLocation:

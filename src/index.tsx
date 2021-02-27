@@ -7,7 +7,6 @@ import AppTheme from "./components/control/AppTheme";
 import LoginGate from "platform-components/components/LoginGate";
 
 import firebase from "firebase/app";
-import "firebase/auth";
 
 import * as Sentry from "@sentry/react";
 
@@ -26,7 +25,7 @@ if(import.meta.env.NODE_ENV === "production") {
 }
 
 //Browser-specific features
-if(!import.meta.env.SNOWPACK_PUBLIC_ELECTRON) {
+if(import.meta.env.SNOWPACK_PUBLIC_ELECTRON !== "true") {
 	// Check that service workers are supported
 	if(import.meta.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
 		// Use the window load event to keep the page load performant
@@ -42,6 +41,7 @@ if(!import.meta.env.SNOWPACK_PUBLIC_ELECTRON) {
 		script.onload = resolve;
 		document.head.appendChild(script);
 	});
+	console.log("Promise assigned!");
 }
 
 //Initializing React

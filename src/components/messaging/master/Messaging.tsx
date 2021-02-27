@@ -1,8 +1,8 @@
-import React from 'react';
+import React from "react";
 
-import {Theme, withTheme} from '@material-ui/core/styles';
+import {Theme, withTheme} from "@material-ui/core/styles";
 
-import styles from './Messaging.module.css';
+import styles from "./Messaging.module.css";
 import Sidebar from "../master/Sidebar";
 import DetailThread from "../thread/DetailThread";
 import DetailWelcome from "../detail/DetailWelcome";
@@ -144,7 +144,7 @@ class Messaging extends React.Component<Props, State> {
 		
 		let masterNode: React.ReactNode;
 		if(isDetailPaneThread(detailPane)) {
-			let conversation: Conversation = this.state.conversations.find(item => item.guid === detailPane.conversationGUID)!;
+			const conversation: Conversation = this.state.conversations.find(item => item.guid === detailPane.conversationGUID)!;
 			masterNode = <DetailThread conversation={conversation} key={conversation.guid}/>;
 		} else if(detailPane.type === DetailType.Create) {
 			masterNode = <DetailCreate onConversationCreated={this.onConversationCreated} />;
@@ -441,12 +441,12 @@ class Messaging extends React.Component<Props, State> {
 						pendingConversationArray[matchedConversationIndex] = {
 							...pendingConversationArray[matchedConversationIndex],
 							members: pendingConversationArray[matchedConversationIndex].members.concat(conversationItem.target)
-						}
+						};
 					} else if(conversationItem.type === ParticipantActionType.Leave) {
 						pendingConversationArray[matchedConversationIndex] = {
 							...pendingConversationArray[matchedConversationIndex],
 							members: pendingConversationArray[matchedConversationIndex].members.filter((member) => member !== conversationItem.target)
-						}
+						};
 					}
 				} else if(isConversationItemChatRenameAction(conversationItem)) {
 					//Ignoring if the chat doesn't exist
@@ -457,7 +457,7 @@ class Messaging extends React.Component<Props, State> {
 					pendingConversationArray[matchedConversationIndex] = {
 						...pendingConversationArray[matchedConversationIndex],
 						name: conversationItem.chatName
-					}
+					};
 				}
 			}
 			

@@ -61,7 +61,7 @@ export interface ConnectionListener {
 	onOpen: () => void;
 	onClose: (reason: ConnectionErrorCode) => void;
 }
-let connectionListenerArray: ConnectionListener[] = [];
+const connectionListenerArray: ConnectionListener[] = [];
 
 //Promise response values
 interface PromiseExecutor<T> {
@@ -203,7 +203,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		const promiseMapKey = data.map(data => data[0]).join(" ");
 		const promiseArray = conversationDetailsPromiseMap.get(promiseMapKey);
 		if(promiseArray) {
-			for(let promise of promiseArray) promise.resolve(data);
+			for(const promise of promiseArray) promise.resolve(data);
 			threadPromiseMap.delete(promiseMapKey);
 		}
 	}, onModifierUpdate(data: MessageModifier[]): void {
@@ -252,7 +252,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		fileDownloadStateMap.delete(requestID);
 	}, onMessageConversations(data: Conversation[]): void {
 		//Resolving pending promises
-		for(let promise of liteConversationPromiseArray) promise.resolve(data);
+		for(const promise of liteConversationPromiseArray) promise.resolve(data);
 		
 		//Emptying the array
 		liteConversationPromiseArray.length = 0;
@@ -261,7 +261,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		const promiseMapKey = JSON.stringify({chatGUID: chatGUID, firstMessageID: firstMessageID} as ThreadKey);
 		const promiseArray = threadPromiseMap.get(promiseMapKey);
 		if(promiseArray) {
-			for(let promise of promiseArray) promise.resolve(data);
+			for(const promise of promiseArray) promise.resolve(data);
 			threadPromiseMap.delete(promiseMapKey);
 		}
 	}, onSendMessageResponse(requestID: number, error: MessageError | undefined): void {
@@ -294,22 +294,22 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 
 function updateStateDisconnected(reason: ConnectionErrorCode) {
 	connState = "disconnected";
-	for(let listener of connectionListenerArray) listener.onClose(reason);
+	for(const listener of connectionListenerArray) listener.onClose(reason);
 }
 
 function updateStateConnecting() {
 	connState = "connecting";
-	for(let listener of connectionListenerArray) listener.onConnecting();
+	for(const listener of connectionListenerArray) listener.onConnecting();
 }
 
 function updateStateConnected() {
 	connState = "connected";
-	for(let listener of connectionListenerArray) listener.onOpen();
+	for(const listener of connectionListenerArray) listener.onOpen();
 }
 
 function generateRequestID(): number {
 	//Recording the next request ID
-	let requestID = nextRequestID;
+	const requestID = nextRequestID;
 	
 	//Increasing the request ID (and overflowing at Java's max short value)
 	if(nextRequestID === 32767) nextRequestID = -32768;
@@ -388,7 +388,7 @@ export function sendMessage(chatGUID: string, message: string): Promise<any> {
 	if(!isConnected()) return Promise.reject(messageErrorNetwork);
 	
 	//Starting a new promise
-	let requestID = generateRequestID();
+	const requestID = generateRequestID();
 	return requestTimeoutMap(requestID, messageSendPromiseMap, undefined, new Promise<any>((resolve, reject) => {
 		//Sending the request
 		communicationsManager!.sendMessage(requestID, chatGUID, message);
@@ -404,7 +404,7 @@ export function sendFile(chatGUID: string, file: File): ProgressPromise<any, str
 	
 	//Starting a new promise
 	return new ProgressPromise<any, string | number>((resolve, reject, progress) => {
-		let requestID = generateRequestID();
+		const requestID = generateRequestID();
 		
 		//Sending the request
 		communicationsManager!.sendFile(requestID, chatGUID, file, progress)
@@ -478,7 +478,7 @@ export function fetchAttachment(attachmentGUID: string): ProgressPromise<ArrayBu
 	
 	//Starting a new promise
 	return new ProgressPromise<ArrayBuffer, FileDownloadProgress>((resolve, reject, progress) => {
-		let requestID = generateRequestID();
+		const requestID = generateRequestID();
 		
 		//Sending the request
 		communicationsManager!.requestAttachmentDownload(requestID, attachmentGUID);
@@ -533,7 +533,7 @@ export function getActiveCommVer(): string | undefined {
 
 function pushKeyedArray<K, R>(map: Map<K, R[]>, key: K, value: R): void {
 	//Finding the array in the map
-	let array = map.get(key);
+	const array = map.get(key);
 	
 	//Pushing the value directly to the array if it exists
 	if(array) array.push(value);
@@ -545,11 +545,11 @@ function rejectAndClear(items: PromiseExecutor<any>[], reason?: any): void;
 function rejectAndClear(items: Map<any, PromiseExecutor<any>[]>, reason?: any): void;
 function rejectAndClear(items: PromiseExecutor<any>[] | Map<any, PromiseExecutor<any>[]>, reason?: any): void {
 	if(items instanceof Array) {
-		for(let promise of items) promise.reject(reason);
+		for(const promise of items) promise.reject(reason);
 		items.length = 0;
 	} else if(items instanceof Map) {
-		for(let promiseArray of items.values()) {
-			for(let promise of promiseArray) {
+		for(const promiseArray of items.values()) {
+			for(const promise of promiseArray) {
 				promise.reject(reason);
 			}
 		}

@@ -1,5 +1,4 @@
 import DataProxy from "shared/connection/dataProxy";
-import "firebase/auth";
 import {ConnectionErrorCode} from "shared/data/stateCodes";
 import ByteBuffer from "bytebuffer";
 import {decryptData, encryptData} from "shared/util/encryptionUtils";

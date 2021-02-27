@@ -12,7 +12,7 @@ export class BasicAccumulator extends TransferAccumulator {
 	
 	
 	constructor(length: number) {
-		super()
+		super();
 		this.accumulatedData = new Uint8Array(length);
 	}
 	

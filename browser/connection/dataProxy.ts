@@ -35,13 +35,13 @@ export default class DataProxyConnect extends DataProxy {
 			this.socket.onopen = () => {
 				//Starting the handshake expiry timer
 				this.handshakeTimeout = setTimeout(this.handleHandshakeTimeout, handshakeTimeoutTime);
-			}
+			};
 			this.socket.onmessage = (event: MessageEvent) => {
 				this.handleMessage(event.data);
-			}
+			};
 			this.socket.onclose = (event: CloseEvent) => {
 				this.notifyClose(DataProxyConnect.mapErrorCode(event.code));
-			}
+			};
 		}).catch((error) => {
 			console.warn(error);
 			this.notifyClose(ConnectionErrorCode.InternalError);

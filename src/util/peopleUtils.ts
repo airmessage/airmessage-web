@@ -31,31 +31,31 @@ let personArray: PersonData[] | undefined;
 let contactMap: Map<string, ContactData> | undefined;
 
 //Contacts that were previously queried for, for quick access
-let contactCacheMap: Map<string, ContactData> = new Map();
-let contactFailedArray: string[] = [];
+const contactCacheMap: Map<string, ContactData> = new Map();
+const contactFailedArray: string[] = [];
 
 export function initializePeople() {
 	initializationPromise = new Promise((resolve, reject) => {
-		gapi.load('client', () => {
+		gapi.load("client", () => {
 			gapi.client.init({
 				apiKey: config.googleApiKey,
 				discoveryDocs: ["https://people.googleapis.com/$discovery/rest?version=v1"],
 				clientId: config.googleClientID,
 				scope: config.googleScope
 			}).then(() => {
-					//Loading contacts
-					loadPeople().then((data) => {
-						console.log("Loaded " + data.personArray.length + " contacts (" + data.contactMap.size + " addresses)");
-						personArray = data.personArray;
-						contactMap = data.contactMap;
-						
-						resolve(undefined);
-					}).catch((error) => {
-						console.warn("Error loading Google people", error);
-					});
+				//Loading contacts
+				loadPeople().then((data) => {
+					console.log("Loaded " + data.personArray.length + " contacts (" + data.contactMap.size + " addresses)");
+					personArray = data.personArray;
+					contactMap = data.contactMap;
+					
+					resolve(undefined);
 				}).catch((error) => {
-					console.warn("Error initializing GAPI client", error);
+					console.warn("Error loading Google people", error);
 				});
+			}).catch((error) => {
+				console.warn("Error initializing GAPI client", error);
+			});
 		});
 	});
 }

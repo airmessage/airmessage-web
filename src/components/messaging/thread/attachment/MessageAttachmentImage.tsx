@@ -21,7 +21,7 @@ export default function MessageAttachmentImage(props: {data: ArrayBuffer | Blob,
 			messageOutgoing: undefined,
 			messageOutgoingTextMessage: undefined
 		}
-	})
+	});
 	
 	useEffect(() => {
 		//Cleaning up the current image URL

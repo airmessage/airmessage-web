@@ -3,7 +3,7 @@ import styles from "./QueuedAttachmentGeneric.module.css";
 
 import QueuedAttachment, {QueuedAttachmentProps} from "./QueuedAttachment";
 import {useTheme} from "@material-ui/core";
-import InsertDriveFileRoundedIcon from '@material-ui/icons/InsertDriveFileRounded';
+import InsertDriveFileRoundedIcon from "@material-ui/icons/InsertDriveFileRounded";
 
 export default function QueuedAttachmentGeneric(props: {queueData: QueuedAttachmentProps}) {
 	const theme = useTheme();

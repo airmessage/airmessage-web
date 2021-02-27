@@ -4,14 +4,14 @@ export function setCookie(name: string, value: string) {
 
 export function hasCookie(name: string): boolean {
 	return document.cookie.match(new RegExp(
-		"(?:^|; )" + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + "=([^;]*)"
+		"(?:^|; )" + name.replace(/([.$?*|{}()[\]\\/+^])/g, "\\$1") + "=([^;]*)"
 	)) != null;
 }
 
 
 export function getCookie(name: string): string | undefined {
 	return document.cookie
-		.split('; ')
+		.split("; ")
 		.find(row => row.startsWith(name + "="))
-		?.split('=')[1];
+		?.split("=")[1];
 }

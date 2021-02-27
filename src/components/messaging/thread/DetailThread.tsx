@@ -1,5 +1,5 @@
 import React from "react";
-import styles from './DetailThread.module.css';
+import styles from "./DetailThread.module.css";
 
 import * as ConnectionManager from "../../../connection/connectionManager";
 import {messageUpdateEmitter, modifierUpdateEmitter} from "../../../connection/connectionManager";
@@ -102,7 +102,7 @@ export default class DetailThread extends React.Component<Props, State> {
 				pendingItems[itemIndex] = {
 					...pendingItems[itemIndex],
 					error: error
-				} as MessageItem
+				} as MessageItem;
 			}
 			
 			return {display: {type: "messages", data: pendingItems} as DisplayMessages};
@@ -364,7 +364,7 @@ export default class DetailThread extends React.Component<Props, State> {
 		} else if(this.state.display.type === "error") {
 			body = (
 				<div className={styles.centerContainer}>
-					<Typography color="textSecondary" gutterBottom>Couldn't load this conversation</Typography>
+					<Typography color="textSecondary" gutterBottom>Couldn&apos;t load this conversation</Typography>
 					<Button onClick={this.requestMessages}>Retry</Button>
 				</div>
 			);

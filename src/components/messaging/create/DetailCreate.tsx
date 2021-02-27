@@ -175,8 +175,7 @@ export default function DetailCreate(props: {onConversationCreated: (conversatio
 				
 				//Displaying a snackbar
 				displaySnackbar({message: "Failed to create conversation"});
-			}
-		);
+			});
 	}
 	
 	let queryDirectState: boolean; //Is the current input query a valid address that can be added directly?
@@ -358,7 +357,7 @@ function SelectionList(props: {className?: string, selections: SelectionData[], 
 					else tooltip = undefined;
 				}
 				
-				return <SelectionChip key={selection.address} className={props.className} selection={selection} label={label} tooltip={tooltip} onDelete={() => props.onRemove(selection)} />
+				return <SelectionChip key={selection.address} className={props.className} selection={selection} label={label} tooltip={tooltip} onDelete={() => props.onRemove(selection)} />;
 			})}
 		</React.Fragment>
 	);
@@ -382,14 +381,14 @@ export const useDirectSendButtonStyles = makeStyles((theme: Theme) => ({
 	root: {
 		width: "100%",
 		padding: "8px 0",
-		transition: theme.transitions.create(['background-color', 'box-shadow', 'border'], {
+		transition: theme.transitions.create(["background-color", "box-shadow", "border"], {
 			duration: theme.transitions.duration.short,
 		}),
 		borderRadius: theme.shape.borderRadius,
 		display: "flex",
 		flexDirection: "row",
 		justifyContent: "flex-start",
-		'&:hover': {
+		"&:hover": {
 			backgroundColor: fade(theme.palette.text.primary, theme.palette.action.hoverOpacity),
 		}
 	},
@@ -407,5 +406,5 @@ function DirectSendButton(props: {address: string, onClick: () => void}) {
 			<Avatar className={classes.avatar} />
 			<Typography>Send to <b>{props.address}</b></Typography>
 		</ButtonBase>
-	)
+	);
 }

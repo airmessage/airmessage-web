@@ -8,5 +8,5 @@ export default function SoftDivider(props: {vertical?: boolean}) {
 	
 	return (
 		<div className={props.vertical ? styles.vertical : styles.horizontal} style={{backgroundColor: color}} />
-	)
+	);
 }

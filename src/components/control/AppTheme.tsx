@@ -1,29 +1,28 @@
-import React from 'react';
+import React from "react";
 
-import {ThemeProvider} from '@material-ui/core/styles';
+import {ThemeProvider} from "@material-ui/core/styles";
 import {createMuiTheme, CssBaseline, useMediaQuery} from "@material-ui/core";
 
 export default function AppTheme(props: {children: React.ReactNode}) {
-	const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+	const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 	
-	//@ts-ignore
 	const theme = React.useMemo(() => createMuiTheme({
 		typography: {
 			fontFamily: [
-				'-apple-system',
-				'BlinkMacSystemFont',
+				"-apple-system",
+				"BlinkMacSystemFont",
 				'"Segoe UI"',
-				'Roboto',
+				"Roboto",
 				'"Helvetica Neue"',
-				'Arial',
-				'sans-serif',
+				"Arial",
+				"sans-serif",
 				'"Apple Color Emoji"',
 				'"Segoe UI Emoji"',
 				'"Segoe UI Symbol"',
-			].join(','),
+			].join(","),
 		},
 		palette: {
-			type: prefersDarkMode ? 'dark' : 'light',
+			type: prefersDarkMode ? "dark" : "light",
 			primary: {
 				main: "#448AFF",
 				dark: "#366FCC",
@@ -67,20 +66,20 @@ export default function AppTheme(props: {children: React.ReactNode}) {
 			
 			{props.children}
 		</ThemeProvider>
-	)
+	);
 }
 
 declare module "@material-ui/core/styles/createPalette" {
 	interface Palette {
-		messageIncoming: Palette['primary'];
-		messageOutgoing: Palette['primary'];
-		messageOutgoingTextMessage: Palette['primary'];
+		messageIncoming: Palette["primary"];
+		messageOutgoing: Palette["primary"];
+		messageOutgoingTextMessage: Palette["primary"];
 	}
 	
 	interface PaletteOptions {
-		messageIncoming: PaletteOptions['primary'];
-		messageOutgoing: PaletteOptions['primary'];
-		messageOutgoingTextMessage: PaletteOptions['primary'];
+		messageIncoming: PaletteOptions["primary"];
+		messageOutgoing: PaletteOptions["primary"];
+		messageOutgoingTextMessage: PaletteOptions["primary"];
 	}
 	
 	interface TypeBackground {

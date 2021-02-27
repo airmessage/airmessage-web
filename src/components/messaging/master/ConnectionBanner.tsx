@@ -4,7 +4,6 @@ import styles from "./ConnectionBanner.module.css";
 import {Button, Paper, Typography} from "@material-ui/core";
 import WifiOffRoundedIcon from "@material-ui/icons/WifiOffRounded";
 import {ConnectionErrorCode} from "../../../data/stateCodes";
-import "firebase/auth";
 import {errorCodeToShortDisplay} from "shared/util/languageUtils";
 
 export default function ConnectionBanner(props: {error: ConnectionErrorCode}) {
