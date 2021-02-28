@@ -41,7 +41,6 @@ if(import.meta.env.SNOWPACK_PUBLIC_ELECTRON !== "true") {
 		script.onload = resolve;
 		document.head.appendChild(script);
 	});
-	console.log("Promise assigned!");
 }
 
 //Initializing React

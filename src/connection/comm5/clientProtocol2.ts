@@ -27,12 +27,14 @@ import {
 	MessageErrorCode,
 	MessageModifierType,
 	MessageStatusCode,
-	ParticipantActionType, TapbackType
+	ParticipantActionType,
+	TapbackType
 } from "../../data/stateCodes";
 import {arrayBufferToHex, blobToArrayBuffer} from "../../util/fileUtils";
 import SparkMD5 from "spark-md5";
 import {InflatorAccumulator} from "../transferAccumulator";
-import {decryptData, encryptData} from "shared/util/encryptionUtils";
+import {encryptData} from "shared/util/encryptionUtils";
+
 
 const attachmentChunkSize = 2 * 1024 * 1024; //2 MiB
 
@@ -412,15 +414,18 @@ export default class ClientProtocol2 extends ProtocolManager {
 	}
 	
 	async sendFile(requestID: number, chatGUID: string, file: File, progressCallback: (bytesUploaded: number) => void): Promise<string> {
-		const spark = new SparkMD5.ArrayBuffer();
+		//TODO find some way to stream deflate
+		const fileData = await file.arrayBuffer();
+		const hash = SparkMD5.ArrayBuffer.hash(fileData);
+		const compressedData = pako.deflate(new Uint8Array(fileData));
 		
 		try {
 			//Reading the file
 			let chunkIndex = 0;
 			let readOffset = 0;
-			while(readOffset < file.size) {
+			while(readOffset < compressedData.length) {
 				const newOffset = readOffset + attachmentChunkSize;
-				const chunkData: ArrayBuffer = await blobToArrayBuffer(file.slice(readOffset, newOffset));
+				const chunkData = compressedData.slice(readOffset, newOffset);
 				
 				//Uploading the data
 				const packer = AirPacker.get();
@@ -432,16 +437,13 @@ export default class ClientProtocol2 extends ProtocolManager {
 					packer.packBoolean(newOffset >= file.size); //Is this the last part?
 					
 					packer.packString(chatGUID);
-					packer.packPayload(pako.deflate(new Uint8Array(chunkData)));
+					packer.packPayload(chunkData);
 					if(chunkIndex === 0) packer.packString(file.name);
 					
 					this.dataProxy.send(packer.toArrayBuffer(), true);
 				} finally {
 					packer.reset();
 				}
-				
-				//Hashing the data
-				spark.append(chunkData);
 				
 				//Updating the index and read offset
 				chunkIndex++;
@@ -455,7 +457,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 		}
 		
 		//Returning with the file's MD5 hash
-		return spark.end(false);
+		return hash;
 	}
 	
 	requestAttachmentDownload(requestID: number, attachmentGUID: string): boolean {
