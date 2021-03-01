@@ -99,6 +99,12 @@ function errorCodeToDisplay(error: ConnectionErrorCode): ErrorDisplay {
 				subtitle: "AirMessage Server is out of date - please update AirMessage Server on your Mac and try again",
 				buttonPrimary: buttonActionRetry
 			};
+		case ConnectionErrorCode.DirectUnauthorized:
+			return {
+				title: "Your password was not accepted",
+				subtitle: "Please check your password and try again",
+				buttonPrimary: buttonActionRetry
+			};
 		case ConnectionErrorCode.ConnectNoGroup:
 			return {
 				title: "Your personal server can't be reached",
@@ -123,14 +129,14 @@ function errorCodeToDisplay(error: ConnectionErrorCode): ErrorDisplay {
 				}
 			};
 		case ConnectionErrorCode.ConnectNoSubscription:
-			/* return {
-				title: "Your account has no active subscription",
-				subtitle: "Please subscribe to AirMessage+ to use AirMessage for web"
-			}; */
+		/* return {
+			title: "Your account has no active subscription",
+			subtitle: "Please subscribe to AirMessage+ to use AirMessage for web"
+		}; */
 			return {
 				title: "Your account isn't registered",
 				subtitle: "Please enroll your account in the early access program at <a href='https://airmessage.org/cloud' style='text-decoration: none; color: #448AFF;'>airmessage.org/cloud</a>.",
-			}
+			};
 		case ConnectionErrorCode.ConnectOtherLocation:
 			return {
 				title: "A change was detected in your server computer",

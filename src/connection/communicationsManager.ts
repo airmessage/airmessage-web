@@ -37,9 +37,9 @@ export default abstract class CommunicationsManager {
 				//Handling the event
 				this.handleClose(reason);
 			},
-			onMessage: (data: ArrayBuffer) => {
+			onMessage: (data: ArrayBuffer, isEncrypted: boolean) => {
 				//Handling the event
-				this.handleMessage(data);
+				this.handleMessage(data, isEncrypted);
 			}
 		};
 	}
@@ -64,7 +64,7 @@ export default abstract class CommunicationsManager {
 	//Used in implementations
 	protected abstract handleOpen(): void;
 	protected abstract handleClose(reason: ConnectionErrorCode): void;
-	protected abstract handleMessage(data: ArrayBuffer): void;
+	protected abstract handleMessage(data: ArrayBuffer, isEncrypted: boolean): void;
 	
 	public onHandshake(installationID: string, deviceName: string, systemVersion: string, softwareVersion: string): void {
 		//Forwarding the event to the listener
@@ -121,7 +121,7 @@ export default abstract class CommunicationsManager {
 	 * @param progressCallback a callback called periodically with the number of bytes uploaded
 	 * @return a promise that completes with the file hash once the file has been fully uploaded
 	 */
-	public abstract async sendFile(requestID: number, chatGUID: string, file: File, progressCallback: (bytesUploaded: number) => void): Promise<string>;
+	public abstract sendFile(requestID: number, chatGUID: string, file: File, progressCallback: (bytesUploaded: number) => void): Promise<string>;
 	
 	/**
 	 * Requests the download of a remote attachment

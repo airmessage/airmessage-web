@@ -25,7 +25,7 @@ export default function MessageModifierTapbackRow(props: {modifiers: TapbackItem
 				<MessageModifierTapback key={tapbackType} type={tapbackType} count={count} />
 			))}
 		</div>
-	)
+	);
 }
 
 function MessageModifierTapback(props: {type: TapbackType, count: number}) {

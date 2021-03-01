@@ -1,5 +1,5 @@
 import React from "react";
-import styles from './Sidebar.module.css';
+import styles from "./Sidebar.module.css";
 
 import firebase from "firebase/app";
 import "firebase/auth";
@@ -67,13 +67,13 @@ export default class Sidebar extends React.Component<Props, State> {
 	private readonly handleOverflowOpen = (event: React.MouseEvent<HTMLElement>) => {
 		this.setState({
 			overflowMenuElement: event.currentTarget
-		})
+		});
 	}
 	
 	private readonly handleOverflowClose = () => {
 		this.setState({
 			overflowMenuElement: null
-		})
+		});
 	}
 	
 	private readonly handleOverflowChangelog = () => {
@@ -147,18 +147,18 @@ export default class Sidebar extends React.Component<Props, State> {
 					<Menu
 						anchorEl={this.state.overflowMenuElement}
 						anchorOrigin={{
-							vertical: 'top',
-							horizontal: 'right',
+							vertical: "top",
+							horizontal: "right",
 						}}
 						keepMounted
 						transformOrigin={{
-							vertical: 'top',
-							horizontal: 'right',
+							vertical: "top",
+							horizontal: "right",
 						}}
 						open={Boolean(this.state.overflowMenuElement)}
 						onClose={this.handleOverflowClose}>
 						{/*<MenuItem onClick={this.handleOverflowClose}>Settings</MenuItem>*/}
-						<MenuItem onClick={this.handleOverflowChangelog}>What's new</MenuItem>
+						<MenuItem onClick={this.handleOverflowChangelog}>What&apos;s new</MenuItem>
 						<MenuItem onClick={this.handleOverflowFeedback}>Help and feedback</MenuItem>
 						<MenuItem onClick={this.handleOverflowLogOut}>Sign out</MenuItem>
 					</Menu>
@@ -197,7 +197,7 @@ function ChangelogDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 	const buildDate = getFormattedBuildDate();
 	const buildVersion = `AirMessage for web ${appVersion}`;
 	const detailedBuildVersion = buildVersion + ` (${releaseHash ?? "unlinked"})`;
-	const buildTitle = buildVersion + (buildDate ? (`, ${process.env.NODE_ENV === "production" ? "released" : "built"} ${buildDate}`) : "");
+	const buildTitle = buildVersion + (buildDate ? (`, ${import.meta.env.NODE_ENV === "production" ? "released" : "built"} ${buildDate}`) : "");
 	
 	return (
 		<Dialog
@@ -223,7 +223,7 @@ function FeedbackDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 			`\nProxy type: Connect` +
 			`\nServer system version: ${getServerSystemVersion()}` +
 			`\nServer software version: ${getServerSoftwareVersion()}`;
-		const url = `mailto:${supportEmail}?subject=${encodeURIComponent("AirMessage feedback")}&body=${encodeURIComponent(body)}`
+		const url = `mailto:${supportEmail}?subject=${encodeURIComponent("AirMessage feedback")}&body=${encodeURIComponent(body)}`;
 		window.open(url, "_blank");
 		props.onDismiss();
 	}
@@ -271,7 +271,7 @@ function SignOutDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 			<DialogTitle>Sign out of AirMessage?</DialogTitle>
 			<DialogContent>
 				<DialogContentText>
-					You won't be able to send or receive any messages from this computer
+					You won&apos;t be able to send or receive any messages from this computer
 				</DialogContentText>
 			</DialogContent>
 			<DialogActions>
@@ -295,5 +295,5 @@ function ConversationSkeleton() {
 				<Skeleton variant="text" animation={false} />
 			</div>
 		</div>
-	)
+	);
 }

@@ -1,44 +1,56 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# AirMessage for web
 
-## Available Scripts
+![AirMessage running on Microsoft Edge](README/windows-web.png)
 
-In the project directory, you can run:
+AirMessage lets people use iMessage on the devices they like.
+**AirMessage for web** brings iMessage to modern web browsers over a WebSocket proxy.
+Production builds are hosted on [web.airmessage.org](https://web.airmessage.org).
 
-### `npm start`
+## Getting started
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+AirMessage for web uses [React](https://reactjs.org), [Electron](https://electronjs.org), and [TypeScript](https://www.typescriptlang.org). If you're not familiar with these tools, they all have great introductory guides:
+- [React - Getting started](https://reactjs.org/docs/getting-started.html)
+- [Electron - Quick start](https://www.electronjs.org/docs/tutorial/quick-start)
+- [TypeScript for JavaScript Programmers](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html)
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+AirMessage for web uses a configuration file to associate with online services like Firebase and Sentry.
+`/src/secure/config-blank.ts` contains empty definitions for values that are used in the config.
+Copy it to `/src/secure/config.ts` to enable the app to build.
+If you're building for Electron, you can leave the config values blank.
 
-### `npm test`
+## File structure outline
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- `/public` holds static files that are copied in at build time. It also holds the app's entry point, `index.html`.
+- `/src` holds shared source files - where most of the UI logic resides.
+- `/browser` holds all browser-specific code. This includes logic for authenticating with Firebase and using AirMessage's WebSocket proxy.
+- `/electron-main` holds the code that runs on Electron's main process.
+- `/electron-renderer` holds all code that runs on Electron's renderer process. This includes UI and logic for establishing direct TCP connections. 
+- Builds are located in `/build` for web builds, and `/dist` for Electron builds.
 
-### `npm run build`
+`/browser` and `/electron-renderer` are aliased to the import prefix `/platform-components` at build time, depending on the build target.
+As such, components that are imported from `/src` must be available in both directories. If you're adding or modifying any files in these build-specific directories, please ensure that they are imported properly with the `/platform-components` alias.
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Any extra files under build-specific directories (`/browser` or `/electron-renderer`) that aren't used by `/src` should be under a `private` subdirectory.
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+For more details on AirMessage for web's build process, please take a look at the files `snowpack.config.js` and `snowpack-electron.config.js`. 
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Developing and running Electron builds
 
-### `npm run eject`
+![AirMessage running on Electron](README/windows-electron.png)
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+AirMessage has recently acquired support for running in Electron environments, enabling direct connections back to servers.
+However, this is still in development and still lacks some features that would be needed for day-to-day use.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+We ask that you do not user AirMessage's proxy servers in your own apps without consent from AirMessage.
+As such, the best way to run AirMessage locally is using its Electron builds.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+Builds for web browsers and Electron will be kept in sync, so any changes made to files under the `/src` directory will make their way into the web app as well.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+To launch Electron in a development environment with fast refresh, run `npm run electron-start`.
+To build Electron for your platform, run `npm run electron-distribute`.
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+Thank you for your interest in contributing to AirMessage!
+You're helping to shape the future of an open, secure messaging market.
+Should you have any questions, comments, or concerns, please shoot an email to [hello@airmessage.org](mailto:hello@airmessage.org).

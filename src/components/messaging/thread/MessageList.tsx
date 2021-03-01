@@ -57,14 +57,14 @@ export default class MessageList extends React.Component<Props, State> {
 		//The latest outgoing item with the "read" status
 		const readTargetIndex = this.props.items.findIndex((item) => ConversationUtils.isConversationItemMessage(item) && !item.sender && item.status === MessageStatusCode.Read);
 		//The latest outgoing item with the "delivered" status, no further than the latest item with the "read" status
-		let deliveredTargetIndex = this.props.items.slice(0, readTargetIndex !== -1 ? readTargetIndex : undefined).findIndex((item) => ConversationUtils.isConversationItemMessage(item) && !item.sender && item.status === MessageStatusCode.Delivered);
+		const deliveredTargetIndex = this.props.items.slice(0, readTargetIndex !== -1 ? readTargetIndex : undefined).findIndex((item) => ConversationUtils.isConversationItemMessage(item) && !item.sender && item.status === MessageStatusCode.Delivered);
 		
 		return (
 			<div className={styles.scroll} ref={this.scrollRef} onScroll={this.handleScroll}>
 				<div className={styles.list}>
 					{this.props.items.map((item, i, array) => {
 						if(ConversationUtils.isConversationItemMessage(item)) {
-							return <Message key={(item.localID ?? item.guid)} message={item} isGroupChat={this.props.conversation.members.length > 1} service={this.props.conversation.service} flow={getMessageFlow(item, array[i + 1], array[i - 1])} showStatus={i === readTargetIndex || i === deliveredTargetIndex} />
+							return <Message key={(item.localID ?? item.guid)} message={item} isGroupChat={this.props.conversation.members.length > 1} service={this.props.conversation.service} flow={getMessageFlow(item, array[i + 1], array[i - 1])} showStatus={i === readTargetIndex || i === deliveredTargetIndex} />;
 						} else if(ConversationUtils.isConversationItemParticipantAction(item)) {
 							return <ConversationActionParticipant key={(item.localID ?? item.guid)} action={item} />;
 						} else if(ConversationUtils.isConversationItemChatRenameAction(item)) {

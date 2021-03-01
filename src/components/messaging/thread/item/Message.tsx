@@ -101,7 +101,7 @@ export default function Message(props: Props) {
 		color: colorPalette.contrastText,
 		backgroundColor: colorPalette.main,
 		opacity: messageConfirmed ? opacityConfirmed : opacityUnconfirmed
-	}
+	};
 	
 	//Splitting the modifiers for each message part
 	const stickerGroups = props.message.stickers.reduce((accumulator: {[index: number]: StickerItem[]}, item: StickerItem) => {
@@ -193,7 +193,7 @@ export default function Message(props: Props) {
 	
 	const messageStyle: CSSProperties = {
 		marginTop: props.flow.anchorTop ? marginLinked : marginUnlinked
-	}
+	};
 	
 	//Initializing state
 	const [contactData, setContactData] = useState<ContactData | undefined>();
@@ -201,7 +201,7 @@ export default function Message(props: Props) {
 		if(!props.message.sender) return;
 		
 		//Requesting contact data
-		findPerson(props.message.sender).then((contact) => setContactData(contact), e => {console.error(e)});
+		findPerson(props.message.sender).then((contact) => setContactData(contact), console.error);
 	}, [props.message.sender]);
 	
 	//Building and returning the component
@@ -218,8 +218,7 @@ export default function Message(props: Props) {
 				{props.message.error && <IconButton className={styles.messageError} style={{color: theme.palette.error.main}} size="small" onClick={openDialogError}>
 					<ErrorRoundedIcon />
 				</IconButton>}
-				<Dialog open={dialogOpen === "error"}
-						onClose={closeDialog}>
+				<Dialog open={dialogOpen === "error"} onClose={closeDialog}>
 					<DialogTitle>Your message could not be sent</DialogTitle>
 					{props.message.error !== undefined && <React.Fragment>
 						<DialogContent>
@@ -235,8 +234,7 @@ export default function Message(props: Props) {
 						</DialogActions>
 					</React.Fragment>}
 				</Dialog>
-				<Dialog open={dialogOpen === "rawError"}
-						onClose={closeDialog}>
+				<Dialog open={dialogOpen === "rawError"} onClose={closeDialog}>
 					<DialogTitle>Error details</DialogTitle>
 					{props.message.error !== undefined && <React.Fragment>
 						<DialogContent>
@@ -296,8 +294,8 @@ export function DecorativeMessageBubble(props: {element: React.ElementType, clas
 }
 
 function getBorderRadius(anchorTop: boolean, anchorBottom: boolean, isOutgoing: boolean): string {
-	let radiusTop = anchorTop ? radiusLinked : radiusUnlinked;
-	let radiusBottom = anchorBottom ? radiusLinked : radiusUnlinked;
+	const radiusTop = anchorTop ? radiusLinked : radiusUnlinked;
+	const radiusBottom = anchorBottom ? radiusLinked : radiusUnlinked;
 	
 	if(isOutgoing) {
 		return `${radiusUnlinked} ${radiusTop} ${radiusBottom} ${radiusUnlinked}`;

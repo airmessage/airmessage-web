@@ -2,7 +2,7 @@ const sizeUnits = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
 const bytesPerUnit = 1024;
 
 //https://stackoverflow.com/a/18650828
-export function formatFileSize(bytes: number, decimals: number = 2): string {
+export function formatFileSize(bytes: number, decimals = 2): string {
 	if(bytes === 0) return "0 bytes";
 	
 	const dm = Math.max(decimals, 0);
@@ -23,5 +23,5 @@ export function blobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
 		reader.onload = () => resolve(reader.result as ArrayBuffer);
 		reader.onerror = reject;
 		reader.readAsArrayBuffer(blob);
-	})
+	});
 }

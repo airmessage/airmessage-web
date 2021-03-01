@@ -29,13 +29,13 @@ export function getFallbackTitle(conversation: Conversation): string {
 
 export async function getNamedTitle(conversation: Conversation): Promise<string> {
 	//Duplicating the member array (in case any modifications are made to the conversation in the meantime)
-	let memberArray = [...conversation.members];
+	const memberArray = [...conversation.members];
 	
 	//Fetching member names
-	let resultArray = await Promise.allSettled(memberArray.map((member) => findPerson(member)));
+	const resultArray = await Promise.allSettled(memberArray.map((member) => findPerson(member)));
 	
 	//Rebuilding the member array with names
-	let memberNameArray: string[] = [];
+	const memberNameArray: string[] = [];
 	for(let i = 0; i < resultArray.length; i++) {
 		const result = resultArray[i];
 		if(result.status === "fulfilled") {
@@ -102,7 +102,7 @@ export function getMessageFlow(main: MessageItem, above?: ConversationItem, belo
 	
 	//Checking if there is a valid message above
 	if(above && isConversationItemMessage(above)) {
-		let timeDiff = Math.abs(main.date.getTime() - above.date.getTime());
+		const timeDiff = Math.abs(main.date.getTime() - above.date.getTime());
 		
 		messageFlow.anchorTop = main.sender === above.sender && timeDiff < thresholdAnchor;
 		messageFlow.showDivider = timeDiff > thresholdHeader;
@@ -110,7 +110,7 @@ export function getMessageFlow(main: MessageItem, above?: ConversationItem, belo
 	
 	//Checking if there is a valid message below
 	if(below && isConversationItemMessage(below)) {
-		let timeDiff = Math.abs(main.date.getTime() - below.date.getTime());
+		const timeDiff = Math.abs(main.date.getTime() - below.date.getTime());
 		
 		messageFlow.anchorBottom = main.sender === below.sender && timeDiff < thresholdAnchor;
 	}

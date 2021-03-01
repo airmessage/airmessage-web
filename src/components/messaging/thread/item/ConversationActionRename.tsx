@@ -18,7 +18,7 @@ export default function ConversationActionRename(props: {action: ChatRenameActio
 		}
 	}, [props.action.user]);
 	
-	return <ConversationActionLine message={generateMessage(userName, props.action.chatName)} />
+	return <ConversationActionLine message={generateMessage(userName, props.action.chatName)} />;
 }
 
 function generateMessage(user: string | undefined, title: string | undefined): string {

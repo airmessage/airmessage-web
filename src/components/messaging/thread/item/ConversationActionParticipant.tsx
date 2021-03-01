@@ -26,7 +26,7 @@ export default function ConversationActionParticipant(props: {action: Participan
 		}
 	}, [props.action]);
 	
-	return <ConversationActionLine message={generateMessage(props.action.type, userName, targetName)} />
+	return <ConversationActionLine message={generateMessage(props.action.type, userName, targetName)} />;
 }
 
 function generateMessage(type: ParticipantActionType, user: string | undefined, target: string | undefined): string {
