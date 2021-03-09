@@ -1,14 +1,13 @@
 import React from "react";
 import ReactDOM from "react-dom";
-
+import firebase from "firebase/app";
+import * as Sentry from "@sentry/react";
+import LoginGate from "platform-components/components/LoginGate";
+import AppTheme from "./components/control/AppTheme";
 import * as config from "./secure/config";
 
-import AppTheme from "./components/control/AppTheme";
-import LoginGate from "platform-components/components/LoginGate";
-
-import firebase from "firebase/app";
-
-import * as Sentry from "@sentry/react";
+//Run initialization
+import "platform-components/init";
 
 export let promiseGAPI: Promise<any>;
 
