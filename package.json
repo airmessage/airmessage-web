@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "start": "cross-env SNOWPACK_PUBLIC_VERSION=$npm_package_version SNOWPACK_PUBLIC_URL_PREFIX=/ snowpack dev",
-    "build": "eslint src browser electron-main electron-renderer --ext .js,jsx,.ts,.tsx && cross-env SNOWPACK_PUBLIC_VERSION=$npm_package_version SNOWPACK_PUBLIC_RELEASE_HASH=$(git rev-parse --short HEAD) SNOWPACK_PUBLIC_BUILD_DATE=$(date +%s) SNOWPACK_PUBLIC_ELECTRON=false SNOWPACK_PUBLIC_URL_PREFIX=/ snowpack build && workbox generateSW workbox-config.js",
+    "build": "cross-env SNOWPACK_PUBLIC_VERSION=$npm_package_version SNOWPACK_PUBLIC_RELEASE_HASH=X SNOWPACK_PUBLIC_BUILD_DATE=Y SNOWPACK_PUBLIC_ELECTRON=false SNOWPACK_PUBLIC_URL_PREFIX=/ snowpack build && workbox generateSW workbox-config.js",
     "electron-launch": "cross-env ELECTRON_START_URL=http://localhost:8080 electron electron-main/electron.js",
     "electron-start": "cross-env SNOWPACK_PUBLIC_ELECTRON=true SNOWPACK_PUBLIC_URL_PREFIX= concurrently \"snowpack dev --config snowpack-electron.config.js --open none\" \"wait-on tcp:8080 && npm run electron-launch\"",
     "electron-build": "cross-env SNOWPACK_PUBLIC_ELECTRON=true SNOWPACK_PUBLIC_URL_PREFIX= snowpack build --config snowpack-electron.config.js",
@@ -51,6 +51,7 @@
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.57",
     "@sentry/react": "^6.1.0",
+    "airmessage-winrt": "file:native/airmessage-winrt",
     "bytebuffer": "^5.0.1",
     "electron-context-menu": "^2.4.0",
     "firebase": "^8.2.6",

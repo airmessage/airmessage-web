@@ -1,0 +1,14 @@
+{
+  "name": "airmessage-winrt",
+  "version": "1.0.0",
+  "description": "WinRT interface for AirMessage Electron",
+  "author": "Tagavari",
+  "private": true,
+  "os": [
+    "win32"
+  ],
+  "dependencies": {
+    "node-addon-api": "*"
+  },
+  "gypfile": true
+}

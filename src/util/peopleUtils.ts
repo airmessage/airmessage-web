@@ -1,8 +1,8 @@
 import {parsePhoneNumberFromString} from "libphonenumber-js";
 
 export enum AddressType {
-	Email,
-	Phone
+	Email = "email",
+	Phone = "phone"
 }
 
 export interface AddressData {
@@ -42,6 +42,11 @@ export function getPeopleUtils() {
 //Contacts that were previously queried for, for quick access
 const contactCacheMap: Map<string, ContactData> = new Map();
 const contactFailedArray: string[] = [];
+
+export function initializePeople() {
+	if(!peopleUtils) return;
+	peopleUtils.initialize();
+}
 
 export function getPeople(): Promise<PersonData[]> {
 	if(!peopleUtils) return Promise.reject(new Error("No people handler assigned"));
