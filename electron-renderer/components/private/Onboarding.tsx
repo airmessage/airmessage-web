@@ -4,13 +4,12 @@ import styles from "./Onboarding.module.css";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 
-import iconAirMessage from "shared/icons/tile-airmessage.svg";
-import iconMac from "shared/icons/tile-mac.svg";
+import iconAirMessage from "shared/resources/icons/tile-airmessage.svg";
+import iconMac from "shared/resources/icons/tile-mac.svg";
 
 import AirMessageLogo from "shared/components/logo/AirMessageLogo";
 import EthernetIcon from "../../private/icon/EthernetIcon";
 import ConnectionConfigDialog from "./ConnectionConfigDialog";
-
 const {shell} = require("electron");
 
 export default function Onboarding(props: {onApplyConfig: VoidFunction}) {

@@ -32,8 +32,6 @@ As such, components that are imported from `/src` must be available in both dire
 
 Any extra files under build-specific directories (`/browser` or `/electron-renderer`) that aren't used by `/src` should be under a `private` subdirectory.
 
-For more details on AirMessage for web's build process, please take a look at the files `snowpack.config.js` and `snowpack-electron.config.js`. 
-
 ## Developing and running Electron builds
 
 ![AirMessage running on Electron](README/windows-electron.png)

@@ -12,7 +12,9 @@ function createWindow() {
 		width: 1000,
 		height: 600,
 		webPreferences: {
-			nodeIntegration: true
+			contextIsolation: false,
+			nodeIntegration: true,
+			preload: path.resolve(__dirname, "preload.js")
 		},
 		autoHideMenuBar: true
 	});

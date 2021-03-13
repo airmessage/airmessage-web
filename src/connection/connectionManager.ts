@@ -69,7 +69,7 @@ interface PromiseExecutor<T> {
 	reject: (reason?: any) => void;
 }
 interface ProgressPromiseExecutor<T, P> {
-	resolve: (value?: T | PromiseLike<T>) => void;
+	resolve: (value: T | PromiseLike<T>) => void;
 	reject: (reason?: any) => void;
 	progress: (progress: P) => void;
 }
