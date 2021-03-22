@@ -60,13 +60,17 @@ module.exports = (env) => ({
 				include: /\.module\.css$/
 			},
 			{
+				test: /\.node$/,
+				loader: "node-loader"
+			},
+			{
 				test: /\.(svg)|(wav)$/,
 				type: "asset/resource"
 			},
 			{
 				test: /\.md$/,
 				type: "asset/source"
-			},
+			}
 		]
 	},
 	resolve: {
@@ -105,6 +109,5 @@ module.exports = (env) => ({
 			"WPEnv.RELEASE_HASH": "\"undefined\"",
 			"WPEnv.BUILD_DATE": Date.now()
 		}),
-		new WorkboxPlugin.GenerateSW()
-	]
+	].concat(!env.WEBPACK_SERVE && !env.electron ? new WorkboxPlugin.GenerateSW() : [])
 });

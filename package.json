@@ -4,7 +4,10 @@
   "author": "Tagavari",
   "description": "iMessage for the web, Windows, and Linux",
   "private": true,
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css",
+    "./{browser,electron-renderer}/init.ts"
+  ],
   "scripts": {
     "start": "webpack serve --open",
     "start-secure": "webpack serve --open --env secure",
@@ -31,6 +34,7 @@
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^4.15.2",
     "@typescript-eslint/parser": "^4.15.2",
+    "awesome-node-loader": "^1.1.1",
     "concurrently": "^6.0.0",
     "copy-webpack-plugin": "^8.0.0",
     "cross-env": "^7.0.3",
@@ -40,6 +44,9 @@
     "eslint": "^7.20.0",
     "eslint-plugin-react": "^7.22.0",
     "fork-ts-checker-webpack-plugin": "^6.1.1",
+    "native-ext-loader": "^2.3.0",
+    "node-addon-loader": "^0.0.6",
+    "node-loader": "^1.0.2",
     "style-loader": "^2.0.0",
     "ts-loader": "^8.0.18",
     "typescript": "^4.1.5",
@@ -54,6 +61,7 @@
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.57",
     "@sentry/react": "^6.1.0",
+    "airmessage-winrt": "file:native/airmessage-winrt",
     "bytebuffer": "^5.0.1",
     "electron-context-menu": "^2.4.0",
     "firebase": "^8.2.6",
