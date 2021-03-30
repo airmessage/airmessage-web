@@ -6,9 +6,6 @@
   "private": true,
   "main": "index.js",
   "types": "index.d.ts",
-  "os": [
-    "win32"
-  ],
   "scripts": {
     "install": "node-gyp rebuild"
   },

@@ -2,7 +2,11 @@
   "targets": [
     {
       "target_name": "airmessage-winrt",
-      "sources": [ "main.cc" ],
+      "conditions":[
+        ["OS=='win'", {
+          "sources": [ "main.cc" ]
+        }]
+      ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")"
       ],
