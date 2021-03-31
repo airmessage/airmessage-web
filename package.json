@@ -15,8 +15,7 @@
     "electron-launch": "cross-env ELECTRON_START_URL=http://localhost:8080 electron electron-main/electron.js",
     "electron-start": "concurrently \"webpack serve --env electron\" \"wait-on tcp:8080 && npm run electron-launch\"",
     "electron-build": "webpack build --env electron",
-    "electron-package": "npm run electron-build && electron-builder",
-    "postinstall": "electron-builder install-app-deps"
+    "electron-package": "npm run electron-build && electron-builder"
   },
   "devDependencies": {
     "@electron/typescript-definitions": "^8.8.0",
@@ -61,7 +60,6 @@
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.57",
     "@sentry/react": "^6.1.0",
-    "airmessage-winrt": "file:native/airmessage-winrt",
     "bytebuffer": "^5.0.1",
     "electron-context-menu": "^2.4.0",
     "firebase": "^8.2.6",
@@ -76,5 +74,8 @@
     "spark-md5": "^3.0.1",
     "ua-parser-js": "^0.7.23",
     "uuid": "^8.3.2"
+  },
+  "optionalDependencies": {
+    "airmessage-winrt": "file:native/airmessage-winrt"
   }
 }
