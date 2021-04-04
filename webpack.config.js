@@ -6,6 +6,16 @@ const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const WorkboxPlugin = require("workbox-webpack-plugin");
 
+let nativeWindowsAvailable = false;
+try {
+	nativeWindowsAvailable = process.platform === "win32" && !!require.resolve("airmessage-winrt");
+} catch(e) {
+	console.log(e);
+}
+if(!nativeWindowsAvailable) {
+	console.log("Skipping compilation of airmessage-winrt");
+}
+
 module.exports = (env) => ({
 	entry: "./src/index.tsx",
 	target: env.electron ? "electron-renderer" : "web",
@@ -90,8 +100,20 @@ module.exports = (env) => ({
 	plugins: [
 		new ForkTsCheckerWebpackPlugin({
 			eslint: {
-				files: "./{src,browser,electron-main,electron-renderer}/**/*.{ts,tsx,js,jsx}"
-			}
+				files: `./{src,browser${nativeWindowsAvailable ? ",electron-main,electron-renderer" : ""}}/**/*.{ts,tsx,js,jsx}`,
+			},
+			typescript: !env.electron ? {
+				configOverwrite: {
+					"include": [
+						"src",
+						"browser",
+						//Don't compile electron directories if doing a web build
+						//"electron-main",
+						//"electron-renderer",
+						"index.d.ts"
+					]
+				}
+			} : {}
 		}),
 		/* new ESLintPlugin({
 			files: ["src", "browser", "electron-main", "electron-renderer"],
