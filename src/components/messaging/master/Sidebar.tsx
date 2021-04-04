@@ -37,7 +37,7 @@ import {
 	targetCommVer
 } from "../../../connection/connectionManager";
 import Markdown from "../../Markdown";
-import {changelog} from "../../../data/changelog";
+import changelog from "../../../resources/text/changelog.md";
 
 interface Props {
 	conversations: Conversation[] | undefined;
@@ -197,7 +197,7 @@ function ChangelogDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 	const buildDate = getFormattedBuildDate();
 	const buildVersion = `AirMessage for web ${appVersion}`;
 	const detailedBuildVersion = buildVersion + ` (${releaseHash ?? "unlinked"})`;
-	const buildTitle = buildVersion + (buildDate ? (`, ${import.meta.env.NODE_ENV === "production" ? "released" : "built"} ${buildDate}`) : "");
+	const buildTitle = buildVersion + (buildDate ? (`, ${WPEnv.ENVIRONMENT === "production" ? "released" : "built"} ${buildDate}`) : "");
 	
 	return (
 		<Dialog

@@ -3,7 +3,6 @@ productName: "AirMessage"
 
 files:
     - "build"
-    - "!**/node_modules/**/*"
 
 extraMetadata:
   main: build/electron.js

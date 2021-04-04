@@ -286,11 +286,11 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,linux,intellij,node
 
-# Snowpack / Electron build files
+# Webpack / Electron build files
 build
 dist
-snowpack.crt
-snowpack.key
+webpack.crt
+webpack.key
 
 # Private config
 /src/secure/config.ts

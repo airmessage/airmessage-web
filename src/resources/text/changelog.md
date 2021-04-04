@@ -1,0 +1,3 @@
+- Migrated to Webpack
+- Protocol 5.3 support
+- Switched to ID-based missed message retrieval

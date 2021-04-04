@@ -8,18 +8,20 @@ declare module "*.svg" {
 	export default content;
 }
 
-/**
- * The type of `import.meta`.
- *
- * If you need to declare that a given property exists on `import.meta`,
- * this type may be augmented via interface merging.
- */
-interface ImportMeta {
-	hot: {
-		accept: VoidFunction;
-	};
-	env: {
-		NODE_ENV: "development" | "production";
-		[key: string]: string;
-	};
+declare module "*.wav" {
+	const content: any;
+	export default content;
 }
+
+declare module "*.md" {
+	const content: string;
+	export default content;
+}
+
+declare const WPEnv: {
+	ENVIRONMENT: "production" | "development";
+	IS_ELECTRON: boolean;
+	PACKAGE_VERSION: string;
+	RELEASE_HASH: string | undefined;
+	BUILD_DATE: number;
+};
