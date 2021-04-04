@@ -4,6 +4,7 @@ import AirUnpacker from "./airUnpacker";
 import ClientProtocol1 from "./clientProtocol1";
 import {ConnectionErrorCode, MessageError, MessageErrorCode} from "../../data/stateCodes";
 import ClientProtocol2 from "./clientProtocol2";
+import ClientProtocol3 from "shared/connection/comm5/clientProtocol3";
 
 const targetCommVer = 5;
 
@@ -98,6 +99,8 @@ export default class ClientComm5 extends CommunicationsManager {
 				return new ClientProtocol1(this, this.dataProxy);
 			case 2:
 				return new ClientProtocol2(this, this.dataProxy);
+			case 3:
+				return new ClientProtocol3(this, this.dataProxy);
 			default:
 				return null;
 		}
@@ -113,6 +116,10 @@ export default class ClientComm5 extends CommunicationsManager {
 	
 	requestRetrievalTime(timeLower: Date, timeUpper: Date): boolean {
 		return this.protocolManager?.requestRetrievalTime(timeLower, timeUpper) ?? false;
+	}
+	
+	requestRetrievalID(idLower: number, timeLower: Date, timeUpper: Date): boolean {
+		return this.protocolManager?.requestRetrievalID(idLower, timeLower, timeUpper) ?? false;
 	}
 	
 	sendMessage(requestID: number, chatGUID: string, message: string): boolean {

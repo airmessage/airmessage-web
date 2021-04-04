@@ -141,6 +141,7 @@ const messageErrorNetwork: MessageError = {code: MessageErrorCode.LocalNetwork};
 //State values
 let connState: ConnectionState = "disconnected";
 let isConnectingPassively = false;
+let lastServerMessageID: number | undefined = undefined;
 let lastConnectionUpdateTime: Date | undefined = undefined; //The last time the client received a message from the server
 let nextRequestID: number = 0;
 
@@ -250,7 +251,11 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		
 		//Removing the request
 		fileDownloadStateMap.delete(requestID);
-	}, onMessageConversations(data: Conversation[]): void {
+	}, onIDUpdate(messageID: number): void {
+		//Recording the last message ID
+		lastServerMessageID = messageID;
+	},
+	onMessageConversations(data: Conversation[]): void {
 		//Resolving pending promises
 		for(const promise of liteConversationPromiseArray) promise.resolve(data);
 		
@@ -508,14 +513,13 @@ export function createChat(members: string[], service: string): Promise<string> 
 }
 
 export function requestMissedMessages() {
-	//Failing if there is no last connection time
-	if(!lastConnectionUpdateTime) {
+	if(lastServerMessageID !== undefined && lastConnectionUpdateTime !== undefined) {
+		communicationsManager!.requestRetrievalID(lastServerMessageID, lastConnectionUpdateTime, new Date());
+	} else if(lastConnectionUpdateTime !== undefined) {
+		communicationsManager!.requestRetrievalTime(lastConnectionUpdateTime, new Date());
+	} else {
 		console.warn("Trying to fetch missed messages with no last connection update time!");
-		return;
 	}
-	
-	//Sending the request
-	communicationsManager!.requestRetrievalTime(lastConnectionUpdateTime, new Date());
 }
 
 export function addConnectionListener(listener: ConnectionListener) {

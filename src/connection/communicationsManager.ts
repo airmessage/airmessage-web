@@ -14,6 +14,7 @@ export interface CommunicationsManagerListener {
 	onFileRequestData: (requestID: number, data: ArrayBuffer) => void;
 	onFileRequestComplete: (requestID: number) => void;
 	onFileRequestFail: (requestID: number, error: AttachmentRequestErrorCode) => void;
+	onIDUpdate: (messageID: number) => void;
 	onMessageConversations: (data: Conversation[]) => void;
 	onMessageThread: (chatGUID: string, firstMessageID: number | undefined, data: ConversationItem[]) => void;
 	onSendMessageResponse: (requestID: number, error: MessageError | undefined) => void;
@@ -140,6 +141,15 @@ export default abstract class CommunicationsManager {
 	 * @return whether or not the request was successfully sent
 	 */
 	public abstract requestRetrievalTime(timeLower: Date, timeUpper: Date): boolean;
+	
+	/**
+	 * Requests an ID range-based message retrieval
+	 * @param idLower The ID to retrieve messages beyond (exclusive)
+	 * @param timeLower The lower time range limit
+	 * @param timeUpper The upper time range limit
+	 * @return Whether the request was successfully sent
+	 */
+	public abstract requestRetrievalID(idLower: number, timeLower: Date, timeUpper: Date): boolean;
 	
 	/**
 	 * Requests the creation of a new conversation on the server

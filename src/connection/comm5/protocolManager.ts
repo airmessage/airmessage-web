@@ -94,6 +94,15 @@ export default abstract class ProtocolManager {
 	public abstract requestRetrievalTime(timeLower: Date, timeUpper: Date): boolean;
 	
 	/**
+	 * Requests an ID range-based message retrieval
+	 * @param idLower The ID to retrieve messages beyond (exclusive)
+	 * @param timeLower The lower time range limit
+	 * @param timeUpper The upper time range limit
+	 * @return Whether the request was successfully sent
+	 */
+	public abstract requestRetrievalID(idLower: number, timeLower: Date, timeUpper: Date): boolean;
+	
+	/**
 	 * Requests a mass message retrieval
 	 *
 	 * @param requestID the ID used to validate conflicting requests
