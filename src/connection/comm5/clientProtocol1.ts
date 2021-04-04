@@ -554,6 +554,11 @@ export default class ClientProtocol1 extends ProtocolManager {
 		
 		return true;
 	}
+	
+	requestRetrievalID(idLower: number, timeLower: Date, timeUpper: Date): boolean {
+		console.warn("Request retrieval ID not supported");
+		return false;
+	}
 }
 
 function mapBrowserAM(browser: string): AMBrowser {

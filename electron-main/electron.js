@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require("electron");
+const {app, BrowserWindow} = require("electron");
 const path = require("path");
 const contextMenu = require("electron-context-menu");
 
@@ -12,7 +12,9 @@ function createWindow() {
 		width: 1000,
 		height: 600,
 		webPreferences: {
-			nodeIntegration: true
+			contextIsolation: false,
+			nodeIntegration: true,
+			preload: path.resolve(__dirname, "preload.js")
 		},
 		autoHideMenuBar: true
 	});

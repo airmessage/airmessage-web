@@ -2,8 +2,8 @@ import DataProxy from "shared/connection/dataProxy";
 import {ConnectionErrorCode} from "shared/data/stateCodes";
 import ByteBuffer from "bytebuffer";
 import {decryptData, encryptData} from "shared/util/encryptionUtils";
-
-const net = require("net");
+//import {Socket} from "net";
+const {Socket} = require("net");
 
 interface AddressOverride {
 	port?: number;
@@ -17,7 +17,7 @@ export default class DataProxyTCP extends DataProxy {
 	constructor(override?: AddressOverride) {
 		super();
 		
-		this.socket = new net.Socket();
+		this.socket = new Socket();
 		this.socket.setTimeout(10 * 1000);
 		this.override = override;
 	}

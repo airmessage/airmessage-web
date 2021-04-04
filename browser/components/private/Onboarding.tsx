@@ -4,9 +4,9 @@ import styles from "./Onboarding.module.css";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 
-import iconAirMessage from "shared/icons/tile-airmessage.svg";
-import iconMac from "shared/icons/tile-mac.svg";
-import iconGoogle from "shared/icons/logo-google.svg";
+import iconAirMessage from "shared/resources/icons/tile-airmessage.svg";
+import iconMac from "shared/resources/icons/tile-mac.svg";
+import iconGoogle from "shared/resources/icons/logo-google.svg";
 
 import * as config from "shared/secure/config";
 import AirMessageLogo from "shared/components/logo/AirMessageLogo";
@@ -17,7 +17,7 @@ export default function Onboarding() {
 			<div style={{padding: 16}}>
 				<AirMessageLogo />
 			</div>
-			
+
 			<div className={styles.content}>
 				<div>
 					<Typography variant="h4">Use iMessage on any computer with AirMessage</Typography>
@@ -31,7 +31,7 @@ export default function Onboarding() {
 									<Typography variant="body1" color="textSecondary">Visit <a href="https://airmessage.org" style={{color: "#008EFF"}}>airmessage.org</a> on a Mac computer to download.</Typography>
 								</div>
 							</div>
-							
+
 							<div className={styles.instruction} style={{marginTop: 24}}>
 								<img src={iconAirMessage} className={styles.instructionIcon} alt="" />
 								<div className={styles.instructionText} style={{top: 0}}>
@@ -40,7 +40,7 @@ export default function Onboarding() {
 								</div>
 							</div>
 						</div>
-						
+
 						<div className={styles.column} style={{marginLeft: 24, flexGrow: 1}}>
 							<Typography variant="subtitle1" gutterBottom>Select a sign-in method:</Typography>
 							<Button className={styles.buttonGoogle} variant="contained" startIcon={<img src={iconGoogle} alt="" />} style={{marginTop: 4}} onClick={signInGoogle} fullWidth>Sign in with Google</Button>
@@ -57,7 +57,7 @@ function signInGoogle() {
 		scope: config.googleScope,
 		ux_mode: "redirect"
 	});
-	
+
 	/* const provider = new firebase.auth.GoogleAuthProvider();
 	provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
 	firebase.auth().signInWithRedirect(provider); */

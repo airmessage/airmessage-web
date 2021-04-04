@@ -134,7 +134,7 @@ enum NSTGroupActionType {
 
 type AMBrowser = "chrome" | "safari" | "firefox" | "edge" | "browser";
 
-export default class ClientProtocol2 extends ProtocolManager {
+export default class ClientProtocol3 extends ProtocolManager {
 	processData(data: ArrayBuffer, wasEncrypted: boolean): void {
 		//Notifying the communications manager of a new incoming message
 		this.communicationsManager.listener?.onPacket();
@@ -575,6 +575,8 @@ export default class ClientProtocol2 extends ProtocolManager {
 			packer.packInt(nhtIDRetrieval);
 			
 			packer.packLong(idLower);
+			packer.packLong(timeLower.getTime());
+			packer.packLong(timeUpper.getTime());
 			
 			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
