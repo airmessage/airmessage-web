@@ -103,7 +103,7 @@ module.exports = (env) => ({
 			].concat(env.electron ? [{from: "electron-main"}] : []),
 		}),
 		new webpack.DefinePlugin({
-			"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
+			"WPEnv.ENVIRONMENT": JSON.stringify(env.WEBPACK_SERVE ? "development" : "production"),
 			"WPEnv.IS_ELECTRON": env.electron,
 			"WPEnv.PACKAGE_VERSION": JSON.stringify(process.env.npm_package_version),
 			"WPEnv.RELEASE_HASH": "\"undefined\"",

@@ -19,5 +19,9 @@ declare module "*.md" {
 }
 
 declare const WPEnv: {
-	[key: string]: any;
+	ENVIRONMENT: "production" | "development";
+	IS_ELECTRON: boolean;
+	PACKAGE_VERSION: string;
+	RELEASE_HASH: string | undefined;
+	BUILD_DATE: number;
 };

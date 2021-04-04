@@ -12,11 +12,11 @@ import "platform-components/init";
 export let promiseGAPI: Promise<any>;
 
 //Initializing Sentry
-if(process.env.NODE_ENV === "production") {
+if(WPEnv.ENVIRONMENT === "production") {
 	Sentry.init({
 		dsn: config.sentryDSN,
 		release: "airmessage-web@" + WPEnv.PACKAGE_VERSION,
-		environment: process.env.NODE_ENV
+		environment: WPEnv.ENVIRONMENT
 	});
 }
 
@@ -26,7 +26,7 @@ if(!WPEnv.IS_ELECTRON) {
 	firebase.initializeApp(config.firebaseConfig);
 	
 	// Check that service workers are supported
-	if(process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
+	if(WPEnv.ENVIRONMENT === "production" && "serviceWorker" in navigator) {
 		// Use the window load event to keep the page load performant
 		window.addEventListener("load", () => {
 			navigator.serviceWorker.register("/service-worker.js");
