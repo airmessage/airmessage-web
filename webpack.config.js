@@ -10,7 +10,7 @@ let nativeWindowsAvailable = false;
 try {
 	nativeWindowsAvailable = process.platform === "win32" && !!require.resolve("airmessage-winrt");
 } catch(e) {
-	console.log(e);
+	console.log("Failed to resolve module airmessage-winrt");
 }
 if(!nativeWindowsAvailable) {
 	console.log("Skipping compilation of airmessage-winrt");
@@ -91,7 +91,8 @@ module.exports = (env) => ({
 		],
 		alias: {
 			"shared": path.resolve(__dirname, "src"),
-			"platform-components": path.resolve(__dirname, env.electron ? "electron-renderer" : "browser")
+			"platform-components": path.resolve(__dirname, env.electron ? "electron-renderer" : "browser"),
+			...(nativeWindowsAvailable ? {} : {"airmessage-winrt": false})
 		}
 	},
 	optimization: {
@@ -102,15 +103,12 @@ module.exports = (env) => ({
 			eslint: {
 				files: `./{src,browser${nativeWindowsAvailable ? ",electron-main,electron-renderer" : ""}}/**/*.{ts,tsx,js,jsx}`,
 			},
-			typescript: !env.electron ? {
+			typescript: !nativeWindowsAvailable ? {
 				configOverwrite: {
-					"include": [
-						"src",
-						"browser",
-						//Don't compile electron directories if doing a web build
-						//"electron-main",
-						//"electron-renderer",
-						"index.d.ts"
+					exclude: [
+						//TypeScript check fails if the module isn't available
+						"electron-renderer/init.ts",
+						"electron-renderer/private/windowsPeopleUtils.ts"
 					]
 				}
 			} : {}
@@ -129,7 +127,8 @@ module.exports = (env) => ({
 			"WPEnv.IS_ELECTRON": env.electron,
 			"WPEnv.PACKAGE_VERSION": JSON.stringify(process.env.npm_package_version),
 			"WPEnv.RELEASE_HASH": "\"undefined\"",
-			"WPEnv.BUILD_DATE": Date.now()
+			"WPEnv.BUILD_DATE": Date.now(),
+			"WPEnv.WINRT": nativeWindowsAvailable
 		}),
 	].concat(!env.WEBPACK_SERVE && !env.electron ? new WorkboxPlugin.GenerateSW() : [])
 });
