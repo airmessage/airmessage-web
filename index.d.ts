@@ -24,4 +24,5 @@ declare const WPEnv: {
 	PACKAGE_VERSION: string;
 	RELEASE_HASH: string | undefined;
 	BUILD_DATE: number;
+	WINRT: boolean;
 };
