@@ -201,7 +201,7 @@ export default function Message(props: Props) {
 		if(!props.message.sender) return;
 		
 		//Requesting contact data
-		findPerson(props.message.sender).then((contact) => setContactData(contact), console.error);
+		findPerson(props.message.sender).then((contact) => setContactData(contact), console.warn);
 	}, [props.message.sender]);
 	
 	//Building and returning the component
