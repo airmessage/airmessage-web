@@ -3,12 +3,13 @@ import React from "react";
 import Onboarding from "./private/Onboarding";
 import Messaging from "shared/components/messaging/master/Messaging";
 
-import * as config from "shared/secure/config";
+import * as secrets from "shared/secrets";
 
 import * as Sentry from "@sentry/react";
 import {promiseGAPI} from "shared/index";
 import firebase from "firebase/app";
 import "firebase/auth";
+import {googleScope} from "shared/constants";
 
 type LoginState = "waiting" | "logged-out" | "logged-in";
 
@@ -39,8 +40,8 @@ export default class LoginGate extends React.Component<any, State> {
 		promiseGAPI.then(() => {
 			gapi.load("auth2", () => {
 				gapi.auth2.init({
-					client_id: config.googleClientID,
-					scope: config.googleScope,
+					client_id: secrets.googleClientID,
+					scope: googleScope,
 				}).then(authInstance => {
 					this.googleAuthInstance = authInstance;
 					//authInstance.isSignedIn.listen(this.updateGoogleSignIn.bind(this));

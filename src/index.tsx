@@ -4,7 +4,7 @@ import firebase from "firebase/app";
 import * as Sentry from "@sentry/react";
 import LoginGate from "platform-components/components/LoginGate";
 import AppTheme from "./components/control/AppTheme";
-import * as config from "./secure/config";
+import * as secrets from "./secrets";
 
 //Run initialization
 import "platform-components/init";
@@ -14,7 +14,7 @@ export let promiseGAPI: Promise<any>;
 //Initializing Sentry
 if(WPEnv.ENVIRONMENT === "production") {
 	Sentry.init({
-		dsn: config.sentryDSN,
+		dsn: secrets.sentryDSN,
 		release: "airmessage-web@" + WPEnv.PACKAGE_VERSION,
 		environment: WPEnv.ENVIRONMENT
 	});
@@ -23,7 +23,7 @@ if(WPEnv.ENVIRONMENT === "production") {
 //Browser-specific features
 if(!WPEnv.IS_ELECTRON) {
 	//Initializing Firebase
-	firebase.initializeApp(config.firebaseConfig);
+	firebase.initializeApp(secrets.firebaseConfig);
 	
 	// Check that service workers are supported
 	if(WPEnv.ENVIRONMENT === "production" && "serviceWorker" in navigator) {

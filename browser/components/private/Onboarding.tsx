@@ -8,8 +8,8 @@ import iconAirMessage from "shared/resources/icons/tile-airmessage.svg";
 import iconMac from "shared/resources/icons/tile-mac.svg";
 import iconGoogle from "shared/resources/icons/logo-google.svg";
 
-import * as config from "shared/secure/config";
 import AirMessageLogo from "shared/components/logo/AirMessageLogo";
+import {googleScope} from "shared/constants";
 
 export default function Onboarding() {
 	return (
@@ -54,7 +54,7 @@ export default function Onboarding() {
 
 function signInGoogle() {
 	gapi.auth2.getAuthInstance().signIn({
-		scope: config.googleScope,
+		scope: googleScope,
 		ux_mode: "redirect"
 	});
 

@@ -1,6 +1,7 @@
 import {AddressData, AddressType, ContactData, PeopleUtils, PersonData} from "shared/util/peopleUtils";
-import * as config from "shared/secure/config";
+import * as secrets from "shared/secrets";
 import {formatAddress} from "shared/util/conversationUtils";
+import {googleScope} from "shared/constants";
 
 //All contacts loaded from Google
 let initializationPromise: Promise<any> | undefined;
@@ -12,10 +13,10 @@ export default class GooglePeopleUtils extends PeopleUtils {
 		initializationPromise = new Promise((resolve, reject) => {
 			gapi.load("client", () => {
 				gapi.client.init({
-					apiKey: config.googleApiKey,
+					apiKey: secrets.googleApiKey,
 					discoveryDocs: ["https://people.googleapis.com/$discovery/rest?version=v1"],
-					clientId: config.googleClientID,
-					scope: config.googleScope
+					clientId: secrets.googleClientID,
+					scope: googleScope
 				}).then(() => {
 					//Loading contacts
 					loadPeople().then((data) => {
