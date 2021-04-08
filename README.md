@@ -7,11 +7,13 @@ AirMessage lets people use iMessage on the devices they like.
 Production builds are hosted on [web.airmessage.org](https://web.airmessage.org).
 
 Other AirMessage repositories:
-[Server](https://github.com/tagavari/airmessage-server) |
-[Android](https://github.com/tagavari/airmessage-android) |
-[Connect (community)](https://github.com/tagavari/airmessage-connect-java)
+[Server](https://github.com/airmessage/airmessage-server) |
+[Android](https://github.com/airmessage/airmessage-android) |
+[Connect (community)](https://github.com/airmessage/airmessage-connect-java)
 
 ## Getting started
+
+To build AirMessage for web, you will need [Node.js](https://nodejs.org).
 
 AirMessage for web uses [React](https://reactjs.org), [Electron](https://electronjs.org), and [TypeScript](https://www.typescriptlang.org). If you're not familiar with these tools, they all have great introductory guides:
 - [React - Getting started](https://reactjs.org/docs/getting-started.html)
@@ -20,6 +22,8 @@ AirMessage for web uses [React](https://reactjs.org), [Electron](https://electro
 
 AirMessage for web uses a configuration file to associate with online services like Firebase and Sentry.
 The app will not build without a valid configuration, so to get started quickly, you can copy the `src/secrets.default.ts` file to `src/secrets.ts` to use a pre-configured Firebase project, or you may provide your own Firebase configuration file.
+
+To launch a development server, run `npm start`. To build a production-optimized bundle, run `npm run build`.
 
 ## File structure outline
 
