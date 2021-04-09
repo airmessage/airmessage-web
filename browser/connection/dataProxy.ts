@@ -8,8 +8,7 @@ import "firebase/auth";
 
 import {getInstallationID} from "shared/util/installationUtils";
 import {ConnectionErrorCode} from "shared/data/stateCodes";
-
-const connectHostname = "wss://connect.airmessage.org";
+import {connectHostname} from "shared/secrets";
 
 const handshakeTimeoutTime = 8 * 1000;
 

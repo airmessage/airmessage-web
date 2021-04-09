@@ -293,4 +293,4 @@ webpack.crt
 webpack.key
 
 # Private config
-/src/secure/config.ts
+/src/secrets.ts
