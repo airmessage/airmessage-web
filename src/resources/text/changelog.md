@@ -1,3 +1,1 @@
-- Migrated to Webpack
-- Protocol 5.3 support
-- Switched to ID-based missed message retrieval
+This update fixes the webpage's background color (especially in dark mode)
