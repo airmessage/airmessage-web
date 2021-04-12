@@ -15,9 +15,8 @@ Other AirMessage repositories:
 
 To build AirMessage for web, you will need [Node.js](https://nodejs.org).
 
-AirMessage for web uses [React](https://reactjs.org), [Electron](https://electronjs.org), and [TypeScript](https://www.typescriptlang.org). If you're not familiar with these tools, they all have great introductory guides:
+AirMessage for web uses [React](https://reactjs.org) and [TypeScript](https://www.typescriptlang.org). If you're not familiar with these tools, they both have great introductory guides:
 - [React - Getting started](https://reactjs.org/docs/getting-started.html)
-- [Electron - Quick start](https://www.electronjs.org/docs/tutorial/quick-start)
 - [TypeScript for JavaScript Programmers](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html)
 
 AirMessage for web uses a configuration file to associate with online services like Firebase and Sentry.
