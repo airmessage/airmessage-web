@@ -12,8 +12,10 @@ export default function ConversationActionRename(props: {action: ChatRenameActio
 		
 		//Loading the user data
 		if(props.action.user) {
-			findPerson(props.action.user).then((name) => {
-				if(name.name && userName === props.action.user) setUserName(name.name);
+			findPerson(props.action.user).then((contact) => {
+				if(contact.name !== undefined) {
+					setUserName(contact.name);
+				}
 			});
 		}
 	}, [props.action.user]);

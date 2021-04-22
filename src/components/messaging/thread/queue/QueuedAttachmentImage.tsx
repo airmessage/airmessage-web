@@ -1,20 +1,9 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 import QueuedAttachment, {QueuedAttachmentProps} from "./QueuedAttachment";
+import {useBlobURL} from "shared/util/hookUtils";
 
 export function QueuedAttachmentImage(props: {queueData: QueuedAttachmentProps}) {
-	const [imageURL, setImageURL] = useState<string | undefined>(undefined);
-	
-	useEffect(() => {
-		//Cleaning up the current image URL
-		if(imageURL) URL.revokeObjectURL(imageURL);
-		
-		//Creating a new image URL
-		setImageURL(URL.createObjectURL(new Blob([props.queueData.file], {type: props.queueData.file.type})));
-		
-		return () => {
-			if(imageURL) URL.revokeObjectURL(imageURL);
-		};
-	}, [props.queueData.file]);
+	const imageURL = useBlobURL(props.queueData.file, props.queueData.file.type);
 	
 	return (
 		<QueuedAttachment queueData={props.queueData}>

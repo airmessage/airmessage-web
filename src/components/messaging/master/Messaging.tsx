@@ -127,7 +127,7 @@ class Messaging extends React.Component<Props, State> {
 				this.setState({sidebarBanner: error});
 			}
 		}
-	}
+	};
 	//Used to hold loose messages received from message updates until their conversation information is received, so it can be applied
 	private readonly pendingConversationDataMap: Map<string, PendingConversationData> = new Map();
 	
@@ -135,7 +135,7 @@ class Messaging extends React.Component<Props, State> {
 		conversations: [],
 		conversationsAvailable: false,
 		detailPane: {type: DetailType.Loading}
-	}
+	};
 	
 	render() {
 		const sidebarBG = this.props.theme.palette.background.sidebar;
@@ -201,11 +201,11 @@ class Messaging extends React.Component<Props, State> {
 				};
 			}
 		});
-	}
+	};
 	
 	private readonly onCreateSelected = (): void => {
 		this.setState({detailPane: {type: DetailType.Create}});
-	}
+	};
 	
 	private readonly onConversationCreated = (newConversation: Conversation): void => {
 		this.setState((prevState) => {
@@ -219,7 +219,7 @@ class Messaging extends React.Component<Props, State> {
 				conversations: matchingConversation ? prevState.conversations : [newConversation].concat(prevState.conversations)
 			};
 		});
-	}
+	};
 	
 	componentDidMount() {
 		//Subscribing to message updates
@@ -487,14 +487,14 @@ class Messaging extends React.Component<Props, State> {
 				if(newSelectedIncomingMessages) playSoundMessageIn();
 			}
 		}
-	}
+	};
 	
 	private readonly onModifierUpdate = (itemArray: MessageModifier[]): void => {
 		//Playing a tapback sound
 		if(itemArray.some((modifier) => isModifierTapback(modifier) && modifier.isAddition)) {
 			playSoundTapback();
 		}
-	}
+	};
 }
 
 export default withTheme(Messaging);

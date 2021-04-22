@@ -24,16 +24,15 @@ export default function MessageAttachmentImage(props: {data: ArrayBuffer | Blob,
 	});
 	
 	useEffect(() => {
-		//Cleaning up the current image URL
-		if(imageURL) URL.revokeObjectURL(imageURL);
-		
 		//Creating a new image URL
-		setImageURL(URL.createObjectURL(props.data instanceof Blob ? props.data : new Blob([props.data], {type: props.type})));
+		const imageURL = URL.createObjectURL(props.data instanceof Blob ? props.data : new Blob([props.data], {type: props.type}));
 		
-		return () => {
-			if(imageURL) URL.revokeObjectURL(imageURL);
-		};
-	}, [props.data]);
+		//Setting the image URL
+		setImageURL(imageURL);
+		
+		//Cleaning up the URL
+		return () => URL.revokeObjectURL(imageURL);
+	}, [props.data, props.type, setImageURL]);
 	
 	function downloadFile(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
 		//So that we don't dismiss the backdrop

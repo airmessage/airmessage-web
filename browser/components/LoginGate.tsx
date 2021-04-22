@@ -23,7 +23,7 @@ export default class LoginGate extends React.Component<any, State> {
 	
 	state: Readonly<State> = {
 		state: "waiting"
-	}
+	};
 	
 	render() {
 		switch(this.state.state) {

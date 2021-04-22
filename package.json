@@ -42,6 +42,7 @@
     "electron-builder": "^22.9.1",
     "eslint": "^7.20.0",
     "eslint-plugin-react": "^7.22.0",
+    "eslint-plugin-react-hooks": "^4.2.0",
     "fork-ts-checker-webpack-plugin": "^6.1.1",
     "native-ext-loader": "^2.3.0",
     "node-addon-loader": "^0.0.6",
