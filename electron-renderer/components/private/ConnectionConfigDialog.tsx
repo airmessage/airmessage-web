@@ -47,7 +47,7 @@ export default function ConnectionConfigDialog(props: {isOpen: boolean, onDismis
 		}
 		
 		ConnectionManager.setDisableAutomaticReconnections(true);
-		EncryptionUtils.setPassword(password).then(() => ConnectionManager.connect());
+		EncryptionUtils.setCryptoPassword(password).then(() => ConnectionManager.connect());
 	}, [inputValid, address, fallbackAddress, password]);
 	
 	useEffect(() => {

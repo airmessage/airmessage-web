@@ -1,6 +1,6 @@
 .container {
 	height: 100%;
-	
+
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -9,7 +9,7 @@
 .main {
 	margin: 16px;
 	max-width: 1000px;
-	
+
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
@@ -19,7 +19,7 @@
 .split {
 	display: flex;
 	flex-direction: column;
-	
+
 	margin-inline-start: 16px;
 }
 
@@ -30,8 +30,8 @@
 
 .buttonRow {
 	display: flex;
-	flex-direction: row;
-	
+	flex-direction: row-reverse;
+
 	margin-top: 12px;
 }
 

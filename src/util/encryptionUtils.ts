@@ -9,8 +9,12 @@ const keyLength = 128; //128 bits
 
 let userKey: CryptoKey;
 
-export async function setPassword(password: string) {
+export async function setCryptoPassword(password: string) {
 	userKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+}
+
+export function isCryptoPasswordSet() {
+	return userKey !== undefined;
 }
 
 export async function encryptData(inData: ArrayBuffer): Promise<ArrayBuffer> {
