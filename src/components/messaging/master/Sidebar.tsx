@@ -60,7 +60,7 @@ export default class Sidebar extends React.Component<Props, State> {
 		showChangelogDialog: false,
 		showFeedbackDialog: false,
 		showLogOutDialog: false
-	}
+	};
 	
 	intervalID: any;
 	
@@ -68,13 +68,13 @@ export default class Sidebar extends React.Component<Props, State> {
 		this.setState({
 			overflowMenuElement: event.currentTarget
 		});
-	}
+	};
 	
 	private readonly handleOverflowClose = () => {
 		this.setState({
 			overflowMenuElement: null
 		});
-	}
+	};
 	
 	private readonly handleOverflowChangelog = () => {
 		//Closing the menu
@@ -82,11 +82,11 @@ export default class Sidebar extends React.Component<Props, State> {
 		
 		//Showing the changelog dialog
 		this.setState({showChangelogDialog: true});
-	}
+	};
 	
 	private readonly dismissOverflowChangelog = () => {
 		this.setState({showChangelogDialog: false});
-	}
+	};
 	
 	private readonly handleOverflowFeedback = () => {
 		//Closing the menu
@@ -98,7 +98,7 @@ export default class Sidebar extends React.Component<Props, State> {
 	
 	private readonly dismissOverflowFeedback = () => {
 		this.setState({showFeedbackDialog: false});
-	}
+	};
 	
 	private readonly handleOverflowLogOut = () => {
 		//Closing the menu
@@ -106,11 +106,11 @@ export default class Sidebar extends React.Component<Props, State> {
 		
 		//Prompting the user to log out
 		this.setState({showLogOutDialog: true});
-	}
+	};
 	
 	private readonly dismissLogOut = () => {
 		this.setState({showLogOutDialog: false});
-	}
+	};
 	
 	private readonly confirmLogOut = () => {
 		//Dismissing the log out dialog
@@ -118,7 +118,7 @@ export default class Sidebar extends React.Component<Props, State> {
 		
 		//Logging out
 		firebase.auth().signOut();
-	}
+	};
 	
 	render() {
 		return (
@@ -171,7 +171,7 @@ export default class Sidebar extends React.Component<Props, State> {
 						<List>
 							{this.props.conversations.map((conversation) =>
 								<Flipped key={conversation.guid} flipId={conversation.guid}>
-									{flippedProps => <ListConversation conversation={conversation} selected={conversation.guid === this.props.selectedConversation} highlighted={conversation.unreadMessages} onSelected={() => this.props.onConversationSelected(conversation.guid)} flippedProps={flippedProps} />}
+									{flippedProps => <ListConversation conversation={conversation} selected={conversation.guid === this.props.selectedConversation} highlighted={conversation.unreadMessages} onSelected={() => this.props.onConversationSelected(conversation.guid)} flippedProps={flippedProps as Record<string, unknown>} />}
 								</Flipped>
 							)}
 						</List>

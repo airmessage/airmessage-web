@@ -1,6 +1,7 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 import styles from "./MessageModifierStickerStack.module.css";
 import {StickerItem} from "../../../../data/blocks";
+import {useBlobURL} from "shared/util/hookUtils";
 
 export default function MessageModifierStickerStack(props: {modifiers: StickerItem[], reveal?: boolean}) {
 	return (
@@ -11,19 +12,7 @@ export default function MessageModifierStickerStack(props: {modifiers: StickerIt
 }
 
 function MessageModifierSticker(props: {sticker: StickerItem, reveal?: boolean}) {
-	const [imageURL, setImageURL] = useState<string | undefined>(undefined);
-	
-	useEffect(() => {
-		//Cleaning up the current image URL
-		if(imageURL) URL.revokeObjectURL(imageURL);
-		
-		//Creating a new image URL
-		setImageURL(URL.createObjectURL(new Blob([props.sticker.data], {type: props.sticker.dataType})));
-		
-		return () => {
-			if(imageURL) URL.revokeObjectURL(imageURL);
-		};
-	}, [props.sticker]);
+	const imageURL = useBlobURL(props.sticker.data, props.sticker.dataType);
 	
 	return (
 		<img className={styles.sticker} src={imageURL} alt="" />

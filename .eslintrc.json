@@ -7,7 +7,8 @@
     "extends": [
         "eslint:recommended",
         "plugin:react/recommended",
-        "plugin:@typescript-eslint/recommended"
+        "plugin:@typescript-eslint/recommended",
+        "plugin:react-hooks/recommended"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
@@ -30,7 +31,10 @@
         "indent": [
             "error",
             "tab",
-            {"SwitchCase": 1}
+            {
+                "SwitchCase": 1,
+                "ignoredNodes": ["JSXElement *", "JSXElement"]
+            }
         ],
         "linebreak-style": [
             "error",
@@ -44,14 +48,17 @@
                 "allowTemplateLiterals": true
             }
         ],
-        "semi": [
-            "error",
-            "always"
-        ],
+        "semi": "off",
+        "no-inner-declarations": "off",
         "no-mixed-spaces-and-tabs": [
             "error",
             "smart-tabs"
         ],
+        "no-constant-condition": [
+            "warn",
+            {"checkLoops": false}
+        ],
+        "@typescript-eslint/semi": ["warn", "always"],
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/explicit-module-boundary-types": "off",
         "@typescript-eslint/no-unused-vars": "off",
@@ -60,10 +67,7 @@
         "@typescript-eslint/no-empty-function": "off",
         "react/display-name": "off",
         "react/prop-types": "off",
-        "no-constant-condition": [
-            "warn",
-            {"checkLoops": false}
-        ],
-        "@typescript-eslint/no-var-requires": "off"
+        "@typescript-eslint/no-var-requires": "off",
+        "jsx-indent-props": "off"
     }
 }

@@ -51,7 +51,7 @@ export default class MessageList extends React.Component<Props, State> {
 				this.setState({isInThreshold: false});
 			}
 		}
-	}
+	};
 	
 	render() {
 		//The latest outgoing item with the "read" status

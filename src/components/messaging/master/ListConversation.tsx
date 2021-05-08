@@ -13,8 +13,7 @@ import {TypographyProps} from "@material-ui/core/Typography";
 import {ConversationPreviewType} from "../../../data/stateCodes";
 import {isConversationPreviewMessage} from "../../../util/conversationUtils";
 
-//eslint-disable-next-line @typescript-eslint/ban-types
-export default function ListConversation(props: {conversation: Conversation, selected?: boolean, highlighted?: boolean, onSelected: () => void, flippedProps?: object}) {
+export default function ListConversation(props: {conversation: Conversation, selected?: boolean, highlighted?: boolean, onSelected: () => void, flippedProps?: Record<string, unknown>}) {
 	//Getting the conversation title
 	const [title, setConversationTitle] = useState(ConversationUtils.getFallbackTitle(props.conversation));
 	useEffect(() => {
@@ -25,7 +24,7 @@ export default function ListConversation(props: {conversation: Conversation, sel
 		}
 		
 		//Building the conversation title
-		ConversationUtils.getNamedTitle(props.conversation).then((title) => setConversationTitle(title));
+		ConversationUtils.getMemberTitle(props.conversation.members).then((title) => setConversationTitle(title));
 	}, [props.conversation.name, props.conversation.members]);
 	
 	const primaryStyle: TypographyProps = props.highlighted ? {

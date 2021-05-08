@@ -2,6 +2,7 @@ import {AddressData, AddressType, ContactData, PeopleUtils, PersonData} from "sh
 import * as secrets from "shared/secrets";
 import {formatAddress} from "shared/util/conversationUtils";
 import {googleScope} from "shared/constants";
+import {promiseGAPI} from "shared/index";
 
 //All contacts loaded from Google
 let initializationPromise: Promise<any> | undefined;
@@ -10,7 +11,7 @@ let contactMap: Map<string, ContactData> | undefined;
 
 export default class GooglePeopleUtils extends PeopleUtils {
 	initialize(): void {
-		initializationPromise = new Promise((resolve, reject) => {
+		initializationPromise = promiseGAPI.then(() => new Promise((resolve) => {
 			gapi.load("client", () => {
 				gapi.client.init({
 					apiKey: secrets.googleApiKey,
@@ -32,7 +33,7 @@ export default class GooglePeopleUtils extends PeopleUtils {
 					console.warn("Error initializing GAPI client", error);
 				});
 			});
-		});
+		}));
 	}
 	
 	async getPeople(): Promise<PersonData[]> {

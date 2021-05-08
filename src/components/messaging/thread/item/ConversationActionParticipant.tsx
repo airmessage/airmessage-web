@@ -16,12 +16,16 @@ export default function ConversationActionParticipant(props: {action: Participan
 		//Loading the user data
 		if(props.action.user) {
 			findPerson(props.action.user).then((name) => {
-				if(name.name && userName === props.action.user) setUserName(name.name);
+				if(name.name !== undefined) {
+					setUserName(name.name);
+				}
 			});
 		}
 		if(props.action.target) {
 			findPerson(props.action.target).then((name) => {
-				if(name.name && targetName === props.action.target) setTargetName(name.name);
+				if(name.name) {
+					setTargetName(name.name);
+				}
 			});
 		}
 	}, [props.action]);

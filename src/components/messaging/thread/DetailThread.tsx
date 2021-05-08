@@ -10,7 +10,7 @@ import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
 import {
 	getFallbackTitle,
-	getNamedTitle,
+	getMemberTitle,
 	isConversationItemMessage,
 	isModifierStatusUpdate,
 	isModifierSticker,
@@ -273,7 +273,7 @@ export default class DetailThread extends React.Component<Props, State> {
 		
 		//this.dragCounter++;
 		//this.setState({dragHighlight: true});
-	}
+	};
 	
 	private readonly handleDragOut = (event: DragEvent) => {
 		event.preventDefault();
@@ -283,14 +283,14 @@ export default class DetailThread extends React.Component<Props, State> {
 		if(this.dragCounter === 0) {
 			this.setState({dragHighlight: false});
 		} */
-	}
+	};
 	
 	private readonly handleDragOver = (event: DragEvent) => {
 		event.preventDefault();
 		event.stopPropagation();
 		
 		if(event.dataTransfer) event.dataTransfer.dropEffect = "copy";
-	}
+	};
 	
 	private readonly handleDrop = (event: DragEvent) => {
 		event.preventDefault();
@@ -309,7 +309,7 @@ export default class DetailThread extends React.Component<Props, State> {
 				return {attachments: state.attachments.concat(...files)};
 			});
 		}
-	}
+	};
 	
 	private readonly handleRequestHistory = () => {
 		//Returning if the state is already loading or is complete
@@ -339,7 +339,7 @@ export default class DetailThread extends React.Component<Props, State> {
 		
 		//Setting the state
 		this.setState({historyLoadState: "loading"});
-	}
+	};
 	
 	private readonly requestMessages = () => {
 		//Fetching thread messages
@@ -398,7 +398,7 @@ export default class DetailThread extends React.Component<Props, State> {
 		
 		//Building a conversation title from the participants' names if the conversation isn't explicitly named
 		if(!this.props.conversation.name) {
-			getNamedTitle(this.props.conversation).then((title) => {
+			getMemberTitle(this.props.conversation.members).then((title) => {
 				this.setState({title: title});
 			});
 		}
@@ -425,7 +425,7 @@ export default class DetailThread extends React.Component<Props, State> {
 				this.setState({title: this.props.conversation.name});
 			} else {
 				this.setState({title: getFallbackTitle(this.props.conversation)});
-				getNamedTitle(this.props.conversation).then((title) => {
+				getMemberTitle(this.props.conversation.members).then((title) => {
 					this.setState({title: title});
 				});
 			}
@@ -552,5 +552,5 @@ export default class DetailThread extends React.Component<Props, State> {
 			
 			return {display: {type: "messages", data: pendingItemArray} as DisplayMessages};
 		});
-	}
+	};
 }

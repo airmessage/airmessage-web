@@ -1,1 +1,2 @@
-This update fixes the webpage's background color (especially in dark mode)
+- Fixed Google Contacts sometimes not loading on unreliable or slow internet connections
+- Dependency updates

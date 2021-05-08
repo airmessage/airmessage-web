@@ -27,9 +27,9 @@ export function getFallbackTitle(conversation: Conversation): string {
 	return buildListString(conversation.members);
 }
 
-export async function getNamedTitle(conversation: Conversation): Promise<string> {
+export async function getMemberTitle(members: string[]): Promise<string> {
 	//Duplicating the member array (in case any modifications are made to the conversation in the meantime)
-	const memberArray = [...conversation.members];
+	const memberArray = [...members];
 	
 	//Fetching member names
 	const resultArray = await Promise.allSettled(memberArray.map((member) => findPerson(member)));

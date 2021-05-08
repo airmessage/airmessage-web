@@ -1,5 +1,5 @@
 import {Conversation, MessageItem} from "../data/blocks";
-import {getNamedTitle, mimeTypeToPreview} from "./conversationUtils";
+import {getMemberTitle, mimeTypeToPreview} from "./conversationUtils";
 import EventEmitter from "./eventEmitter";
 import {appleSendStyleBubbleInvisibleInk} from "../data/appleConstants";
 
@@ -67,7 +67,7 @@ export function dismissMessageNotifications(chatGUID: string) {
 
 async function getConversationTitle(conversation: Conversation) {
 	if(conversation.name) return conversation.name;
-	else return getNamedTitle(conversation);
+	else return getMemberTitle(conversation.members);
 }
 
 function getMessagePreview(message: MessageItem) {
