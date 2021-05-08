@@ -9,7 +9,7 @@ import "firebase/auth";
 import {getInstallationID} from "shared/util/installationUtils";
 import {ConnectionErrorCode} from "shared/data/stateCodes";
 import {connectHostname} from "shared/secrets";
-import {decryptData, isCryptoPasswordSet} from "shared/util/encryptionUtils";
+import {decryptData, isCryptoPasswordAvailable} from "shared/util/encryptionUtils";
 
 const handshakeTimeoutTime = 8 * 1000;
 
@@ -126,7 +126,7 @@ export default class DataProxyConnect extends DataProxy {
 				//Reading the data
 				const data = byteBuffer.compact().toArrayBuffer();
 				
-				if(isEncrypted && isCryptoPasswordSet()) {
+				if(isEncrypted && isCryptoPasswordAvailable()) {
 					decryptData(data).then((data) => {
 						this.notifyMessage(data, isSecure);
 					});

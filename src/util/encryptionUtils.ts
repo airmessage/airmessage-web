@@ -7,13 +7,25 @@ const cipherTransformation = "AES-GCM";
 const keyIterationCount = 10000;
 const keyLength = 128; //128 bits
 
-let userKey: CryptoKey;
+//Whether a request has been put in to initialize the crypto password, even if undefined
+let cryptoPasswordSet = false;
+let userKey: CryptoKey | undefined;
 
-export async function setCryptoPassword(password: string) {
-	userKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+export async function setCryptoPassword(password: string | undefined) {
+	cryptoPasswordSet = true;
+	
+	if(password == undefined) {
+		userKey = undefined;
+	} else {
+		userKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+	}
 }
 
 export function isCryptoPasswordSet() {
+	return cryptoPasswordSet;
+}
+
+export function isCryptoPasswordAvailable() {
 	return userKey !== undefined;
 }
 
@@ -26,7 +38,7 @@ export async function encryptData(inData: ArrayBuffer): Promise<ArrayBuffer> {
 	
 	//Creating the key
 	const derivedKey = await crypto.subtle.deriveKey({name: algorithm, salt: salt, iterations: keyIterationCount, hash: hash},
-		userKey,
+		userKey!,
 		{name: cipherTransformation, length: keyLength},
 		false,
 		["encrypt"]);
@@ -50,7 +62,7 @@ export async function decryptData(inData: ArrayBuffer): Promise<ArrayBuffer> {
 	
 	//Creating the key
 	const derivedKey = await crypto.subtle.deriveKey({name: algorithm, salt: salt, iterations: keyIterationCount, hash: hash},
-		userKey,
+		userKey!,
 		{name: cipherTransformation, length: keyLength},
 		false,
 		["decrypt"]);

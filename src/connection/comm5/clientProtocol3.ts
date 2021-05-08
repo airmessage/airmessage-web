@@ -33,7 +33,7 @@ import {
 import {arrayBufferToHex} from "../../util/fileUtils";
 import SparkMD5 from "spark-md5";
 import {InflatorAccumulator} from "../transferAccumulator";
-import {encryptData, isCryptoPasswordSet} from "shared/util/encryptionUtils";
+import {encryptData, isCryptoPasswordAvailable} from "shared/util/encryptionUtils";
 
 
 const attachmentChunkSize = 2 * 1024 * 1024; //2 MiB
@@ -366,7 +366,7 @@ export default class ClientProtocol3 extends ProtocolManager {
 		//Checking if the current protocol requires authentication
 		if(unpacker.unpackBoolean()) {
 			//Checking if we don't have a password to use
-			if(!isCryptoPasswordSet()) {
+			if(!isCryptoPasswordAvailable()) {
 				//Failing the connection
 				this.communicationsManager.disconnect(ConnectionErrorCode.Unauthorized);
 				return false;
