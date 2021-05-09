@@ -3,6 +3,12 @@ import * as secrets from "../secrets";
 const keyServerPassword = "serverPassword";
 const ivLen = 12;
 
+export enum SecureStorageKey {
+	ServerPassword = "serverPassword",
+	ServerAddress = "serverAddress",
+	ServerAddressFallback = "serverAddressFallback"
+}
+
 const cryptoKey: Promise<CryptoKey> = crypto.subtle.importKey(
 	"jwk",
 	secrets.jwkLocalEncryption,
@@ -60,31 +66,22 @@ async function decryptString(value: string, useIV: boolean): Promise<string> {
 	return new TextDecoder().decode(await decrypt(decodeBase64(value), useIV));
 }
 
-export async function setLS(key: string, value: string | undefined) {
-	key = await encryptString(key, false);
-	console.log("Saving under key " + key);
+export async function setSecureLS(key: SecureStorageKey, value: string | undefined) {
+	const encryptedKey = await encryptString(key, false);
 	
 	if(value === undefined) {
-		localStorage.removeItem(key);
+		localStorage.removeItem(encryptedKey);
 	} else {
 		value = await encryptString(value, true);
-		localStorage.setItem(key, value);
+		localStorage.setItem(encryptedKey, value);
 	}
 }
 
-export async function getLS(key: string): Promise<string | undefined> {
+export async function getSecureLS(key: SecureStorageKey): Promise<string | undefined> {
 	const value = localStorage.getItem(await encryptString(key, false));
 	if(value === null) {
 		return undefined;
 	} else {
 		return decryptString(value, true);
 	}
-}
-
-export async function saveServerPassword(password: string | undefined) {
-	return setLS(keyServerPassword, password);
-}
-
-export async function getServerPassword(): Promise<string | undefined> {
-	return getLS(keyServerPassword);
 }

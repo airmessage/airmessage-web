@@ -8,7 +8,7 @@ import {connect, connect as connectToServer} from "../../../connection/connectio
 import firebase from "firebase/app";
 import "firebase/auth";
 import {setCryptoPassword} from "shared/util/encryptionUtils";
-import {saveServerPassword, setLS} from "shared/util/secureStorageUtils";
+import {SecureStorageKey, setSecureLS} from "shared/util/secureStorageUtils";
 
 interface ErrorDisplay {
 	title: string;
@@ -71,7 +71,7 @@ function DetailErrorAuth() {
 		if(password.trim().length === 0) return;
 		
 		setIsLoading(true);
-		Promise.all([setCryptoPassword(password), saveServerPassword(password)]).then(connect);
+		Promise.all([setCryptoPassword(password), setSecureLS(SecureStorageKey.ServerPassword, password)]).then(connect);
 	}, [setIsLoading, password]);
 	const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
 		//Confirm when enter is pressed

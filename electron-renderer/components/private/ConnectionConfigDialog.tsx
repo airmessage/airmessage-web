@@ -3,14 +3,14 @@ import styles from "./ConnectionConfigDialog.module.css";
 import {Button, Card, Dialog, DialogContent, DialogTitle, TextField, Typography} from "@material-ui/core";
 import * as ConnectionManager from "shared/connection/connectionManager";
 import {ConnectionListener} from "shared/connection/connectionManager";
-import * as EncryptionUtils from "shared/util/encryptionUtils";
 import DataProxyTCP from "../../connection/dataProxy";
 import {ConnectionErrorCode} from "shared/data/stateCodes";
 import {CheckCircleOutline, CloudOff} from "@material-ui/icons";
 import {errorCodeToShortDisplay} from "shared/util/languageUtils";
+import {setCryptoPassword} from "shared/util/encryptionUtils";
+import {SecureStorageKey, setSecureLS} from "shared/util/secureStorageUtils";
 
 const regexInternetAddress = "^(((www\\.)?[a-zA-Z0-9.\\-_]+(\\.[a-zA-Z]{2,})+)|(\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b))([a-zA-Z0-9_\\-\\s./?%#&=]*)?(:([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]?))?$";
-const regexPort = /(:([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]?))$/;
 
 function checkAddressError(input: string) {
 	return input.length > 0 && !input.match(regexInternetAddress);
@@ -38,16 +38,18 @@ export default function ConnectionConfigDialog(props: {isOpen: boolean, onDismis
 		//Ignoring if the input isn't valid
 		if(!inputValid) return;
 		
-		//Updating the proxy
-		if(regexPort.test(address)) {
-			const targetDetails = address.split(":");
-			ConnectionManager.setDataProxy(new DataProxyTCP({host: targetDetails[0], port: parseInt(targetDetails[1])}));
-		} else {
-			ConnectionManager.setDataProxy(new DataProxyTCP({host: address}));
-		}
+		const addressClean = address;
+		const addressFallbackClean = fallbackAddress.length > 0 ? fallbackAddress : undefined;
+		
+		ConnectionManager.setDataProxy(new DataProxyTCP({primary: addressClean, fallback: addressFallbackClean}));
 		
 		ConnectionManager.setDisableAutomaticReconnections(true);
-		EncryptionUtils.setCryptoPassword(password).then(() => ConnectionManager.connect());
+		Promise.all([
+			setCryptoPassword(password),
+			setSecureLS(SecureStorageKey.ServerAddress, addressClean),
+			setSecureLS(SecureStorageKey.ServerAddressFallback, addressFallbackClean),
+			setSecureLS(SecureStorageKey.ServerPassword, password)
+		]).then(() => ConnectionManager.connect());
 	}, [inputValid, address, fallbackAddress, password]);
 	
 	useEffect(() => {

@@ -2,17 +2,38 @@ import DataProxy from "shared/connection/dataProxy";
 import {ConnectionErrorCode} from "shared/data/stateCodes";
 import ByteBuffer from "bytebuffer";
 import {decryptData, encryptData} from "shared/util/encryptionUtils";
-//import {Socket} from "net";
-const {Socket} = require("net");
+import {Socket} from "net";
+import {getSecureLS, SecureStorageKey} from "shared/util/secureStorageUtils";
+
+interface AddressData {
+	host: string;
+	port: number;
+}
 
 interface AddressOverride {
-	port?: number;
-	host: string;
+	primary: string;
+	fallback?: string;
+}
+
+//A regex that determines if an address contains a valid port
+const regexPort = /(:([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]?))$/;
+
+/**
+ * Parses a string address to its hostname and port components
+ */
+function parseAddress(address: string): AddressData {
+	if(regexPort.test(address)) {
+		const split = address.split(":");
+		return {host: split[0], port: parseInt(split[1])};
+	} else {
+		return {host: address, port: 1359};
+	}
 }
 
 export default class DataProxyTCP extends DataProxy {
-	private socket: any;
+	private socket: Socket;
 	private readonly override: AddressOverride | undefined;
+	private isStopping = false;
 	
 	constructor(override?: AddressOverride) {
 		super();
@@ -56,27 +77,44 @@ export default class DataProxyTCP extends DataProxy {
 	
 	//previousDecrypt ensures that all read messages are decrypted in parallel
 	private previousDecrypt: Promise<any> | undefined;
-	start(): void {
-		//Reading address data
-		let port: number;
-		let host: string;
+	async start(): Promise<void> {
+		//Resetting the isStopping flag
+		this.isStopping = true;
 		
-		if(this.override) {
-			port = this.override.port ?? 1359;
-			host = this.override.host;
+		//Reading address data
+		let addressPrimary: AddressData;
+		let addressSecondary: AddressData | undefined;
+		
+		if(this.override !== undefined) {
+			addressPrimary = parseAddress(this.override.primary);
+			addressSecondary = this.override.fallback ? parseAddress(this.override.fallback) : undefined;
 		} else {
-			port = 1359;
-			host = "localhost";
+			const addressPrimaryStr = await getSecureLS(SecureStorageKey.ServerAddress);
+			if(addressPrimaryStr === undefined) {
+				this.notifyClose(ConnectionErrorCode.Connection);
+				return;
+			}
+			addressPrimary = parseAddress(addressPrimaryStr);
+			
+			const addressSecondaryStr = await getSecureLS(SecureStorageKey.ServerAddressFallback);
+			if(addressSecondaryStr !== undefined) {
+				addressSecondary = parseAddress(addressSecondaryStr);
+			}
 		}
 		
-		this.socket.connect(port, host);
+		this.socket.connect(addressPrimary.port, addressPrimary.host);
 		
 		let messageData: {size: number, isEncrypted: boolean} | undefined = undefined;
 		this.socket.on("connect", () => {
 			this.notifyOpen();
 		});
 		this.socket.on("close", () => {
-			this.notifyClose(ConnectionErrorCode.Connection);
+			//Connect using fallback parameters if we haven't been asked to disconnect
+			if(!this.isStopping && addressSecondary) {
+				this.socket.connect(addressSecondary.port, addressSecondary.host);
+			} else {
+				this.notifyClose(ConnectionErrorCode.Connection);
+			}
 		});
 		this.socket.on("readable", async () => {
 			while(true) {
@@ -123,6 +161,10 @@ export default class DataProxyTCP extends DataProxy {
 	}
 	
 	stop(): void {
+		//Setting the isStopping flag, so we don't try to create any more connections
+		this.isStopping = true;
+		
+		//Closing the socket
 		this.socket.end(() => this.socket.destroy());
 	}
 }

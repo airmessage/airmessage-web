@@ -16,7 +16,7 @@ import ProgressPromise from "../util/progressPromise";
 import promiseTimeout from "../util/promiseTimeout";
 import {TransferAccumulator} from "./transferAccumulator";
 import {isCryptoPasswordSet, setCryptoPassword} from "shared/util/encryptionUtils";
-import {getServerPassword} from "shared/util/secureStorageUtils";
+import {getSecureLS, SecureStorageKey} from "shared/util/secureStorageUtils";
 
 export const targetCommVer = "5.2";
 
@@ -330,7 +330,7 @@ export async function connect() {
 	//Load the password if it hasn't been loaded yet
 	if(!isCryptoPasswordSet()) {
 		try {
-			await setCryptoPassword(await getServerPassword());
+			await setCryptoPassword(await getSecureLS(SecureStorageKey.ServerPassword));
 		} catch(error) {
 			console.warn(error);
 		}
