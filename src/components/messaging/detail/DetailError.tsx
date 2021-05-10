@@ -87,7 +87,7 @@ function DetailErrorAuth() {
 			<Typography color="textSecondary" gutterBottom>Please enter your server password</Typography>
 			<TextField label="Password" variant="filled" type="password" autoComplete="current-password" margin="normal" autoFocus
 					   value={password} onChange={updatePassword} onKeyDown={onKeyDown} />
-			<div className={styles.buttonRow}>
+			<div className={`${styles.buttonRow} ${styles.buttonRowReverse}`}>
 				<Button variant="contained" disableElevation onClick={confirm} disabled={password.trim().length === 0 || isLoading}>Continue</Button>
 			</div>
 		</div>

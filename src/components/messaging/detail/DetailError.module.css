@@ -30,9 +30,13 @@
 
 .buttonRow {
 	display: flex;
-	flex-direction: row-reverse;
+	flex-direction: row;
 
 	margin-top: 12px;
+}
+
+.buttonRowReverse {
+	flex-direction: row-reverse;
 }
 
 .buttonRow > button:not(:first-child) {
