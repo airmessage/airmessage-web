@@ -267,6 +267,16 @@ export default class DetailThread extends React.Component<Props, State> {
 		});
 	}
 	
+	private handleAttachmentAdd(files: File[]) {
+		const queuedFiles: QueuedFile[] = files.map((file) => {
+			return {id: this.nextAttachmentID, file: file};
+		});
+		
+		this.setState(state => {
+			return {attachments: state.attachments.concat(...queuedFiles)};
+		});
+	}
+	
 	private readonly handleDragIn = (event: DragEvent) => {
 		event.preventDefault();
 		event.stopPropagation();
@@ -383,7 +393,7 @@ export default class DetailThread extends React.Component<Props, State> {
 				<div className={styles.body}>{body}</div>
 				<div className={styles.input}>
 					<MessageInput placeholder={inputPlaceholder} message={this.state.message} attachments={this.state.attachments}
-								  onMessageChange={this.handleMessageChange.bind(this)} onMessageSubmit={this.handleMessageSubmit.bind(this)} onAttachmentRemove={this.handleAttachmentRemove.bind(this)} />
+								  onMessageChange={this.handleMessageChange.bind(this)} onMessageSubmit={this.handleMessageSubmit.bind(this)} onAttachmentRemove={this.handleAttachmentRemove.bind(this)} onAttachmentAdd={this.handleAttachmentAdd.bind(this)} />
 				</div>
 			</DetailFrame>
 		);
