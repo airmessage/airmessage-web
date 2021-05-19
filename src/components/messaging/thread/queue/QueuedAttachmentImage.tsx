@@ -1,4 +1,5 @@
 import React from "react";
+import styles from "./QueuedAttachmentImage.module.css";
 import QueuedAttachment, {QueuedAttachmentProps} from "./QueuedAttachment";
 import {useBlobURL} from "shared/util/hookUtils";
 
@@ -7,7 +8,7 @@ export function QueuedAttachmentImage(props: {queueData: QueuedAttachmentProps})
 	
 	return (
 		<QueuedAttachment queueData={props.queueData}>
-			<img src={imageURL} alt="" />
+			<img className={styles.image} src={imageURL} alt="" />
 		</QueuedAttachment>
 	);
 }

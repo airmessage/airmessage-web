@@ -1,4 +1,4 @@
-import React, {ChangeEvent} from "react";
+import React, {ChangeEvent, useCallback} from "react";
 import styles from "./MessageInput.module.css";
 
 import {useTheme} from "@material-ui/core/styles";
@@ -16,6 +16,7 @@ interface Props {
 	attachments: QueuedFile[];
 	onMessageChange: (value: string) => void;
 	onMessageSubmit: (message: string, attachments: QueuedFile[]) => void;
+	onAttachmentAdd: (files: File[]) => void;
 	onAttachmentRemove: (value: QueuedFile) => void;
 }
 
@@ -23,20 +24,32 @@ export default function MessageInput(props: Props) {
 	const theme = useTheme();
 	const colorBG = theme.palette.messageIncoming.main;
 	
-	function handleChange(event: ChangeEvent<HTMLTextAreaElement>) {
-		props.onMessageChange(event.target.value);
-	}
+	const {
+		onMessageChange: propsOnMessageChange,
+		onMessageSubmit: propsOnMessageSubmit,
+		message: propsMessage,
+		attachments: propsAttachments,
+		onAttachmentAdd: propsOnAttachmentAdd
+	} = props;
 	
-	function handleKeyPress(event: React.KeyboardEvent<HTMLElement>) {
+	const handleChange = useCallback((event: ChangeEvent<HTMLTextAreaElement>) => {
+		propsOnMessageChange(event.target.value);
+	}, [propsOnMessageChange]);
+	
+	const submitInput = useCallback(() => {
+		propsOnMessageSubmit(propsMessage, propsAttachments);
+	}, [propsOnMessageSubmit, propsMessage, propsAttachments]);
+	
+	const handleKeyPress = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
 		if(!event.shiftKey && event.key === "Enter") {
 			event.preventDefault();
-			props.onMessageSubmit(props.message, props.attachments);
+			submitInput();
 		}
-	}
+	}, [submitInput]);
 	
-	function handleSubmitPress() {
-		props.onMessageSubmit(props.message, props.attachments);
-	}
+	const handlePaste = useCallback((event: React.ClipboardEvent<HTMLElement>) => {
+		propsOnAttachmentAdd(Array.from(event.clipboardData.files));
+	}, [propsOnAttachmentAdd]);
 	
 	return (
 		<div className={styles.root} style={{backgroundColor: colorBG}}>
@@ -60,8 +73,8 @@ export default function MessageInput(props: Props) {
 					</div>
 				}
 				<div className={styles.control}>
-					<InputBase className={styles.textfield} rowsMax="5" multiline fullWidth autoFocus placeholder={props.placeholder} value={props.message} onChange={handleChange} onKeyPress={handleKeyPress} />
-					<IconButton size="small" color="primary" disabled={props.message.trim() === "" && props.attachments.length === 0} onClick={handleSubmitPress}><PushIcon /></IconButton>
+					<InputBase className={styles.textfield} rowsMax="5" multiline fullWidth autoFocus placeholder={props.placeholder} value={props.message} onChange={handleChange} onKeyPress={handleKeyPress} onPaste={handlePaste} />
+					<IconButton size="small" color="primary" disabled={props.message.trim() === "" && props.attachments.length === 0} onClick={submitInput}><PushIcon /></IconButton>
 				</div>
 			</Flipper>
 		</div>

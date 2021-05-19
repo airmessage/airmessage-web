@@ -1,6 +1,6 @@
 {
   "name": "airmessage-react",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "author": "Tagavari",
   "description": "iMessage for the web, Windows, and Linux",
   "private": true,
@@ -62,7 +62,7 @@
     "@material-ui/lab": "^4.0.0-alpha.57",
     "@sentry/react": "^6.2.5",
     "bytebuffer": "^5.0.1",
-    "electron-context-menu": "^2.4.0",
+    "electron-context-menu": "^3.1.0",
     "firebase": "^8.3.2",
     "libphonenumber-js": "^1.9.15",
     "luxon": "^1.25.0",
