@@ -29,6 +29,7 @@ import {playSoundMessageIn, playSoundNotification, playSoundTapback} from "../..
 
 interface Props {
 	theme: Theme;
+	resetCallback?: VoidFunction | undefined;
 }
 
 interface State {
@@ -151,7 +152,7 @@ class Messaging extends React.Component<Props, State> {
 		} else if(detailPane.type === DetailType.Loading) {
 			masterNode = <DetailLoading />;
 		} else if(isDetailPaneError(detailPane)) {
-			masterNode = <DetailError error={detailPane.errorCode} />;
+			masterNode = <DetailError error={detailPane.errorCode} resetCallback={this.props.resetCallback} />;
 		} else if(detailPane.type === DetailType.Welcome) {
 			masterNode = <DetailWelcome />;
 		}

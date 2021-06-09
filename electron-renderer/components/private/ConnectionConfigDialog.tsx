@@ -70,6 +70,12 @@ export default function ConnectionConfigDialog(props: {isOpen: boolean, onDismis
 		return () => ConnectionManager.removeConnectionListener(listener);
 	}, [setConnectionState]);
 	
+	const propsOnApplyConfig = props.onApplyConfig;
+	const finish = useCallback(() => {
+		ConnectionManager.setDisableAutomaticReconnections(false);
+		propsOnApplyConfig();
+	}, [propsOnApplyConfig]);
+	
 	return (
 		<Dialog
 			open={props.isOpen}
@@ -94,10 +100,10 @@ export default function ConnectionConfigDialog(props: {isOpen: boolean, onDismis
 							
 							<span className={styles.bottomBarSpacer} />
 							
-							<Button className={styles.bottomBarButton} variant="text" color="primary">Back</Button>
-							<Button className={styles.bottomBarButton} variant="contained" color="primary" onClick={props.onApplyConfig}>Done</Button>
+							<Button style={{marginRight: 16}} className={styles.bottomBarButton} variant="text" color="primary">Back</Button>
+							<Button className={styles.bottomBarButton} variant="contained" color="primary" onClick={finish}>Done</Button>
 						</>) : (<>
-							{connectionState.type === "disconnected" && connectionState.reason && <ConnectionCard connected={false}>{errorCodeToShortDisplay(connectionState.reason).message}</ConnectionCard>}
+							{connectionState.type === "disconnected" && connectionState.reason !== undefined && <ConnectionCard connected={false}>{errorCodeToShortDisplay(connectionState.reason, true).message}</ConnectionCard>}
 							
 							<span className={styles.bottomBarSpacer} />
 							

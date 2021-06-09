@@ -187,7 +187,11 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		//Checking if the error is automatically recoverable
 		if((reason === ConnectionErrorCode.Connection || reason === ConnectionErrorCode.Internet) && !disableAutomaticReconnections) {
 			//Scheduling a passive reconnection
-			reconnectTimeoutID = setTimeout(connectPassive, reconnectInterval);
+			reconnectTimeoutID = setTimeout(() => {
+				if(!disableAutomaticReconnections) {
+					connectPassive();
+				}
+			}, reconnectInterval);
 		}
 		
 		//Removing the network event listeners

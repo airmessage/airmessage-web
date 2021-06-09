@@ -23,13 +23,14 @@ const buttonActionRetry: ButtonAction = {
 /**
  * Maps a connection error code to a human-readable description and optional action
  * @param error The error code to map
+ * @param isDirect Whether the connection is made directly to the server without the use of a proxy
  */
-export function errorCodeToShortDisplay(error: ConnectionErrorCode): ErrorDisplay {
+export function errorCodeToShortDisplay(error: ConnectionErrorCode, isDirect?: boolean): ErrorDisplay {
 	switch(error) {
 		case ConnectionErrorCode.Connection:
 		case ConnectionErrorCode.Internet:
 			return {
-				message: "No internet connection",
+				message: isDirect ? "Server not reachable" : "No internet connection",
 			};
 		case ConnectionErrorCode.InternalError:
 			return {
@@ -88,7 +89,6 @@ export function errorCodeToShortDisplay(error: ConnectionErrorCode): ErrorDispla
 			};
 		case ConnectionErrorCode.ConnectNoSubscription:
 			return {
-			//message: "Subscription expired"
 				message: "Account not enrolled"
 			};
 		case ConnectionErrorCode.ConnectOtherLocation:

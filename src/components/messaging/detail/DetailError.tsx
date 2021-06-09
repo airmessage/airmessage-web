@@ -36,17 +36,27 @@ const buttonActionRetry: ButtonAction = {
 	}
 }; */
 
-export default function DetailError(props: {error: ConnectionErrorCode}) {
+export default function DetailError(props: {
+	error: ConnectionErrorCode,
+	resetCallback?: VoidFunction | undefined
+}) {
 	return (
 		<div className={styles.container}>
 			<div className={styles.main}>
-				{props.error === ConnectionErrorCode.Unauthorized ? <DetailErrorAuth /> : <DetailErrorMessage error={props.error} />}
+				{props.error === ConnectionErrorCode.Unauthorized ? (
+					<DetailErrorAuth resetCallback={props.resetCallback} />
+				) : (
+					<DetailErrorMessage error={props.error} resetCallback={props.resetCallback} />
+				)}
 			</div>
 		</div>
 	);
 }
 
-function DetailErrorMessage(props: {error: ConnectionErrorCode}) {
+function DetailErrorMessage(props: {
+	error: ConnectionErrorCode,
+	resetCallback?: VoidFunction | undefined
+}) {
 	const errorDisplay = errorCodeToDisplay(props.error);
 	
 	return (<>
@@ -57,12 +67,17 @@ function DetailErrorMessage(props: {error: ConnectionErrorCode}) {
 			<div className={styles.buttonRow}>
 				{errorDisplay.buttonPrimary && <Button variant="contained" disableElevation onClick={errorDisplay.buttonPrimary.onClick}>{errorDisplay.buttonPrimary.label}</Button>}
 				{errorDisplay.buttonSecondary && <Button onClick={errorDisplay.buttonSecondary.onClick}>{errorDisplay.buttonSecondary.label}</Button>}
+				
+				{props.resetCallback && (<>
+					<div style={{flexGrow: 1}} />
+					<Button onClick={props.resetCallback}>Reconfigure</Button>
+				</>)}
 			</div>
 		</div>
 	</>);
 }
 
-function DetailErrorAuth() {
+function DetailErrorAuth(props: {resetCallback?: VoidFunction | undefined}) {
 	const [password, setPassword] = useState("");
 	const updatePassword = useCallback((event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => setPassword(event.target.value), [setPassword]);
 	
@@ -89,6 +104,7 @@ function DetailErrorAuth() {
 					   value={password} onChange={updatePassword} onKeyDown={onKeyDown} />
 			<div className={`${styles.buttonRow} ${styles.buttonRowReverse}`}>
 				<Button variant="contained" disableElevation onClick={confirm} disabled={password.trim().length === 0 || isLoading}>Continue</Button>
+				{props.resetCallback && <Button onClick={props.resetCallback}>Reconfigure</Button>}
 			</div>
 		</div>
 	</>);
