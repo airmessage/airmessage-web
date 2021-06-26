@@ -38,25 +38,26 @@ interface State {
 	historyLoadState: HistoryLoadState;
 }
 
-interface Display {
-	type: "loading" | "error" | "messages";
+enum DisplayType {
+	Loading,
+	Error,
+	Messages
 }
 
-interface DisplayMessages extends Display {
-	type: "messages";
+type DisplayMessages = {
+	type: DisplayType.Messages;
 	data: ConversationItem[];
 }
-
-export function isDisplayMessages(display: Display): display is DisplayMessages {
-	return display.type === "messages";
-}
+type Display = {
+	type: DisplayType.Loading | DisplayType.Error;
+} | DisplayMessages;
 
 export default class DetailThread extends React.Component<Props, State> {
 	readonly dragDropRef = React.createRef<HTMLDivElement>();
 	readonly messageSubmitEmitter = new EventEmitter();
 	
 	state: Readonly<State> = {
-		display: {type: "loading"},
+		display: {type: DisplayType.Loading},
 		unconfirmedMessages: [],
 		title: getFallbackTitle(this.props.conversation),
 		message: "",
@@ -93,7 +94,7 @@ export default class DetailThread extends React.Component<Props, State> {
 	private applyMessageError(error: MessageError, localID: number) {
 		this.setState((prevState) => {
 			//Ignoring if there are no messages
-			if(!isDisplayMessages(prevState.display)) return null;
+			if(prevState.display.type !== DisplayType.Messages) return null;
 			
 			//Updating the message's error state
 			const pendingItems = [...prevState.display.data];
@@ -105,13 +106,13 @@ export default class DetailThread extends React.Component<Props, State> {
 				} as MessageItem;
 			}
 			
-			return {display: {type: "messages", data: pendingItems} as DisplayMessages};
+			return {display: {type: DisplayType.Messages, data: pendingItems}};
 		});
 	}
 	
 	private handleMessageSubmit(messageText: string, queuedFiles: QueuedFile[]) {
 		//Ignoring if there are no messages
-		if(!isDisplayMessages(this.state.display)) return;
+		if(this.state.display.type !== DisplayType.Messages) return;
 		
 		const addedItems: MessageItem[] = [];
 		
@@ -189,7 +190,7 @@ export default class DetailThread extends React.Component<Props, State> {
 					.progress((progressData) => {
 						this.setState((prevState) => {
 							//Ignoring if there are no messages
-							if(!isDisplayMessages(prevState.display)) return null;
+							if(prevState.display.type !== DisplayType.Messages) return null;
 							
 							//Cloning the item array
 							const pendingItems: ConversationItem[] = [...prevState.display.data];
@@ -215,13 +216,13 @@ export default class DetailThread extends React.Component<Props, State> {
 								}
 							}
 							
-							return {display: {type: "messages", data: pendingItems} as DisplayMessages};
+							return {display: {type: DisplayType.Messages, data: pendingItems}};
 						});
 					})
 					.then(() => {
 						this.setState((prevState) => {
 							//Ignoring if there are no messages
-							if(!isDisplayMessages(prevState.display)) return null;
+							if(prevState.display.type !== DisplayType.Messages) return null;
 							
 							//Cloning the item array
 							const pendingItems: ConversationItem[] = [...prevState.display.data];
@@ -236,7 +237,7 @@ export default class DetailThread extends React.Component<Props, State> {
 								} as MessageItem;
 							}
 							
-							return {display: {type: "messages", data: pendingItems} as DisplayMessages};
+							return {display: {type: DisplayType.Messages, data: pendingItems}};
 						});
 					})
 					.catch((error: MessageError) => this.applyMessageError(error, message.localID!));
@@ -331,10 +332,10 @@ export default class DetailThread extends React.Component<Props, State> {
 			if(data.length > 0) {
 				//Add the new items to the end of the array, and reset the load state
 				this.setState((prevState) => {
-					if(!isDisplayMessages(prevState.display)) return null;
+					if(prevState.display.type !== DisplayType.Messages) return null;
 					
 					return {
-						display: {type: "messages", data: prevState.display.data.concat(data)} as DisplayMessages,
+						display: {type: DisplayType.Messages, data: prevState.display.data.concat(data)},
 						historyLoadState: "idle"
 					};
 				});
@@ -354,24 +355,24 @@ export default class DetailThread extends React.Component<Props, State> {
 	private readonly requestMessages = () => {
 		//Fetching thread messages
 		ConnectionManager.fetchThread(this.props.conversation.guid).then(data => {
-			this.setState({display: {type: "messages", data: data} as DisplayMessages});
+			this.setState({display: {type: DisplayType.Messages, data: data}});
 		}).catch(() => {
-			this.setState({display: {type: "error"}});
+			this.setState({display: {type: DisplayType.Error}});
 		});
 	};
 	
 	render() {
 		//Creating the body view (use a loading spinner while conversation details aren't available)
 		let body: React.ReactNode;
-		if(isDisplayMessages(this.state.display)) {
+		if(this.state.display.type === DisplayType.Messages) {
 			body = <MessageList conversation={this.props.conversation} items={this.state.display.data} messageSubmitEmitter={this.messageSubmitEmitter} showHistoryLoader={this.state.historyLoadState === "loading"} onRequestHistory={this.handleRequestHistory} />;
-		} else if(this.state.display.type === "loading") {
+		} else if(this.state.display.type === DisplayType.Loading) {
 			body = (
 				<div className={styles.centerContainer}>
 					<CircularProgress />
 				</div>
 			);
-		} else if(this.state.display.type === "error") {
+		} else if(this.state.display.type === DisplayType.Error) {
 			body = (
 				<div className={styles.centerContainer}>
 					<Typography color="textSecondary" gutterBottom>Couldn&apos;t load this conversation</Typography>
@@ -460,11 +461,11 @@ export default class DetailThread extends React.Component<Props, State> {
 	
 	private readonly onMessageUpdate = (itemArray: ConversationItem[]): void => {
 		//Ignoring if the chat isn't loaded
-		if(!isDisplayMessages(this.state.display)) return;
+		if(this.state.display.type !== DisplayType.Messages) return;
 		
 		//Merging the item into the conversation
 		this.setState((prevState, props) => {
-			if(!isDisplayMessages(prevState.display)) return null;
+			if(prevState.display.type !== DisplayType.Messages) return null;
 			
 			//Filtering out items that aren't part of this conversation
 			const newItemArray = itemArray.filter((item) => item.chatGuid === props.conversation.guid);
@@ -516,17 +517,17 @@ export default class DetailThread extends React.Component<Props, State> {
 			//Adding new unmatched conversation items to the start of the array
 			pendingItemArray.unshift(...newItemArray);
 			
-			return {display: {type: "messages", data: pendingItemArray} as DisplayMessages};
+			return {display: {type: DisplayType.Messages, data: pendingItemArray}};
 		});
 	};
 	
 	private readonly onModifierUpdate = (itemArray: MessageModifier[]): void => {
 		//Ignoring if the chat isn't loaded
-		if(!isDisplayMessages(this.state.display)) return;
+		if(this.state.display.type !== DisplayType.Messages) return;
 		
 		//Updating affected messages
 		this.setState((prevState) => {
-			if(!isDisplayMessages(prevState.display)) return null;
+			if(prevState.display.type !== DisplayType.Messages) return null;
 			
 			//Cloning the item array
 			const pendingItemArray: ConversationItem[] = [...prevState.display.data];
@@ -561,7 +562,7 @@ export default class DetailThread extends React.Component<Props, State> {
 				}
 			}
 			
-			return {display: {type: "messages", data: pendingItemArray} as DisplayMessages};
+			return {display: {type: DisplayType.Messages, data: pendingItemArray}};
 		});
 	};
 }
