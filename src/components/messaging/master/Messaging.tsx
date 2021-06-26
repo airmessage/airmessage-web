@@ -46,27 +46,15 @@ enum DetailType {
 	Welcome,
 }
 
-interface DetailPane {
-	type: DetailType;
-}
-
-interface DetailPaneThread extends DetailPane {
+type DetailPane = {
+	type: DetailType.Create | DetailType.Loading | DetailType.Welcome;
+} | {
 	type: DetailType.Thread;
 	conversationGUID: string;
-}
-
-interface DetailPaneError extends DetailPane {
+} | {
 	type: DetailType.Error;
 	errorCode: ConnectionErrorCode;
-}
-
-function isDetailPaneThread(pane: DetailPane): pane is DetailPaneThread {
-	return pane.type === DetailType.Thread;
-}
-
-function isDetailPaneError(pane: DetailPane): pane is DetailPaneError {
-	return pane.type === DetailType.Error;
-}
+};
 
 interface PendingConversationData {
 	latestMessage: MessageItem;
@@ -95,7 +83,7 @@ class Messaging extends React.Component<Props, State> {
 						this.setState({
 							conversations: data,
 							conversationsAvailable: true,
-							detailPane: {type: DetailType.Thread, conversationGUID: data[0].guid} as DetailPaneThread
+							detailPane: {type: DetailType.Thread, conversationGUID: data[0].guid}
 						});
 					} else {
 						this.setState({
@@ -120,7 +108,7 @@ class Messaging extends React.Component<Props, State> {
 			if(!this.state.conversationsAvailable) {
 				//Displaying the full-screen error pane
 				this.setState({
-					detailPane: {type: DetailType.Error, errorCode: error} as DetailPaneError
+					detailPane: {type: DetailType.Error, errorCode: error}
 				});
 			} else {
 				//Displaying an error in the sidebar
@@ -143,17 +131,24 @@ class Messaging extends React.Component<Props, State> {
 		const detailPane = this.state.detailPane;
 		
 		let masterNode: React.ReactNode;
-		if(isDetailPaneThread(detailPane)) {
-			const conversation: Conversation = this.state.conversations.find(item => item.guid === detailPane.conversationGUID)!;
-			masterNode = <DetailThread conversation={conversation} key={conversation.guid}/>;
-		} else if(detailPane.type === DetailType.Create) {
-			masterNode = <DetailCreate onConversationCreated={this.onConversationCreated} />;
-		} else if(detailPane.type === DetailType.Loading) {
-			masterNode = <DetailLoading />;
-		} else if(isDetailPaneError(detailPane)) {
-			masterNode = <DetailError error={detailPane.errorCode} />;
-		} else if(detailPane.type === DetailType.Welcome) {
-			masterNode = <DetailWelcome />;
+		switch(detailPane.type) {
+			case DetailType.Thread: {
+				const conversation: Conversation = this.state.conversations.find(item => item.guid === detailPane.conversationGUID)!;
+				masterNode = <DetailThread conversation={conversation} key={conversation.guid}/>;
+				break;
+			}
+			case DetailType.Create:
+				masterNode = <DetailCreate onConversationCreated={this.onConversationCreated} />;
+				break;
+			case DetailType.Loading:
+				masterNode = <DetailLoading />;
+				break;
+			case DetailType.Error:
+				masterNode = <DetailError error={detailPane.errorCode} />;
+				break;
+			case DetailType.Welcome:
+				masterNode = <DetailWelcome />;
+				break;
 		}
 		
 		return (
@@ -162,7 +157,7 @@ class Messaging extends React.Component<Props, State> {
 					<div className={styles.splitDetail} style={{backgroundColor: sidebarBG}}>
 						<Sidebar
 							conversations={this.state.conversationsAvailable ? this.state.conversations : undefined}
-							selectedConversation={(isDetailPaneThread(detailPane) && detailPane.conversationGUID) || undefined}
+							selectedConversation={detailPane.type === DetailType.Thread ? detailPane.conversationGUID : undefined}
 							onConversationSelected={this.onConversationSelected}
 							onCreateSelected={this.onCreateSelected}
 							errorBanner={(typeof this.state.sidebarBanner === "number") ? this.state.sidebarBanner : undefined} />
@@ -191,13 +186,13 @@ class Messaging extends React.Component<Props, State> {
 				
 				return {
 					conversations: pendingConversations,
-					detailPane: {type: DetailType.Thread, conversationGUID: conversationID} as DetailPaneThread
+					detailPane: {type: DetailType.Thread, conversationGUID: conversationID}
 				};
 			} else {
 				//Just select the conversation
 				return {
 					conversations: prevState.conversations,
-					detailPane: {type: DetailType.Thread, conversationGUID: conversationID} as DetailPaneThread
+					detailPane: {type: DetailType.Thread, conversationGUID: conversationID}
 				};
 			}
 		});
@@ -277,7 +272,8 @@ class Messaging extends React.Component<Props, State> {
 			return accumulator;
 		}
 		
-		const selectedConversationGUID: string | undefined = isDetailPaneThread(this.state.detailPane) ? this.state.detailPane.conversationGUID : undefined;
+		const selectedConversationGUID = this.state.detailPane.type === DetailType.Thread ?
+			this.state.detailPane.conversationGUID : undefined;
 		
 		//Finding the most recent item per chat
 		const topItems = itemArray.reduce((accumulator: {[index: string]: [MessageItem, number]}, item: ConversationItem) => {
@@ -417,7 +413,7 @@ class Messaging extends React.Component<Props, State> {
 					...pendingConversationArray[matchedConversationIndex],
 					preview: messageItemToConversationPreview(conversationItem)
 				};
-				if(!(isDetailPaneThread(prevState.detailPane) && prevState.detailPane.conversationGUID === chatGUID) && conversationItem.sender) updatedConversation.unreadMessages = true;
+				if(!(prevState.detailPane.type === DetailType.Thread && prevState.detailPane.conversationGUID === chatGUID) && conversationItem.sender) updatedConversation.unreadMessages = true;
 				
 				//Re-sorting the conversation into the list
 				pendingConversationArray.splice(matchedConversationIndex, 1);
