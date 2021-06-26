@@ -36,6 +36,7 @@ export interface ConversationItem {
 }
 
 export interface MessageItem extends ConversationItem {
+	readonly itemType: ConversationItemType.Message;
 	readonly text?: string;
 	readonly subject?: string;
 	readonly sender?: string;
@@ -87,12 +88,14 @@ export interface TapbackItem extends MessageModifier {
 }
 
 export interface ParticipantAction extends ConversationItem {
+	readonly itemType: ConversationItemType.ParticipantAction;
 	readonly type: ParticipantActionType;
 	readonly user?: string;
 	readonly target?: string;
 }
 
 export interface ChatRenameAction extends ConversationItem {
+	readonly itemType: ConversationItemType.ChatRenameAction;
 	readonly user: string;
 	readonly chatName: string;
 }

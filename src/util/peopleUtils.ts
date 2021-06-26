@@ -13,6 +13,7 @@ export interface AddressData {
 }
 
 export interface PersonData {
+	id: string;
 	name?: string;
 	avatar?: string;
 	addresses: AddressData[];

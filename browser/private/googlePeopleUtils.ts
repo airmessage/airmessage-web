@@ -116,6 +116,7 @@ async function loadPeople(): Promise<{personArray: PersonData[], contactMap: Map
 }
 
 function googlePersonToPersonData(person: gapi.client.people.Person): PersonData {
+	const id = person.resourceName;
 	const name = person.names?.[0].displayName;
 	const avatar = person.photos?.[0]?.url;
 	const addresses: AddressData[] = [
@@ -134,6 +135,7 @@ function googlePersonToPersonData(person: gapi.client.people.Person): PersonData
 	];
 	
 	return {
+		id: id,
 		name: name,
 		avatar: avatar,
 		addresses: addresses

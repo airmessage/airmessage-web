@@ -223,7 +223,7 @@ export default function DetailCreate(props: {onConversationCreated: (conversatio
 								<React.Fragment key={`section-${firstLetter}`}>
 									<ListSubheader>{firstLetter}</ListSubheader>
 									{people.map((person) => (
-										<div key={`person-${person.name}`} className={styles.contactRoot}>
+										<div key={person.id} className={styles.contactRoot}>
 											<Avatar src={person.avatar} alt={person.name} />
 											<div className={styles.contactText}>
 												<Typography variant="body1" color="textPrimary">{person.name}</Typography>
