@@ -14,7 +14,7 @@ export const DetailFrame = React.forwardRef<HTMLDivElement, Props>((props, ref) 
 	return (
 		<div className={styles.root} ref={ref}>
 			<Toolbar>
-				<Typography variant="h6">{props.title}</Typography>
+				<Typography className={styles.title} variant="h6" noWrap>{props.title}</Typography>
 			</Toolbar>
 			<SoftDivider />
 			{props.children}
