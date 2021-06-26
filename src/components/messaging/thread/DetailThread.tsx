@@ -47,7 +47,7 @@ enum DisplayType {
 type DisplayMessages = {
 	type: DisplayType.Messages;
 	data: ConversationItem[];
-}
+};
 type Display = {
 	type: DisplayType.Loading | DisplayType.Error;
 } | DisplayMessages;
