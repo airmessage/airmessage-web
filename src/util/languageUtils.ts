@@ -86,10 +86,9 @@ export function errorCodeToShortDisplay(error: ConnectionErrorCode): ErrorDispla
 					}
 				}
 			};
-		case ConnectionErrorCode.ConnectNoSubscription:
+		case ConnectionErrorCode.ConnectNoActivation:
 			return {
-			//message: "Subscription expired"
-				message: "Account not enrolled"
+				message: "Account not activated"
 			};
 		case ConnectionErrorCode.ConnectOtherLocation:
 			return {

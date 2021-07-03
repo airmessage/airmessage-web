@@ -128,14 +128,10 @@ function errorCodeToDisplay(error: ConnectionErrorCode): ErrorDisplay {
 					}
 				}
 			};
-		case ConnectionErrorCode.ConnectNoSubscription:
-		/* return {
-			title: "Your account has no active subscription",
-			subtitle: "Please subscribe to AirMessage+ to use AirMessage for web"
-		}; */
+		case ConnectionErrorCode.ConnectNoActivation:
 			return {
-				title: "Your account isn't registered",
-				subtitle: "Please enroll your account in the early access program at <a href='https://airmessage.org/cloud' style='text-decoration: none; color: #448AFF;'>airmessage.org/cloud</a>.",
+				title: "Your account isn't activated",
+				subtitle: "Unfortunately, AirMessage Cloud is not accepting new users at this moment. Please try again later.",
 			};
 		case ConnectionErrorCode.ConnectOtherLocation:
 			return {

@@ -74,5 +74,5 @@ export const closeCodeNoGroup = 4001; //There is no active group with a matching
 export const closeCodeNoCapacity = 4002; //The client's group is at capacity
 export const closeCodeAccountValidation = 4003; //This account couldn't be validated
 export const closeCodeServerTokenRefresh = 4004; //The server's provided installation ID is out of date; log in again to re-link this device
-export const closeCodeNoSubscription = 4005; //This user does not have an active subscription
+export const closeCodeNoActivation = 4005; //This user's account is not activated
 export const closeCodeOtherLocation = 4006; //Logged in from another location
