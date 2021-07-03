@@ -129,8 +129,8 @@ export default class DataProxyConnect extends DataProxy {
 				return ConnectionErrorCode.ConnectNoCapacity;
 			case NHT.closeCodeAccountValidation:
 				return ConnectionErrorCode.ConnectAccountValidation;
-			case NHT.closeCodeNoSubscription:
-				return ConnectionErrorCode.ConnectNoSubscription;
+			case NHT.closeCodeNoActivation:
+				return ConnectionErrorCode.ConnectNoActivation;
 			case NHT.closeCodeOtherLocation:
 				return ConnectionErrorCode.ConnectOtherLocation;
 			default:

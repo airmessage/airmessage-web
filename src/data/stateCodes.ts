@@ -43,7 +43,7 @@ export enum ConnectionErrorCode {
 	ConnectNoGroup,
 	ConnectNoCapacity,
 	ConnectAccountValidation,
-	ConnectNoSubscription,
+	ConnectNoActivation,
 	ConnectOtherLocation
 }
 
