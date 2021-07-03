@@ -1,2 +1,2 @@
-- Fixed long conversation titles extending beyond the width of the window
+- Updated language strings for activation errors
 - Updated dependencies
