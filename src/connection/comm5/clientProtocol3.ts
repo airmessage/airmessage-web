@@ -33,7 +33,7 @@ import {
 import {arrayBufferToHex} from "../../util/fileUtils";
 import SparkMD5 from "spark-md5";
 import {InflatorAccumulator} from "../transferAccumulator";
-import {encryptData} from "shared/util/encryptionUtils";
+import {encryptData, isCryptoPasswordAvailable} from "shared/util/encryptionUtils";
 
 
 const attachmentChunkSize = 2 * 1024 * 1024; //2 MiB
@@ -157,7 +157,7 @@ export default class ClientProtocol3 extends ProtocolManager {
 				this.communicationsManager.disconnect(ConnectionErrorCode.Connection);
 				break;
 			case nhtPing: {
-			//Replying with a pong
+				//Replying with a pong
 				const packer = AirPacker.get();
 				try {
 					packer.packInt(nhtPong);
@@ -230,7 +230,7 @@ export default class ClientProtocol3 extends ProtocolManager {
 					this.communicationsManager.disconnect(ConnectionErrorCode.BadRequest);
 					break;
 				case NRCAuthenticationResult.Unauthorized:
-					this.communicationsManager.disconnect(ConnectionErrorCode.DirectUnauthorized);
+					this.communicationsManager.disconnect(ConnectionErrorCode.Unauthorized);
 					break;
 				default:
 					this.communicationsManager.disconnect(ConnectionErrorCode.Connection);
@@ -365,6 +365,13 @@ export default class ClientProtocol3 extends ProtocolManager {
 		
 		//Checking if the current protocol requires authentication
 		if(unpacker.unpackBoolean()) {
+			//Checking if we don't have a password to use
+			if(!isCryptoPasswordAvailable()) {
+				//Failing the connection
+				this.communicationsManager.disconnect(ConnectionErrorCode.Unauthorized);
+				return false;
+			}
+			
 			//Reading the transmission check
 			const transmissionCheck = unpacker.unpackPayload();
 			

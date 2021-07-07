@@ -13,3 +13,9 @@ export const firebaseConfig = {
 };
 
 export const sentryDSN = undefined;
+
+export const jwkLocalEncryption: JsonWebKey = {
+	kty: "oct",
+	k: "s9lDeHtl0rh-3FpBDZwQvw",
+	alg: "A128GCM"
+};

@@ -164,7 +164,7 @@ export default class Sidebar extends React.Component<Props, State> {
 					</Menu>
 				</Toolbar>
 				
-				{this.props.errorBanner && <ConnectionBanner error={this.props.errorBanner} /> }
+				{this.props.errorBanner !== undefined && <ConnectionBanner error={this.props.errorBanner} /> }
 				
 				{
 					this.props.conversations ? <Flipper flipKey={this.props.conversations.map(conversation => conversation.guid).join(" ")} className={styles.sidebarList}>

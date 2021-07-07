@@ -9,6 +9,7 @@ import "firebase/auth";
 import {getInstallationID} from "shared/util/installationUtils";
 import {ConnectionErrorCode} from "shared/data/stateCodes";
 import {connectHostname} from "shared/secrets";
+import {decryptData, isCryptoPasswordAvailable} from "shared/util/encryptionUtils";
 
 const handshakeTimeoutTime = 8 * 1000;
 
@@ -95,11 +96,44 @@ export default class DataProxyConnect extends DataProxy {
 				break;
 			}
 			case NHT.nhtClientProxy: {
+				/*
+				 * App-level encryption was added at a later date,
+				 * so we use a hack by checking the first byte of the message.
+				 *
+				 * All message types will have the first byte as 0 or -1,
+				 * so we can check for other values here.
+				 *
+				 * If we find a match, assume that this was intentional from the server.
+				 * Otherwise, backtrack and assume the server doesn't support encryption.
+				 *
+				 * -100 -> The content is encrypted
+				 * -101 -> The content is not encrypted, but the server has encryption enabled
+				 * -102 -> The server has encryption disabled
+				 * Anything else -> The server does not support encryption
+				 */
+				let isSecure: boolean, isEncrypted: boolean;
+				const encryptionValue = byteBuffer.readByte();
+				if(encryptionValue === -100) isSecure = isEncrypted = true;
+				else if(encryptionValue === -101) isSecure = isEncrypted = false;
+				else {
+					isSecure = true;
+					isEncrypted = false;
+					if(encryptionValue != -102) {
+						byteBuffer.offset -= 1;
+					}
+				}
+				
 				//Reading the data
 				const data = byteBuffer.compact().toArrayBuffer();
 				
-				//Handling the message
-				this.notifyMessage(data, true);
+				if(isEncrypted && isCryptoPasswordAvailable()) {
+					decryptData(data).then((data) => {
+						this.notifyMessage(data, isSecure);
+					});
+				} else {
+					//Handling the message right away
+					this.notifyMessage(data, isSecure);
+				}
 				
 				break;
 			}

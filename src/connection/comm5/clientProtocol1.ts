@@ -223,7 +223,7 @@ export default class ClientProtocol1 extends ProtocolManager {
 					this.communicationsManager.disconnect(ConnectionErrorCode.BadRequest);
 					break;
 				case NRCAuthenticationResult.Unauthorized:
-					this.communicationsManager.disconnect(ConnectionErrorCode.DirectUnauthorized);
+					this.communicationsManager.disconnect(ConnectionErrorCode.Unauthorized);
 					break;
 				default:
 					this.communicationsManager.disconnect(ConnectionErrorCode.Connection);

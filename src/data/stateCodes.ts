@@ -35,9 +35,7 @@ export enum ConnectionErrorCode {
 	BadRequest,
 	ClientOutdated,
 	ServerOutdated,
-	
-	//Direct proxy error codes
-	DirectUnauthorized,
+	Unauthorized,
 	
 	//Connect proxy error codes
 	ConnectNoGroup,
