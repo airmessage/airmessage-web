@@ -4,7 +4,7 @@ import {Button, TextField, Typography} from "@material-ui/core";
 import WifiOffRoundedIcon from "@material-ui/icons/WifiOffRounded";
 import LockRoundedIcon from "@material-ui/icons/LockRounded";
 import {ConnectionErrorCode} from "../../../data/stateCodes";
-import {connect, connect as connectToServer} from "../../../connection/connectionManager";
+import {connect} from "../../../connection/connectionManager";
 import firebase from "firebase/app";
 import "firebase/auth";
 import {setCryptoPassword} from "shared/util/encryptionUtils";
@@ -24,9 +24,7 @@ interface ButtonAction {
 
 const buttonActionRetry: ButtonAction = {
 	label: "Retry",
-	onClick: () => {
-		connectToServer();
-	}
+	onClick: connect
 };
 
 /* const buttonActionMoreInfo: ButtonAction = {

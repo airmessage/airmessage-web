@@ -118,7 +118,7 @@ export default class DataProxyConnect extends DataProxy {
 				else {
 					isSecure = true;
 					isEncrypted = false;
-					if(encryptionValue != -102) {
+					if(encryptionValue !== -102) {
 						byteBuffer.offset -= 1;
 					}
 				}
