@@ -1,16 +1,17 @@
 import React from "react";
-import ReactMarkdown from "markdown-to-jsx";
+import ReactMarkdown, {MarkdownToJSX} from "markdown-to-jsx";
 import {Theme, withStyles} from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import Link from "@material-ui/core/Link";
+import {makeStyles} from "@material-ui/core";
 
-const styles = (theme: Theme) => ({
+const useStyles = makeStyles((theme: Theme) => ({
 	listItem: {
 		marginTop: theme.spacing(1),
 	}
-});
+}));
 
-const options = {
+const options: MarkdownToJSX.Options = {
 	overrides: {
 		h1: {
 			component: Typography,
@@ -29,8 +30,8 @@ const options = {
 		p: { component: Typography, props: { paragraph: true } },
 		a: { component: Link },
 		li: {
-			component: withStyles(styles)(({...props}) => (
-				<li className={(props as any).classes.listItem}>
+			component: React.memo(({...props}) => (
+				<li className={useStyles().listItem}>
 					<Typography component="span" {...props} />
 				</li>
 			)),

@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import styles from "../item/Message.module.css";
 import stylesImage from "./MessageAttachmentImage.module.css";
 
-import {Backdrop, ButtonBase, createMuiTheme, IconButton, Toolbar, Tooltip, Typography} from "@material-ui/core";
+import {Backdrop, ButtonBase, createTheme, IconButton, Toolbar, Tooltip, Typography} from "@material-ui/core";
 import {ThemeProvider} from "@material-ui/core/styles";
 import ArrowBackIcon from "@material-ui/icons/ArrowBack";
 import SaveAltIcon from "@material-ui/icons/SaveAlt";
@@ -14,7 +14,7 @@ export default function MessageAttachmentImage(props: {data: ArrayBuffer | Blob,
 	const [imageURL, setImageURL] = useState<string | undefined>(undefined);
 	const [previewOpen, setPreviewOpen] = useState(false);
 	
-	const theme = createMuiTheme({
+	const theme = createTheme({
 		palette: {
 			type: "dark",
 			messageIncoming: undefined,

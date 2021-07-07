@@ -20,8 +20,8 @@
   "devDependencies": {
     "@electron/typescript-definitions": "^8.8.0",
     "@types/bytebuffer": "^5.0.42",
-    "@types/gapi": "^0.0.39",
-    "@types/gapi.auth2": "^0.0.54",
+    "@types/gapi": "^0.0.40",
+    "@types/gapi.auth2": "^0.0.55",
     "@types/gapi.people": "^1.0.5",
     "@types/luxon": "^1.26.3",
     "@types/pako": "^1.0.1",
