@@ -1,2 +1,2 @@
-- Updated language strings for activation errors
+- Added support for end-to-end encrypted messaging
 - Updated dependencies
