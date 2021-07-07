@@ -5,7 +5,7 @@ export function setCookie(name: string, value: string) {
 export function hasCookie(name: string): boolean {
 	return document.cookie.match(new RegExp(
 		"(?:^|; )" + name.replace(/([.$?*|{}()[\]\\/+^])/g, "\\$1") + "=([^;]*)"
-	)) != null;
+	)) !== null;
 }
 
 

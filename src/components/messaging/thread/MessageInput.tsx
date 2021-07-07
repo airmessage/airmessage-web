@@ -73,7 +73,7 @@ export default function MessageInput(props: Props) {
 					</div>
 				}
 				<div className={styles.control}>
-					<InputBase className={styles.textfield} rowsMax="5" multiline fullWidth autoFocus placeholder={props.placeholder} value={props.message} onChange={handleChange} onKeyPress={handleKeyPress} onPaste={handlePaste} />
+					<InputBase className={styles.textfield} maxRows="5" multiline fullWidth autoFocus placeholder={props.placeholder} value={props.message} onChange={handleChange} onKeyPress={handleKeyPress} onPaste={handlePaste} />
 					<IconButton size="small" color="primary" disabled={props.message.trim() === "" && props.attachments.length === 0} onClick={submitInput}><PushIcon /></IconButton>
 				</div>
 			</Flipper>

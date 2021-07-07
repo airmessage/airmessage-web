@@ -15,6 +15,8 @@ import EventEmitter from "../util/eventEmitter";
 import ProgressPromise from "../util/progressPromise";
 import promiseTimeout from "../util/promiseTimeout";
 import {TransferAccumulator} from "./transferAccumulator";
+import {isCryptoPasswordSet, setCryptoPassword} from "shared/util/encryptionUtils";
+import {getSecureLS, SecureStorageKey} from "shared/util/secureStorageUtils";
 
 export const targetCommVer = "5.2";
 
@@ -185,7 +187,11 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		//Checking if the error is automatically recoverable
 		if((reason === ConnectionErrorCode.Connection || reason === ConnectionErrorCode.Internet) && !disableAutomaticReconnections) {
 			//Scheduling a passive reconnection
-			reconnectTimeoutID = setTimeout(connectPassive, reconnectInterval);
+			reconnectTimeoutID = setTimeout(() => {
+				if(!disableAutomaticReconnections) {
+					connectPassive();
+				}
+			}, reconnectInterval);
 		}
 		
 		//Removing the network event listeners
@@ -324,7 +330,16 @@ function generateRequestID(): number {
 	return requestID;
 }
 
-export function connect() {
+export async function connect() {
+	//Load the password if it hasn't been loaded yet
+	if(!isCryptoPasswordSet()) {
+		try {
+			await setCryptoPassword(await getSecureLS(SecureStorageKey.ServerPassword));
+		} catch(error) {
+			console.warn(error);
+		}
+	}
+	
 	//Checking if a passive reconnection is in progress
 	if(isConnectingPassively) {
 		//Bringing the state from passive to the foreground

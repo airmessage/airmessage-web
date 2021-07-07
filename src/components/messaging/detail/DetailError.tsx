@@ -1,11 +1,14 @@
-import React from "react";
+import React, {useCallback, useState} from "react";
 import styles from "./DetailError.module.css";
-import {Button, Typography} from "@material-ui/core";
+import {Button, TextField, Typography} from "@material-ui/core";
 import WifiOffRoundedIcon from "@material-ui/icons/WifiOffRounded";
+import LockRoundedIcon from "@material-ui/icons/LockRounded";
 import {ConnectionErrorCode} from "../../../data/stateCodes";
-import {connect as connectToServer} from "../../../connection/connectionManager";
+import {connect} from "../../../connection/connectionManager";
 import firebase from "firebase/app";
 import "firebase/auth";
+import {setCryptoPassword} from "shared/util/encryptionUtils";
+import {SecureStorageKey, setSecureLS} from "shared/util/secureStorageUtils";
 
 interface ErrorDisplay {
 	title: string;
@@ -21,9 +24,7 @@ interface ButtonAction {
 
 const buttonActionRetry: ButtonAction = {
 	label: "Retry",
-	onClick: () => {
-		connectToServer();
-	}
+	onClick: connect
 };
 
 /* const buttonActionMoreInfo: ButtonAction = {
@@ -33,24 +34,78 @@ const buttonActionRetry: ButtonAction = {
 	}
 }; */
 
-export default function DetailError(props: {error: ConnectionErrorCode}) {
-	const errorDisplay = errorCodeToDisplay(props.error);
-	
+export default function DetailError(props: {
+	error: ConnectionErrorCode,
+	resetCallback?: VoidFunction | undefined
+}) {
 	return (
 		<div className={styles.container}>
 			<div className={styles.main}>
-				<WifiOffRoundedIcon className={styles.icon} />
-				<div className={styles.split}>
-					<Typography variant="h4" gutterBottom>{errorDisplay.title}</Typography>
-					<Typography color="textSecondary" gutterBottom dangerouslySetInnerHTML={{__html: errorDisplay.subtitle}} />
-					<div className={styles.buttonRow}>
-						{errorDisplay.buttonPrimary && <Button variant="contained" disableElevation onClick={errorDisplay.buttonPrimary.onClick}>{errorDisplay.buttonPrimary.label}</Button>}
-						{errorDisplay.buttonSecondary && <Button onClick={errorDisplay.buttonSecondary.onClick}>{errorDisplay.buttonSecondary.label}</Button>}
-					</div>
-				</div>
+				{props.error === ConnectionErrorCode.Unauthorized ? (
+					<DetailErrorAuth resetCallback={props.resetCallback} />
+				) : (
+					<DetailErrorMessage error={props.error} resetCallback={props.resetCallback} />
+				)}
 			</div>
 		</div>
 	);
+}
+
+function DetailErrorMessage(props: {
+	error: ConnectionErrorCode,
+	resetCallback?: VoidFunction | undefined
+}) {
+	const errorDisplay = errorCodeToDisplay(props.error);
+	
+	return (<>
+		<WifiOffRoundedIcon className={styles.icon} />
+		<div className={styles.split}>
+			<Typography variant="h4" gutterBottom>{errorDisplay.title}</Typography>
+			<Typography color="textSecondary" gutterBottom dangerouslySetInnerHTML={{__html: errorDisplay.subtitle}} />
+			<div className={styles.buttonRow}>
+				{errorDisplay.buttonPrimary && <Button variant="contained" disableElevation onClick={errorDisplay.buttonPrimary.onClick}>{errorDisplay.buttonPrimary.label}</Button>}
+				{errorDisplay.buttonSecondary && <Button onClick={errorDisplay.buttonSecondary.onClick}>{errorDisplay.buttonSecondary.label}</Button>}
+				
+				{props.resetCallback && (<>
+					<div style={{flexGrow: 1}} />
+					<Button onClick={props.resetCallback}>Reconfigure</Button>
+				</>)}
+			</div>
+		</div>
+	</>);
+}
+
+function DetailErrorAuth(props: {resetCallback?: VoidFunction | undefined}) {
+	const [password, setPassword] = useState("");
+	const updatePassword = useCallback((event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => setPassword(event.target.value), [setPassword]);
+	
+	const [isLoading, setIsLoading] = useState(false);
+	const confirm = useCallback(() => {
+		if(password.trim().length === 0) return;
+		
+		setIsLoading(true);
+		Promise.all([setCryptoPassword(password), setSecureLS(SecureStorageKey.ServerPassword, password)]).then(connect);
+	}, [setIsLoading, password]);
+	const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+		//Confirm when enter is pressed
+		if(event.key === "Enter") {
+			confirm();
+		}
+	}, [confirm]);
+	
+	return (<>
+		<LockRoundedIcon className={styles.icon} />
+		<div className={styles.split}>
+			<Typography variant="h4" gutterBottom>Server is password-protected</Typography>
+			<Typography color="textSecondary" gutterBottom>Please enter your server password</Typography>
+			<TextField label="Password" variant="filled" type="password" autoComplete="current-password" margin="normal" autoFocus
+					   value={password} onChange={updatePassword} onKeyDown={onKeyDown} />
+			<div className={`${styles.buttonRow} ${styles.buttonRowReverse}`}>
+				<Button variant="contained" disableElevation onClick={confirm} disabled={password.trim().length === 0 || isLoading}>Continue</Button>
+				{props.resetCallback && <Button onClick={props.resetCallback}>Reconfigure</Button>}
+			</div>
+		</div>
+	</>);
 }
 
 const errorTitleSystems = "An error occurred while connecting";
@@ -99,7 +154,7 @@ function errorCodeToDisplay(error: ConnectionErrorCode): ErrorDisplay {
 				subtitle: "AirMessage Server is out of date - please update AirMessage Server on your Mac and try again",
 				buttonPrimary: buttonActionRetry
 			};
-		case ConnectionErrorCode.DirectUnauthorized:
+		case ConnectionErrorCode.Unauthorized:
 			return {
 				title: "Your password was not accepted",
 				subtitle: "Please check your password and try again",

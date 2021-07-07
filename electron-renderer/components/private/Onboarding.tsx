@@ -53,7 +53,6 @@ export default function Onboarding(props: {onApplyConfig: VoidFunction}) {
 						
 						<div className={styles.buttonColumn} style={{marginLeft: 24, flexGrow: 1}}>
 							<Typography variant="subtitle1" gutterBottom>Select a sign-in method:</Typography>
-							{/*<Button className={styles.buttonGoogle} variant="contained" startIcon={<img src={iconGoogle} alt="" />} style={{marginTop: 4}} onClick={signInGoogle} fullWidth>Sign in with Google</Button>*/}
 							<Button className={styles.buttonManual} variant="outlined" startIcon={<EthernetIcon />} style={{marginTop: 8}} onClick={() => setShowConfigDialog(true)} fullWidth>Use manual configuration</Button>
 						</div>
 					</div>

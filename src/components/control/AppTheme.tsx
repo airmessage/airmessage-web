@@ -1,12 +1,12 @@
 import React from "react";
 
 import {ThemeProvider} from "@material-ui/core/styles";
-import {createMuiTheme, CssBaseline, useMediaQuery} from "@material-ui/core";
+import {createTheme, CssBaseline, useMediaQuery} from "@material-ui/core";
 
 export default function AppTheme(props: {children: React.ReactNode}) {
 	const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 	
-	const theme = React.useMemo(() => createMuiTheme({
+	const theme = React.useMemo(() => createTheme({
 		typography: {
 			fontFamily: [
 				"-apple-system",
