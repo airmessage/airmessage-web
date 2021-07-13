@@ -169,12 +169,15 @@ export default function DetailCreate(props: {onConversationCreated: (conversatio
 						date: new Date()
 					}
 				});
-			}).catch((reason: [CreateChatErrorCode, string | undefined]) => {
+			}).catch(([errorCode, errorDesc]: [CreateChatErrorCode, string | undefined]) => {
 				//Cancelling loading
 				setLoading(false);
 				
 				//Displaying a snackbar
 				displaySnackbar({message: "Failed to create conversation"});
+				
+				//Logging the error
+				console.warn(`Failed to create chat: ${errorCode} / ${errorDesc}`);
 			});
 	}
 	
