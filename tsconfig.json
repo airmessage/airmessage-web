@@ -32,8 +32,8 @@
 	"include": [
 		"src",
 		"browser",
-		"electron-main",
-		"electron-renderer",
-		"index.d.ts"
+		"windows/web",
+		"index.d.ts",
+		"window.ts"
 	]
 }

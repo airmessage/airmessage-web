@@ -21,7 +21,7 @@ if(WPEnv.ENVIRONMENT === "production") {
 }
 
 //Browser-specific features
-if(!WPEnv.IS_ELECTRON) {
+if(WPEnv.IS_WEB) {
 	//Initializing Firebase
 	firebase.initializeApp(secrets.firebaseConfig);
 	

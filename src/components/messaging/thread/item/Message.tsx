@@ -14,7 +14,7 @@ import {
 	Typography
 } from "@material-ui/core";
 import {getDeliveryStatusTime, getTimeDivider} from "../../../../util/dateUtils";
-import {ContactData, findPerson} from "../../../../util/peopleUtils";
+import {findPerson} from "../../../../util/peopleUtils";
 import {MessageErrorCode, MessageStatusCode} from "../../../../data/stateCodes";
 import MessageAttachmentDownloadable from "../attachment/MessageAttachmentDownloadable";
 import MessageAttachmentImage from "../attachment/MessageAttachmentImage";
@@ -27,6 +27,7 @@ import {colorFromContact} from "../../../../util/avatarUtils";
 import {Anchorme} from "react-anchorme";
 import {PaletteColor} from "@material-ui/core/styles/createPalette";
 import {appleServiceAppleMessage} from "../../../../data/appleConstants";
+import {ContactData} from "../../../../../window";
 
 const radiusLinked = "4px";
 const radiusUnlinked = "16px";

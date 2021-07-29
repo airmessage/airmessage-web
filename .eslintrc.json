@@ -36,10 +36,6 @@
                 "ignoredNodes": ["JSXElement *", "JSXElement"]
             }
         ],
-        "linebreak-style": [
-            "error",
-            "unix"
-        ],
         "quotes": [
             "error",
             "double",

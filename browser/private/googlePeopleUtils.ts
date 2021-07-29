@@ -1,8 +1,9 @@
-import {AddressData, AddressType, ContactData, PeopleUtils, PersonData} from "shared/util/peopleUtils";
+import {PeopleUtils} from "shared/util/peopleUtils";
 import * as secrets from "shared/secrets";
 import {formatAddress} from "shared/util/conversationUtils";
 import {googleScope} from "shared/constants";
 import {promiseGAPI} from "shared/index";
+import {AddressData, AddressType, ContactData, PersonData} from "../../window";
 
 //All contacts loaded from Google
 let initializationPromise: Promise<any> | undefined;

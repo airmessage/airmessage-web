@@ -2,7 +2,7 @@
   "name": "airmessage-react",
   "version": "1.2.0",
   "author": "Tagavari",
-  "description": "iMessage for the web, Windows, and Linux",
+  "description": "iMessage for the web",
   "private": true,
   "sideEffects": [
     "**/*.css",
@@ -12,10 +12,8 @@
     "start": "webpack serve --open",
     "start-secure": "webpack serve --open --env secure",
     "build": "webpack build",
-    "electron-launch": "cross-env ELECTRON_START_URL=http://localhost:8080 electron electron-main/electron.js",
-    "electron-start": "concurrently \"webpack serve --env electron\" \"wait-on tcp:8080 && npm run electron-launch\"",
-    "electron-build": "webpack build --env electron",
-    "electron-package": "npm run electron-build && electron-builder"
+    "windows-start": "webpack serve --env windows",
+    "windows-build": "webpack build --env windows"
   },
   "devDependencies": {
     "@electron/typescript-definitions": "^8.8.0",
@@ -74,8 +72,5 @@
     "spark-md5": "^3.0.1",
     "ua-parser-js": "^0.7.27",
     "uuid": "^8.3.2"
-  },
-  "optionalDependencies": {
-    "airmessage-winrt": "file:native/airmessage-winrt"
   }
 }
