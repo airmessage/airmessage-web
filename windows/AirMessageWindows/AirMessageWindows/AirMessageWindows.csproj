@@ -17,4 +17,8 @@
     <PackageReference Include="Microsoft.ProjectReunion.WinUI" Version="0.8.1" />
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command=":: Compile webpack&#xD;&#xA;cd&#xD;&#xA;pushd ..\..\..&#xD;&#xA;npm run windows-build&#xD;&#xA;xcopy &quot;build&quot; &quot;$(ProjectDir)build&quot;&#xD;&#xA;popd" />
+  </Target>
 </Project>
