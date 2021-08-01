@@ -2,8 +2,8 @@ import DataProxy from "shared/connection/dataProxy";
 import {ConnectionErrorCode} from "shared/data/stateCodes";
 import ByteBuffer from "bytebuffer";
 import {decryptData, encryptData} from "shared/util/encryptionUtils";
-import {Socket} from "net";
 import {getSecureLS, SecureStorageKey} from "shared/util/secureStorageUtils";
+import {encodeBase64} from "shared/util/dataHelper";
 
 interface AddressData {
 	host: string;
@@ -31,15 +31,12 @@ function parseAddress(address: string): AddressData {
 }
 
 export default class DataProxyTCP extends DataProxy {
-	private socket: Socket;
 	private readonly override: AddressOverride | undefined;
 	private isStopping = false;
 	
 	constructor(override?: AddressOverride) {
 		super();
 		
-		this.socket = new Socket();
-		this.socket.setTimeout(10 * 1000);
 		this.override = override;
 	}
 	
@@ -72,7 +69,7 @@ export default class DataProxyTCP extends DataProxy {
 			.writeByte(isEncrypted ? 1 : 0)
 			.append(data);
 		
-		this.socket.write(new Uint8Array(byteBuffer.buffer));
+		window.chrome.webview.hostObjects.connection.send(encodeBase64(byteBuffer.buffer));
 	}
 	
 	//previousDecrypt ensures that all read messages are decrypted in parallel
@@ -102,7 +99,7 @@ export default class DataProxyTCP extends DataProxy {
 			}
 		}
 		
-		this.socket.connect(addressPrimary.port, addressPrimary.host);
+		await window.chrome.webview.hostObjects.connection.connect(addressPrimary.host + ":" + addressPrimary.port);
 		
 		let messageData: {size: number, isEncrypted: boolean} | undefined = undefined;
 		this.socket.on("connect", () => {
@@ -165,6 +162,6 @@ export default class DataProxyTCP extends DataProxy {
 		this.isStopping = true;
 		
 		//Closing the socket
-		this.socket.end(() => this.socket.destroy());
+		window.chrome.webview.hostObjects.connection.disconnect();
 	}
 }

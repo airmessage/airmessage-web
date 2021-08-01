@@ -10,15 +10,9 @@ import iconMac from "shared/resources/icons/tile-mac.svg";
 import AirMessageLogo from "shared/components/logo/AirMessageLogo";
 import EthernetIcon from "../../private/icon/EthernetIcon";
 import ConnectionConfigDialog from "./ConnectionConfigDialog";
-const {shell} = require("electron");
 
 export default function Onboarding(props: {onApplyConfig: VoidFunction}) {
 	const [showConfigDialog, setShowConfigDialog] = useState(false);
-	
-	const navigateWebsite = useCallback((event: React.MouseEvent) => {
-		event.preventDefault();
-		shell.openExternal("https://airmessage.org");
-	}, []);
 	
 	return (
 		<div className={styles.root}>
@@ -38,7 +32,7 @@ export default function Onboarding(props: {onApplyConfig: VoidFunction}) {
 								<div className={styles.instructionText} style={{top: 0}}>
 									<Typography variant="h5" gutterBottom>1. Set up your server</Typography>
 									<Typography variant="body1" color="textSecondary" gutterBottom>A server installed on a Mac computer is required to route your messages for you.</Typography>
-									<Typography variant="body1" color="textSecondary">Visit <a style={{color: "#008EFF"}} href="https://airmessage.org" onClick={navigateWebsite}>airmessage.org</a> on a Mac computer to download.</Typography>
+									<Typography variant="body1" color="textSecondary">Visit <a style={{color: "#008EFF"}} href="https://airmessage.org" rel="noreferrer" target="_blank">airmessage.org</a> on a Mac computer to download.</Typography>
 								</div>
 							</div>
 							
