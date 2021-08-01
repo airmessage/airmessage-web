@@ -287,10 +287,10 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,linux,intellij,node
 
 # Webpack / Electron build files
-build
-dist
-webpack.crt
-webpack.key
+/build
+/dist
+/webpack.crt
+/webpack.key
 
 # Private config
 /src/secrets.ts
