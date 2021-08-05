@@ -28,13 +28,13 @@ declare global {
 			webview: {
 				hostObjects: {
 					people: {
-						getContacts: () => Promise<PersonData[]>;
-						findContact: (query: string) => Promise<PersonData[] | undefined>;
+						GetContacts: () => Promise<PersonData[]>;
+						FindContact: (query: string) => Promise<PersonData[] | undefined>;
 					}
 					connection: {
-						connect: (address: string) => Promise<void>;
-						send: (data: string) => Promise<void>;
-						disconnect: () => Promise<void>;
+						Connect: (data: {hostname: string, port: number}) => Promise<void>;
+						Send: (data: string) => Promise<void>;
+						Disconnect: () => Promise<void>;
 					}
 					
 					/* sync: {
@@ -45,12 +45,12 @@ declare global {
 					} */
 				}
 				
-				//addEventListener: (event: string, callback: (result: Record<string, unknown>) => void) => void;
-				addEventListener:
-					((event: "connect", callback: () => void) => void) |
-					((event: "close", callback: () => void) => void) |
-					((event: "message", callback: (data: {size: number, isEncrypted: boolean}) => void) => void)
-				removeEventListener: (event: string, callback: VoidFunction) => void;
+				addEventListener: (event: "message", callback: (
+					data:
+						{type: "connect" | "disconnect"} |
+						{type: "message", data: {data: string, isEncrypted: boolean}}
+				) => void) => void;
+				removeEventListener: (event: "message", callback: VoidFunction) => void;
 			}
 		}
 	}

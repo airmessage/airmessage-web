@@ -6,11 +6,11 @@ export default class WindowsPeopleUtils extends PeopleUtils {
 	}
 	
 	getPeople(): Promise<PersonData[]> {
-		return window.chrome.webview.hostObjects.people.getContacts();
+		return window.chrome.webview.hostObjects.people.GetContacts();
 	}
 	
 	findPerson(address: string): Promise<ContactData> {
-		return window.chrome.webview.hostObjects.people.findContact(address)
+		return window.chrome.webview.hostObjects.people.FindContact(address)
 			.then((contact) => {
 				if(contact === undefined) {
 					throw new Error(`Contact ${address} not found`);

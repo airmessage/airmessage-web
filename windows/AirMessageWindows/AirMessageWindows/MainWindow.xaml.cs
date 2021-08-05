@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+using System.Text.Json;
 using Windows.ApplicationModel.Contacts;
 using Microsoft.UI.Xaml;
 using Microsoft.Web.WebView2.Core;
@@ -27,6 +28,14 @@ namespace AirMessageWindows
             
             //Load JavaScript bridge
             MainWebView.CoreWebView2.AddHostObjectToScript("contacts", new JSBridgeContacts());
+            MainWebView.CoreWebView2.AddHostObjectToScript("connection", new JSBridgeConnection());
+            
+            ConnectionManager.Connected += (sender, args) =>
+                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageData("connect")));
+            ConnectionManager.Disconnected += (sender, args) =>
+                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageData("disconnect")));
+            ConnectionManager.MessageReceived += (sender, args) =>
+                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageData<JSConnectionMessage>("message", new JSConnectionMessage(Convert.ToBase64String(args.Data), args.IsEncrypted))));
             
             //Capture requests for contact images
             MainWebView.CoreWebView2.AddWebResourceRequestedFilter(Constants.ContactURIPrefix + "*", CoreWebView2WebResourceContext.All);

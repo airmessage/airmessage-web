@@ -3,7 +3,7 @@ import {ConnectionErrorCode} from "shared/data/stateCodes";
 import ByteBuffer from "bytebuffer";
 import {decryptData, encryptData} from "shared/util/encryptionUtils";
 import {getSecureLS, SecureStorageKey} from "shared/util/secureStorageUtils";
-import {encodeBase64} from "shared/util/dataHelper";
+import {decodeBase64, encodeBase64} from "shared/util/dataHelper";
 
 interface AddressData {
 	host: string;
@@ -69,7 +69,7 @@ export default class DataProxyTCP extends DataProxy {
 			.writeByte(isEncrypted ? 1 : 0)
 			.append(data);
 		
-		window.chrome.webview.hostObjects.connection.send(encodeBase64(byteBuffer.buffer));
+		window.chrome.webview.hostObjects.connection.Send(encodeBase64(byteBuffer.buffer));
 	}
 	
 	//previousDecrypt ensures that all read messages are decrypted in parallel
@@ -99,59 +99,49 @@ export default class DataProxyTCP extends DataProxy {
 			}
 		}
 		
-		await window.chrome.webview.hostObjects.connection.connect(addressPrimary.host + ":" + addressPrimary.port);
+		await window.chrome.webview.hostObjects.connection.Connect({hostname: addressPrimary.host, port: addressPrimary.port});
 		
-		let messageData: {size: number, isEncrypted: boolean} | undefined = undefined;
-		this.socket.on("connect", () => {
-			this.notifyOpen();
-		});
-		this.socket.on("close", () => {
-			//Connect using fallback parameters if we haven't been asked to disconnect
-			if(!this.isStopping && addressSecondary) {
-				this.socket.connect(addressSecondary.port, addressSecondary.host);
-			} else {
-				this.notifyClose(ConnectionErrorCode.Connection);
-			}
-		});
-		this.socket.on("readable", async () => {
-			while(true) {
-				if(messageData === undefined) {
-					//Reading the message data
-					const data: Buffer = this.socket.read(4 + 1);
-					if(!data) break;
+		window.chrome.webview.addEventListener("message", (message) => {
+			switch(message.type) {
+				case "connect": {
+					this.notifyOpen();
 					
-					//Setting the message data
-					const size = data.readInt32BE(0);
-					const isEncrypted = data[4] !== 0;
-					messageData = {size: size, isEncrypted: isEncrypted};
-				} else {
-					//Reading the message contents
-					const data: Buffer = this.socket.read(messageData.size);
-					if(!data) break;
+					break;
+				}
+				case "disconnect": {
+					//Connect using fallback parameters if we haven't been asked to disconnect
+					if(!this.isStopping && addressSecondary !== undefined) {
+						window.chrome.webview.hostObjects.connection.Connect({hostname: addressSecondary.host, port: addressSecondary.port});
+					} else {
+						this.notifyClose(ConnectionErrorCode.Connection);
+					}
+					
+					break;
+				}
+				case "message": {
+					const data = decodeBase64(message.data.data);
+					const isEncrypted = message.data.isEncrypted;
 					
 					//Submitting the message
 					if(this.previousDecrypt) {
-						const isEncrypted = messageData.isEncrypted;
-						
-						this.previousDecrypt = this.previousDecrypt.then(async () => {
+						this.previousDecrypt = this.previousDecrypt.then(() => {
 							//Decrypting the data if necessary
 							if(isEncrypted) {
-								this.notifyMessage(await decryptData(data), true);
+								decryptData(data).then((data) => this.notifyMessage(data, true));
 							} else {
 								this.notifyMessage(data, false);
 							}
 						});
 					} else {
 						//Decrypting the data if necessary
-						if(messageData.isEncrypted) {
-							this.notifyMessage(await (this.previousDecrypt = decryptData(data)), true);
+						if(isEncrypted) {
+							(this.previousDecrypt = decryptData(data)).then((data) => this.notifyMessage(data, true));
 						} else {
 							this.notifyMessage(data, false);
 						}
 					}
 					
-					//Invalidating the message data
-					messageData = undefined;
+					break;
 				}
 			}
 		});
@@ -162,6 +152,6 @@ export default class DataProxyTCP extends DataProxy {
 		this.isStopping = true;
 		
 		//Closing the socket
-		window.chrome.webview.hostObjects.connection.disconnect();
+		window.chrome.webview.hostObjects.connection.Disconnect();
 	}
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Windows.Networking.Sockets;
 
 namespace AirMessageWindows
 {
@@ -9,6 +10,7 @@ namespace AirMessageWindows
         public static event EventHandler? Connected;
         public static event EventHandler? Disconnected;
         public static event EventHandler<MessageReceivedEventArgs>? MessageReceived;
+        private static StreamSocket? _socket;
         private static Stream? _writer;
         
         public static async void Connect(string hostname, int port)
@@ -16,15 +18,15 @@ namespace AirMessageWindows
             try
             {
                 //Connecting to the server
-                using var socket = new Windows.Networking.Sockets.StreamSocket();
-                await socket.ConnectAsync(new Windows.Networking.HostName(hostname), port.ToString());
+                _socket = new Windows.Networking.Sockets.StreamSocket();
+                await _socket.ConnectAsync(new Windows.Networking.HostName(hostname), port.ToString());
                 Connected?.Invoke(null, EventArgs.Empty);
                 
                 //Configuring the writer
-                _writer = socket.OutputStream.AsStreamForWrite();
+                _writer = _socket.OutputStream.AsStreamForWrite();
                 
                 //Listening for new messages
-                await using var stream = socket.InputStream.AsStreamForRead();
+                await using var stream = _socket.InputStream.AsStreamForRead();
                 var bufferHeader = new byte[5];
                 while (true)
                 {
@@ -47,6 +49,12 @@ namespace AirMessageWindows
                 
                 //Emitting an event
                 Disconnected?.Invoke(null, EventArgs.Empty);
+
+                if (_socket != null)
+                {
+                    _socket.Dispose();
+                    _socket = null;
+                }
                 
                 //Cleaning up
                 if (_writer != null)
@@ -57,6 +65,12 @@ namespace AirMessageWindows
             }
         }
 
+        public static void Disconnect()
+        {
+            _socket?.Dispose();
+            _socket = null;
+        }
+        
         public static async Task<bool> Send(byte[] data)
         {
             //Failing if there is no writer (we're disconnected)
