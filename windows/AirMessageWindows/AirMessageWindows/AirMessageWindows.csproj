@@ -19,6 +19,6 @@
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command=":: Compile webpack&#xD;&#xA;cd&#xD;&#xA;pushd ..\..\..&#xD;&#xA;npm run windows-build&#xD;&#xA;xcopy &quot;build&quot; &quot;$(ProjectDir)build&quot;&#xD;&#xA;popd" />
+    <Exec Command=":: Compile webpack&#xD;&#xA;pushd ..\..\..&#xD;&#xA;call npm run windows-build&#xD;&#xA;xcopy &quot;build&quot; &quot;$(ProjectDir)webassets&quot; /i /y&#xD;&#xA;popd" />
   </Target>
 </Project>

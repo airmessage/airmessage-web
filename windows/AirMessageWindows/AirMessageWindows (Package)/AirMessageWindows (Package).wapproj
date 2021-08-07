@@ -58,6 +58,12 @@
     <Content Include="Images\Wide310x150Logo.scale-200.png" />
   </ItemGroup>
   <ItemGroup>
+    <Content
+	  Include="..\AirMessageWindows\webassets\**"
+	  CopyToPublishDirectory="PreserveNewest"
+	  Link="AirMessageWindows\webassets\%(RecursiveDir)\%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\AirMessageWindows\AirMessageWindows.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
       <PublishProfile>Properties\PublishProfiles\win10-$(Platform).pubxml</PublishProfile>

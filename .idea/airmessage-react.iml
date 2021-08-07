@@ -16,6 +16,7 @@
       <excludeFolder url="file://$MODULE_DIR$/windows/AirMessageWindows/AirMessageWindows (Package)/obj" />
       <excludeFolder url="file://$MODULE_DIR$/windows/AirMessageWindows/.idea" />
       <excludeFolder url="file://$MODULE_DIR$/windows/AirMessageWindows/.vs" />
+      <excludeFolder url="file://$MODULE_DIR$/windows/AirMessageWindows/AirMessageWindows/webassets" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

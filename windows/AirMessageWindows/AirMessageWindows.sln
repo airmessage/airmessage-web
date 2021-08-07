@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31515.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "AirMessageWindows (Package)", "AirMessageWindows (Package)\AirMessageWindows (Package).wapproj", "{25514EF8-89F7-4C4B-B7C5-5DD4323F0D39}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AirMessageWindows", "AirMessageWindows\AirMessageWindows.csproj", "{9522F19C-8370-404A-B882-A2CDCD0DB2FA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AirMessageWindows", "AirMessageWindows\AirMessageWindows.csproj", "{9522F19C-8370-404A-B882-A2CDCD0DB2FA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
