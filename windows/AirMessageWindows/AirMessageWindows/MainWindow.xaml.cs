@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text.Json;
+using System.Diagnostics;
 using Windows.ApplicationModel.Contacts;
 using Microsoft.UI.Xaml;
 using Microsoft.Web.WebView2.Core;
@@ -26,24 +28,71 @@ namespace AirMessageWindows
             //Wait for initialization
             await MainWebView.EnsureCoreWebView2Async();
             
-            //Load JavaScript bridge
-            MainWebView.CoreWebView2.AddHostObjectToScript("contacts", new JSBridgeContacts());
-            MainWebView.CoreWebView2.AddHostObjectToScript("connection", new JSBridgeConnection());
+            //Configure settings
+            MainWebView.CoreWebView2.Settings.IsZoomControlEnabled = false;
             
+            //Register for incoming events
+            MainWebView.CoreWebView2.WebMessageReceived += CoreWebView2OnWebMessageReceived;
+            
+            //Post connection events
             ConnectionManager.Connected += (sender, args) =>
-                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageData("connect")));
+                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageSimple("connect")));
             ConnectionManager.Disconnected += (sender, args) =>
-                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageData("disconnect")));
+                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageSimple("disconnect")));
             ConnectionManager.MessageReceived += (sender, args) =>
-                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageData<JSConnectionMessage>("message", new JSConnectionMessage(Convert.ToBase64String(args.Data), args.IsEncrypted))));
-            
+                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageNetwork("message", Convert.ToBase64String(args.Data), args.IsEncrypted)));
+
             //Capture requests for contact images
             MainWebView.CoreWebView2.AddWebResourceRequestedFilter(Constants.ContactURIPrefix + "*", CoreWebView2WebResourceContext.All);
             MainWebView.CoreWebView2.WebResourceRequested += CoreWebView2OnWebResourceRequested;
-            
+
             //Map local file directory and load
-            MainWebView.CoreWebView2.SetVirtualHostNameToFolderMapping("windowsweb.airmessage.org", "build", CoreWebView2HostResourceAccessKind.Allow);
-            MainWebView.CoreWebView2.Navigate("https://windowsweb.airmessage.org");
+            MainWebView.CoreWebView2.SetVirtualHostNameToFolderMapping("windowsweb.airmessage.org", "webassets", CoreWebView2HostResourceAccessKind.Allow);
+            MainWebView.Source = new Uri("https://windowsweb.airmessage.org/index.html");
+        }
+        
+        private async void CoreWebView2OnWebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs args)
+        {
+            Debug.WriteLine("Received message: " + args.WebMessageAsJson);
+            using var doc = JsonDocument.Parse(args.WebMessageAsJson);
+
+            switch (doc.RootElement.GetProperty("type").GetString()!)
+            {
+                //Contacts
+                case "getContacts":
+                {
+                    List<JSPersonData> contacts = await JSBridgeContacts.GetContacts();
+
+                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageGetContacts("getContacts", contacts)));
+                    break;
+                }
+                case "findContact":
+                {
+                    string address = doc.RootElement.GetProperty("address").GetString()!;
+                    JSContactData? contact = await JSBridgeContacts.FindContact(address);
+                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageFindContact("findContact", address, contact)));
+                    
+                    break;
+                }
+
+                //Connection
+                case "connect":
+                {
+                    string hostname = doc.RootElement.GetProperty("hostname").GetString()!;
+                    int port = doc.RootElement.GetProperty("port").GetInt32();
+                    await ConnectionManager.Connect(hostname, port);
+                    break;
+                }
+                case "send":
+                {
+                    byte[] data = doc.RootElement.GetProperty("data").GetBytesFromBase64();
+                    await ConnectionManager.Send(data);
+                    break;
+                }
+                case "disconnect":
+                    ConnectionManager.Disconnect();
+                    break;
+            }
         }
 
         private async void CoreWebView2OnWebResourceRequested(CoreWebView2 sender, CoreWebView2WebResourceRequestedEventArgs args)

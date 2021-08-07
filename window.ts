@@ -22,35 +22,23 @@ export interface ContactData {
 	avatar?: string;
 }
 
+export type ChromeEventData =
+	//Contacts
+	{type: "getContacts", contacts: PersonData[]} |
+	{type: "findContact", address: string, contact: ContactData | undefined} |
+	//Connection
+	{type: "connect" | "disconnect"} |
+	{type: "message", data: string, isEncrypted: boolean};
+export type ChromeEvent = {data: ChromeEventData} & Event;
+export type ChromeEventListener = (event: ChromeEvent) => void;
+
 declare global {
 	interface Window {
 		chrome: {
 			webview: {
-				hostObjects: {
-					people: {
-						GetContacts: () => Promise<PersonData[]>;
-						FindContact: (query: string) => Promise<PersonData[] | undefined>;
-					}
-					connection: {
-						Connect: (data: {hostname: string, port: number}) => Promise<void>;
-						Send: (data: string) => Promise<void>;
-						Disconnect: () => Promise<void>;
-					}
-					
-					/* sync: {
-						people: {
-							getContacts: () => PersonData[];
-							findContact: (query: string) => PersonData[] | undefined;
-						}
-					} */
-				}
-				
-				addEventListener: (event: "message", callback: (
-					data:
-						{type: "connect" | "disconnect"} |
-						{type: "message", data: {data: string, isEncrypted: boolean}}
-				) => void) => void;
-				removeEventListener: (event: "message", callback: VoidFunction) => void;
+				postMessage: (message: any) => void;
+				addEventListener: (event: "message", callback: ChromeEventListener) => void;
+				removeEventListener: (event: "message", callback: ChromeEventListener) => void;
 			}
 		}
 	}

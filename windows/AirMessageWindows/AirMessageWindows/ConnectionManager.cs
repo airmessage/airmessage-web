@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Diagnostics;
 using Windows.Networking.Sockets;
 
 namespace AirMessageWindows
@@ -13,13 +14,16 @@ namespace AirMessageWindows
         private static StreamSocket? _socket;
         private static Stream? _writer;
         
-        public static async void Connect(string hostname, int port)
+        public static async Task Connect(string hostname, int port)
         {
+            Debug.WriteLine($"Connecting to {hostname}:{port}");
+            
             try
             {
                 //Connecting to the server
-                _socket = new Windows.Networking.Sockets.StreamSocket();
+                _socket = new StreamSocket();
                 await _socket.ConnectAsync(new Windows.Networking.HostName(hostname), port.ToString());
+                Debug.WriteLine($"Connected to {hostname}:{port}");
                 Connected?.Invoke(null, EventArgs.Empty);
                 
                 //Configuring the writer
@@ -35,10 +39,12 @@ namespace AirMessageWindows
                     var contentLen = BitConverter.ToInt32(bufferHeader, 0);
                     var isEncrypted = BitConverter.ToBoolean(bufferHeader, 4);
                     
+                    Debug.WriteLine($"Received message {contentLen} / {isEncrypted}");
+                    
                     //Reading the body
                     var bufferContent = new byte[contentLen];
                     await stream.ReadAsync(bufferContent.AsMemory());
-                    
+
                     //Calling event listeners
                     MessageReceived?.Invoke(null, new MessageReceivedEventArgs(bufferContent, isEncrypted));
                 }
@@ -46,6 +52,8 @@ namespace AirMessageWindows
             {
                 //Logging the error
                 Console.Error.WriteLine(ex);
+                Debug.WriteLine(ex);
+                Debug.WriteLine($"Disconnected from {hostname}:{port}");
                 
                 //Emitting an event
                 Disconnected?.Invoke(null, EventArgs.Empty);

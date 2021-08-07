@@ -4,6 +4,8 @@ import ByteBuffer from "bytebuffer";
 import {decryptData, encryptData} from "shared/util/encryptionUtils";
 import {getSecureLS, SecureStorageKey} from "shared/util/secureStorageUtils";
 import {decodeBase64, encodeBase64} from "shared/util/dataHelper";
+import {serverConnect, serverDisconnect, serverSend} from "../private/interopUtils";
+import {ChromeEventListener} from "../../../window";
 
 interface AddressData {
 	host: string;
@@ -69,7 +71,7 @@ export default class DataProxyTCP extends DataProxy {
 			.writeByte(isEncrypted ? 1 : 0)
 			.append(data);
 		
-		window.chrome.webview.hostObjects.connection.Send(encodeBase64(byteBuffer.buffer));
+		serverSend(encodeBase64(byteBuffer.buffer));
 	}
 	
 	//previousDecrypt ensures that all read messages are decrypted in parallel
@@ -99,9 +101,12 @@ export default class DataProxyTCP extends DataProxy {
 			}
 		}
 		
-		await window.chrome.webview.hostObjects.connection.Connect({hostname: addressPrimary.host, port: addressPrimary.port});
+		serverConnect(addressPrimary.host, addressPrimary.port);
 		
-		window.chrome.webview.addEventListener("message", (message) => {
+		const chromeEventListener: ChromeEventListener = (event) => {
+			const message = event.data;
+			console.log("Received chrome message", message);
+			
 			switch(message.type) {
 				case "connect": {
 					this.notifyOpen();
@@ -111,16 +116,17 @@ export default class DataProxyTCP extends DataProxy {
 				case "disconnect": {
 					//Connect using fallback parameters if we haven't been asked to disconnect
 					if(!this.isStopping && addressSecondary !== undefined) {
-						window.chrome.webview.hostObjects.connection.Connect({hostname: addressSecondary.host, port: addressSecondary.port});
+						serverConnect(addressSecondary.host, addressSecondary.port);
 					} else {
+						window.chrome.webview.removeEventListener("message", chromeEventListener);
 						this.notifyClose(ConnectionErrorCode.Connection);
 					}
 					
 					break;
 				}
 				case "message": {
-					const data = decodeBase64(message.data.data);
-					const isEncrypted = message.data.isEncrypted;
+					const data = decodeBase64(message.data);
+					const isEncrypted = message.isEncrypted;
 					
 					//Submitting the message
 					if(this.previousDecrypt) {
@@ -144,7 +150,8 @@ export default class DataProxyTCP extends DataProxy {
 					break;
 				}
 			}
-		});
+		};
+		window.chrome.webview.addEventListener("message", chromeEventListener);
 	}
 	
 	stop(): void {
@@ -152,6 +159,6 @@ export default class DataProxyTCP extends DataProxy {
 		this.isStopping = true;
 		
 		//Closing the socket
-		window.chrome.webview.hostObjects.connection.Disconnect();
+		serverDisconnect();
 	}
 }
