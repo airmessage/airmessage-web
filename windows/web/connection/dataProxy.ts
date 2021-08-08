@@ -130,18 +130,19 @@ export default class DataProxyTCP extends DataProxy {
 					
 					//Submitting the message
 					if(this.previousDecrypt) {
-						this.previousDecrypt = this.previousDecrypt.then(() => {
+						this.previousDecrypt = this.previousDecrypt.then((): [ArrayBuffer, boolean] | PromiseLike<[ArrayBuffer, boolean]> => {
 							//Decrypting the data if necessary
-							if(isEncrypted) {
-								decryptData(data).then((data) => this.notifyMessage(data, true));
-							} else {
-								this.notifyMessage(data, false);
-							}
-						});
+							if(isEncrypted) return decryptData(data).then((data) => [data, true]);
+							else return [data, false];
+						}).then(([data, isEncrypted]) => {
+							this.notifyMessage(data, isEncrypted);
+						}).catch((error) => console.warn("Error reading network message", error));
 					} else {
 						//Decrypting the data if necessary
 						if(isEncrypted) {
-							(this.previousDecrypt = decryptData(data)).then((data) => this.notifyMessage(data, true));
+							this.previousDecrypt = decryptData(data)
+								.then((data) => this.notifyMessage(data, true))
+								.catch((error) => console.warn("Error reading network message", error));
 						} else {
 							this.notifyMessage(data, false);
 						}

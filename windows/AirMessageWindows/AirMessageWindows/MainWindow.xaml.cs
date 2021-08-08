@@ -16,7 +16,13 @@ namespace AirMessageWindows
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainWindow : Window {
+    public sealed partial class MainWindow : Window
+    {
+        private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+        {
+            IgnoreNullValues = true
+        };
+        
         public MainWindow() {
             this.InitializeComponent();
 
@@ -36,24 +42,25 @@ namespace AirMessageWindows
             
             //Post connection events
             ConnectionManager.Connected += (sender, args) =>
-                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageSimple("connect")));
+                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageSimple("connect"), JsonOptions));
             ConnectionManager.Disconnected += (sender, args) =>
-                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageSimple("disconnect")));
+                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageSimple("disconnect"), JsonOptions));
             ConnectionManager.MessageReceived += (sender, args) =>
-                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageNetwork("message", Convert.ToBase64String(args.Data), args.IsEncrypted)));
+                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageNetwork("message", Convert.ToBase64String(args.Data), args.IsEncrypted), JsonOptions));
 
             //Capture requests for contact images
             MainWebView.CoreWebView2.AddWebResourceRequestedFilter(Constants.ContactURIPrefix + "*", CoreWebView2WebResourceContext.All);
             MainWebView.CoreWebView2.WebResourceRequested += CoreWebView2OnWebResourceRequested;
 
             //Map local file directory and load
-            MainWebView.CoreWebView2.SetVirtualHostNameToFolderMapping("windowsweb.airmessage.org", "webassets", CoreWebView2HostResourceAccessKind.Allow);
-            MainWebView.Source = new Uri("https://windowsweb.airmessage.org/index.html");
+            //MainWebView.CoreWebView2.SetVirtualHostNameToFolderMapping("windowsweb.airmessage.org", "webassets", CoreWebView2HostResourceAccessKind.Allow);
+            //MainWebView.Source = new Uri("https://windowsweb.airmessage.org/index.html");
+            MainWebView.Source = new Uri("http://localhost:8080");
         }
         
         private async void CoreWebView2OnWebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs args)
         {
-            Debug.WriteLine("Received message: " + args.WebMessageAsJson);
+            Debug.WriteLine("Received socket message " + args.WebMessageAsJson);
             using var doc = JsonDocument.Parse(args.WebMessageAsJson);
 
             switch (doc.RootElement.GetProperty("type").GetString()!)
@@ -63,14 +70,14 @@ namespace AirMessageWindows
                 {
                     List<JSPersonData> contacts = await JSBridgeContacts.GetContacts();
 
-                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageGetContacts("getContacts", contacts)));
+                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageGetContacts("getContacts", contacts), JsonOptions));
                     break;
                 }
                 case "findContact":
                 {
                     string address = doc.RootElement.GetProperty("address").GetString()!;
                     JSContactData? contact = await JSBridgeContacts.FindContact(address);
-                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageFindContact("findContact", address, contact)));
+                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageFindContact("findContact", address, contact), JsonOptions));
                     
                     break;
                 }
@@ -128,20 +135,6 @@ namespace AirMessageWindows
                 args.Response = response;
                 deferral.Complete();
             }
-        }
-
-        private void myButton_Click(object sender, RoutedEventArgs e) {
-            //myButton.Content = "Clicked";
-        }
-
-        private static Stream GenerateStreamFromString(string s)
-        {
-            var stream = new MemoryStream();
-            var writer = new StreamWriter(stream);
-            writer.Write(s);
-            writer.Flush();
-            stream.Position = 0;
-            return stream;
         }
     }
 }
