@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
-using System.Diagnostics;
 using Windows.ApplicationModel.Contacts;
 using Microsoft.UI.Xaml;
 using Microsoft.Web.WebView2.Core;
@@ -24,8 +23,9 @@ namespace AirMessageWindows
         };
         
         public MainWindow() {
-            this.InitializeComponent();
-
+            InitializeComponent();
+            
+            //Initialize web view
             InitializeWebViewAsync();
         }
 
@@ -53,9 +53,8 @@ namespace AirMessageWindows
             MainWebView.CoreWebView2.WebResourceRequested += CoreWebView2OnWebResourceRequested;
 
             //Map local file directory and load
-            //MainWebView.CoreWebView2.SetVirtualHostNameToFolderMapping("windowsweb.airmessage.org", "webassets", CoreWebView2HostResourceAccessKind.Allow);
-            //MainWebView.Source = new Uri("https://windowsweb.airmessage.org/index.html");
-            MainWebView.Source = new Uri("http://localhost:8080");
+            MainWebView.CoreWebView2.SetVirtualHostNameToFolderMapping("windowsweb.airmessage.org", "webassets", CoreWebView2HostResourceAccessKind.Allow);
+            MainWebView.Source = new Uri("https://windowsweb.airmessage.org/index.html");
         }
         
         private async void CoreWebView2OnWebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs args)
