@@ -21,12 +21,32 @@ namespace AirMessageWindows
         {
             IgnoreNullValues = true
         };
+
+        private static bool IsWebView2Installed()
+        {
+            try
+            {
+                CoreWebView2Environment.GetAvailableBrowserVersionString();
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
         
         public MainWindow() {
             InitializeComponent();
-            
-            //Initialize web view
-            InitializeWebViewAsync();
+
+            if (IsWebView2Installed())
+            {
+                //Initialize web view
+                InitializeWebViewAsync();
+            }
+            else
+            {
+                //Prompt user to install web view
+            }
         }
 
         async void InitializeWebViewAsync()
