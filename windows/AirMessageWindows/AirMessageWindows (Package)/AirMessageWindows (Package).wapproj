@@ -58,10 +58,7 @@
     <Content Include="Images\Wide310x150Logo.scale-200.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content
-	  Include="..\AirMessageWindows\webassets\**"
-	  CopyToPublishDirectory="PreserveNewest"
-	  Link="AirMessageWindows\webassets\%(RecursiveDir)\%(Filename)%(Extension)" />
+    <Content Include="..\AirMessageWindows\webassets\**" CopyToPublishDirectory="PreserveNewest" Link="AirMessageWindows\webassets\%(RecursiveDir)\%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AirMessageWindows\AirMessageWindows.csproj">
@@ -70,10 +67,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.ProjectReunion" Version="[0.8.1]">
+    <PackageReference Include="Microsoft.ProjectReunion" Version="0.8.2">
       <IncludeAssets>build</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.ProjectReunion.WinUI" Version="[0.8.1]">
+    <PackageReference Include="Microsoft.ProjectReunion.WinUI" Version="0.8.2">
       <IncludeAssets>build</IncludeAssets>
     </PackageReference>
   </ItemGroup>
