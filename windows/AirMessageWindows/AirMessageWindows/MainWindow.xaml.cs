@@ -181,7 +181,6 @@ namespace AirMessageWindows
         {
             args.Handled = true;
             await Launcher.LaunchUriAsync(new Uri(args.Uri));
-
         }
         
         private async void ButtonWebView2_OnClick(object sender, RoutedEventArgs e)

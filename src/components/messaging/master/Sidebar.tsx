@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useCallback, useContext} from "react";
 import styles from "./Sidebar.module.css";
 
 import firebase from "firebase/app";
@@ -38,6 +38,7 @@ import {
 } from "../../../connection/connectionManager";
 import Markdown from "../../Markdown";
 import changelog from "../../../resources/text/changelog.md";
+import LoginContext from "shared/components/LoginContext";
 
 interface Props {
 	conversations: Conversation[] | undefined;
@@ -110,14 +111,6 @@ export default class Sidebar extends React.Component<Props, State> {
 	
 	private readonly dismissLogOut = () => {
 		this.setState({showLogOutDialog: false});
-	};
-	
-	private readonly confirmLogOut = () => {
-		//Dismissing the log out dialog
-		this.dismissLogOut();
-		
-		//Logging out
-		firebase.auth().signOut();
 	};
 	
 	render() {
@@ -256,13 +249,15 @@ function FeedbackDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 }
 
 function SignOutDialog(props: {isOpen: boolean, onDismiss: () => void}) {
-	function onConfirm() {
+	const onDismiss = props.onDismiss;
+	const signOut = useContext(LoginContext).signOut;
+	const onConfirm = useCallback(() => {
 		//Dismissing the dialog
-		props.onDismiss();
+		onDismiss();
 		
-		//Logging out
-		firebase.auth().signOut();
-	}
+		//Signing out
+		signOut();
+	}, [onDismiss, signOut]);
 	
 	return (
 		<Dialog

@@ -10,6 +10,7 @@ import {promiseGAPI} from "shared/index";
 import firebase from "firebase/app";
 import "firebase/auth";
 import {googleScope} from "shared/constants";
+import LoginContext from "shared/components/LoginContext";
 
 type LoginState = "waiting" | "logged-out" | "logged-in";
 
@@ -26,14 +27,26 @@ export default class LoginGate extends React.Component<any, State> {
 	};
 	
 	render() {
+		let main: React.ReactElement | null;
 		switch(this.state.state) {
 			case "waiting":
-				return null;
+				main = null;
+				break;
 			case "logged-in":
-				return <Messaging />;
+				main = <Messaging />;
+				break;
 			case "logged-out":
-				return <Onboarding />;
+				main = <Onboarding />;
+				break;
 		}
+		
+		return (
+			<LoginContext.Provider value={{
+				signOut: () => firebase.auth().signOut()
+			}}>
+				{main}
+			</LoginContext.Provider>
+		);
 	}
 	
 	componentDidMount() {
