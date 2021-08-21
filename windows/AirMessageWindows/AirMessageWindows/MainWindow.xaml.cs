@@ -34,18 +34,36 @@ namespace AirMessageWindows
                 return false;
             }
         }
-        
+
         public MainWindow() {
             InitializeComponent();
 
+            CheckWebView();
+        }
+        
+        private void MainWindow_OnActivated(object sender, WindowActivatedEventArgs args)
+        {
+            //Re-check when the user activates the window again
+            if (WebViewNotice.Visibility == Visibility.Visible)
+            {
+                CheckWebView();
+            }
+        }
+
+        private void CheckWebView()
+        {
             if (IsWebView2Installed())
             {
                 //Initialize web view
                 InitializeWebViewAsync();
+                WebViewNotice.Visibility = Visibility.Collapsed;
+                MainWebView.Visibility = Visibility.Visible;
             }
             else
             {
                 //Prompt user to install web view
+                WebViewNotice.Visibility = Visibility.Visible;
+                MainWebView.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -154,6 +172,11 @@ namespace AirMessageWindows
                 args.Response = response;
                 deferral.Complete();
             }
+        }
+
+        private async void ButtonWebView2_OnClick(object sender, RoutedEventArgs e)
+        {
+            await Windows.System.Launcher.LaunchUriAsync(new Uri(@"https://go.microsoft.com/fwlink/p/?LinkId=2124703"));
         }
     }
 }
