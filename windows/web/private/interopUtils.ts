@@ -31,6 +31,7 @@ export function initEventListener() {
 		switch(message.type) {
 			case "getContacts":
 				getContactsTask?.resolve(message.contacts);
+				getContactsTask = undefined;
 				break;
 			case "findContact":
 				if(message.contact === undefined) {
@@ -38,6 +39,7 @@ export function initEventListener() {
 				} else {
 					findContactTaskMap.get(message.address)?.resolve(message.contact);
 				}
+				findContactTaskMap.delete(message.address);
 				break;
 		}
 	});
@@ -65,7 +67,7 @@ export function getContacts(): Promise<PersonData[]> {
 export function findContact(address: string): Promise<ContactData> {
 	initEventListener();
 	
-	const existingTask = findContactTaskMap.get("address");
+	const existingTask = findContactTaskMap.get(address);
 	if(existingTask !== undefined) return existingTask.promise;
 	
 	const task = new Deferred<ContactData>();
