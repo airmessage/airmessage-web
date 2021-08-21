@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 using Windows.ApplicationModel.Contacts;
 
 namespace AirMessageWindows
@@ -15,7 +16,7 @@ namespace AirMessageWindows
             return contacts.Select(contact => new JSPersonData(
                 contact.Id,
                 contact.FullName,
-                contact.Thumbnail != null ? Constants.ContactURIPrefix + contact.Id : null,
+                contact.Thumbnail != null ? Constants.ContactURIPrefix + HttpUtility.UrlEncode(contact.Id) : null,
                 contact.Emails.Select(email => new JSAddressData(
                     email.Address,
                     email.Address,
@@ -43,7 +44,7 @@ namespace AirMessageWindows
             var contact = contacts[0];
             return new JSContactData(
                 contact.FullName,
-                contact.Thumbnail != null ? Constants.ContactURIPrefix + contact.Id : null
+                Constants.ContactURIPrefix + HttpUtility.UrlEncode(contact.Id)
             );
         }
     }

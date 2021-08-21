@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
+using System.Web;
 using Windows.ApplicationModel.Contacts;
 using Microsoft.UI.Xaml;
 using Microsoft.Web.WebView2.Core;
@@ -144,7 +145,7 @@ namespace AirMessageWindows
             var uri = new Uri(args.Request.Uri);
             if (uri.Host != "contact.airmessage.org") return;
             
-            var contactId = uri.PathAndQuery;
+            var contactId = HttpUtility.UrlDecode(uri.PathAndQuery[1..]);
             var deferral = args.GetDeferral();
             try
             {
