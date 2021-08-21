@@ -37,7 +37,7 @@ export default function GroupAvatar(props: {members: string[]}) {
 	} else if(contactArray.length === 3) {
 		body = [<ContactAvatar key={"1-" + props.members[0]} className={styles.avatar3first} contact={contactArray[0]} style={{backgroundColor: colorFromContact(props.members[0])}} />,
 			<ContactAvatar key={"2-" + props.members[1]} className={styles.avatar3second} contact={contactArray[1]} style={{backgroundColor: colorFromContact(props.members[1])}} />,
-			<ContactAvatar key={"2-" + props.members[2]} className={styles.avatar3third} contact={contactArray[2]} style={{backgroundColor: colorFromContact(props.members[2])}} />];
+			<ContactAvatar key={"3-" + props.members[2]} className={styles.avatar3third} contact={contactArray[2]} style={{backgroundColor: colorFromContact(props.members[2])}} />];
 	} else if(contactArray.length === 0) {
 		//Just in case?
 		body = [<ContactAvatar key="default" />];
