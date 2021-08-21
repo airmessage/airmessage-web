@@ -5,6 +5,7 @@ using System.Net;
 using System.Text.Json;
 using System.Web;
 using Windows.ApplicationModel.Contacts;
+using Windows.System;
 using Microsoft.UI.Xaml;
 using Microsoft.Web.WebView2.Core;
 
@@ -92,10 +93,11 @@ namespace AirMessageWindows
             MainWebView.CoreWebView2.WebResourceRequested += CoreWebView2OnWebResourceRequested;
 
             //Map local file directory and load
+            MainWebView.CoreWebView2.NewWindowRequested += CoreWebView2OnNewWindowRequested;
             MainWebView.CoreWebView2.SetVirtualHostNameToFolderMapping("windowsweb.airmessage.org", "webassets", CoreWebView2HostResourceAccessKind.Allow);
             MainWebView.Source = new Uri("https://windowsweb.airmessage.org/index.html");
         }
-        
+
         private async void CoreWebView2OnWebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs args)
         {
             Debug.WriteLine("Received socket message " + args.WebMessageAsJson);
@@ -175,9 +177,16 @@ namespace AirMessageWindows
             }
         }
 
+        private static async void CoreWebView2OnNewWindowRequested(CoreWebView2 sender, CoreWebView2NewWindowRequestedEventArgs args)
+        {
+            args.Handled = true;
+            await Launcher.LaunchUriAsync(new Uri(args.Uri));
+
+        }
+        
         private async void ButtonWebView2_OnClick(object sender, RoutedEventArgs e)
         {
-            await Windows.System.Launcher.LaunchUriAsync(new Uri(@"https://go.microsoft.com/fwlink/p/?LinkId=2124703"));
+            await Launcher.LaunchUriAsync(new Uri(@"https://go.microsoft.com/fwlink/p/?LinkId=2124703"));
         }
     }
 }
