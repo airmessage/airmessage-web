@@ -78,6 +78,7 @@ namespace AirMessageWindows
             MainWebView.CoreWebView2.Settings.IsZoomControlEnabled = false;
             
             //Register for incoming events
+            MainWebView.CoreWebView2.NavigationStarting += CoreWebView2OnNavigationStarting;
             MainWebView.CoreWebView2.WebMessageReceived += CoreWebView2OnWebMessageReceived;
             
             //Post connection events
@@ -96,6 +97,12 @@ namespace AirMessageWindows
             MainWebView.CoreWebView2.NewWindowRequested += CoreWebView2OnNewWindowRequested;
             MainWebView.CoreWebView2.SetVirtualHostNameToFolderMapping("windowsweb.airmessage.org", "webassets", CoreWebView2HostResourceAccessKind.Allow);
             MainWebView.Source = new Uri("https://windowsweb.airmessage.org/index.html");
+        }
+        
+        private void CoreWebView2OnNavigationStarting(CoreWebView2 sender, CoreWebView2NavigationStartingEventArgs args)
+        {
+            //Disconnect from server
+            ConnectionManager.Disconnect();
         }
 
         private async void CoreWebView2OnWebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs args)
