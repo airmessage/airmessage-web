@@ -117,6 +117,7 @@
     <PackageReference Include="Microsoft.ProjectReunion.WinUI" Version="0.8.2">
       <IncludeAssets>build</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="PInvoke.User32" Version="0.7.104" />
   </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
 </Project>

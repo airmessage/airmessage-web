@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Web;
 using Windows.ApplicationModel.Contacts;
 using Windows.System;
 using Microsoft.UI.Xaml;
 using Microsoft.Web.WebView2.Core;
+using PInvoke;
+using WinRT.Interop;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -38,6 +41,9 @@ namespace AirMessageWindows
         }
 
         public MainWindow() {
+            Title = "AirMessage";
+            LoadIcon("AirMessage.ico");
+
             InitializeComponent();
 
             CheckWebView();
@@ -193,6 +199,26 @@ namespace AirMessageWindows
         private async void ButtonWebView2_OnClick(object sender, RoutedEventArgs e)
         {
             await Launcher.LaunchUriAsync(new Uri(@"https://go.microsoft.com/fwlink/p/?LinkId=2124703"));
+        }
+        
+        private void LoadIcon(string iconName)
+        {
+            //Get the Window's HWND
+            IntPtr hwnd = WindowNative.GetWindowHandle(this);
+            
+            //Get the app icon
+            IntPtr hIcon = User32.LoadImage(IntPtr.Zero, iconName, User32.ImageType.IMAGE_ICON, 256, 256, User32.LoadImageFlags.LR_LOADFROMFILE);
+            
+            //Set the window's icon
+            User32.SendMessage(hwnd, User32.WindowMessage.WM_SETICON, (IntPtr) 0, hIcon);
+        }
+        
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("EECDBF0E-BAE9-4CB6-A68E-9598E1CB57BB")]
+        internal interface IWindowNative
+        {
+            IntPtr WindowHandle { get; }
         }
     }
 }
