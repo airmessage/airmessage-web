@@ -34,7 +34,7 @@ namespace AirMessageWindows
             return new JSPersonData(
                 contact.Id,
                 contact.FullName,
-                contact.Thumbnail != null ? Constants.ContactURIPrefix + HttpUtility.UrlEncode(contact.Id) : null,
+                contact.Thumbnail != null ? Constants.PersonUriPrefix + HttpUtility.UrlEncode(contact.Id) : null,
                 contact.Emails.Select(email => new JSAddressData(
                     email.Address,
                     email.Address,

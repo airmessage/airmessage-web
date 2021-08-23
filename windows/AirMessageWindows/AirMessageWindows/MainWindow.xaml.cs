@@ -96,7 +96,7 @@ namespace AirMessageWindows
                 MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageNetwork("message", Convert.ToBase64String(args.Data), args.IsEncrypted), JsonOptions));
 
             //Capture requests for contact images
-            MainWebView.CoreWebView2.AddWebResourceRequestedFilter(Constants.ContactURIPrefix + "*", CoreWebView2WebResourceContext.All);
+            MainWebView.CoreWebView2.AddWebResourceRequestedFilter(Constants.PersonUriPrefix + "*", CoreWebView2WebResourceContext.All);
             MainWebView.CoreWebView2.WebResourceRequested += CoreWebView2OnWebResourceRequested;
 
             //Map local file directory and load
@@ -180,7 +180,7 @@ namespace AirMessageWindows
         private async void CoreWebView2OnWebResourceRequested(CoreWebView2 sender, CoreWebView2WebResourceRequestedEventArgs args)
         {
             var uri = new Uri(args.Request.Uri);
-            if (uri.Host != "contact.airmessage.org") return;
+            if (uri.Host != Constants.PersonUriHost) return;
             
             var contactId = HttpUtility.UrlDecode(uri.PathAndQuery[1..]);
             var deferral = args.GetDeferral();
@@ -191,7 +191,8 @@ namespace AirMessageWindows
                 var thumbnail = contact.Thumbnail;
                 if (thumbnail != null)
                 {
-                    var response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(await thumbnail.OpenReadAsync(), (int) HttpStatusCode.OK, null, null);
+                    using var thumbnailStream = await thumbnail.OpenReadAsync();
+                    var response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(thumbnailStream, (int) HttpStatusCode.OK, null, null);
                     args.Response = response;
                     deferral.Complete();
                 }

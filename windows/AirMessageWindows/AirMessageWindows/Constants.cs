@@ -2,6 +2,7 @@
 {
     public static class Constants
     {
-        public const string ContactURIPrefix = "https://contact.airmessage.org/";
+        public const string PersonUriHost = "person.windowsweb.airmessage.org";
+        public const string PersonUriPrefix = "https://" + PersonUriHost + "/";
     }
 }
