@@ -64,10 +64,6 @@ module.exports = (env) => ({
 				include: /\.module\.css$/
 			},
 			{
-				test: /\.node$/,
-				loader: "node-loader"
-			},
-			{
 				test: /\.(svg)|(wav)$/,
 				type: "asset/resource"
 			},
