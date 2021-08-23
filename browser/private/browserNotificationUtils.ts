@@ -24,7 +24,7 @@ export default class BrowserNotificationUtils extends NotificationUtils {
 		const title = await getConversationTitle(conversation);
 		
 		//Getting the notification information
-		const itemCount = messages.length - 1;
+		const itemCount = messages.length;
 		const chatGUID = conversation.guid;
 		
 		//Getting the count from the backlog

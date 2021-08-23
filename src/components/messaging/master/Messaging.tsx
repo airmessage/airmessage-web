@@ -24,7 +24,7 @@ import DetailCreate from "../create/DetailCreate";
 import DetailLoading from "../detail/DetailLoading";
 import DetailError from "../detail/DetailError";
 import SnackbarProvider from "../../control/SnackbarProvider";
-import {playSoundMessageIn, playSoundTapback} from "../../../util/soundUtils";
+import {playSoundMessageIn, playSoundNotification, playSoundTapback} from "../../../util/soundUtils";
 import {getNotificationUtils} from "shared/util/notificationUtils";
 import {sortConversationItems} from "shared/util/sortUtils";
 import {getPlatformUtils} from "shared/util/platformUtils";
@@ -267,7 +267,7 @@ class Messaging extends React.Component<Props, State> {
 		ConnectionManager.disconnect();
 	}
 	
-	private readonly onMessageUpdate = (itemArray: ConversationItem[]): void => {
+	private readonly onMessageUpdate = async (itemArray: ConversationItem[]): Promise<void> => {
 		//Keeps track of a single most recent message, along with the number of messages related (including the most recent message)
 		type MessageCounter = {message: MessageItem, count: number};
 		
@@ -299,6 +299,9 @@ class Messaging extends React.Component<Props, State> {
 			return accumulator;
 		}, {});
 		
+		//Getting if the window is focused
+		const hasFocus = await getPlatformUtils().hasFocus();
+		
 		//Whether a message is received in the currently selected conversation
 		let activeConversationUpdated = false;
 		
@@ -306,8 +309,8 @@ class Messaging extends React.Component<Props, State> {
 		const notificationMessages = itemArray.reduce((accumulator: {[chatGUID: string]: MessageItem[]}, item: ConversationItem) => {
 			//If the new item isn't an incoming message, ignore it
 			if(isConversationItemMessage(item) && item.sender !== undefined) {
-				if(item.chatGuid === selectedConversationGUID) {
-					//Don't display a desktop notification if the message's conversation is selected
+				if(hasFocus && item.chatGuid === selectedConversationGUID) {
+					//Don't display a desktop notification if the message's conversation focused and is selected
 					activeConversationUpdated = true;
 				} else {
 					//Getting the message array for the message's conversation
@@ -371,7 +374,6 @@ class Messaging extends React.Component<Props, State> {
 					
 					//Filter out failed conversations and map to conversation map
 					for(const [chatGUID, conversation] of result) {
-						
 						//Checking if the conversation request failed
 						if(!conversation) {
 							//Ignoring this conversation and removing its associated preview
@@ -492,19 +494,20 @@ class Messaging extends React.Component<Props, State> {
 		{
 			const entries = Object.entries(notificationMessages);
 			if(entries.length > 0) {
-				//Only show notifications if the window isn't focused
-				getPlatformUtils().hasFocus().then((hasFocus) => {
-					if(!hasFocus) {
-						for(const [chatGUID, messages] of entries) {
-							//Finding the chat
-							const conversation = this.state.conversations.find((conversation) => conversation.guid === chatGUID);
-							if(!conversation) continue;
-							
-							//Sending a notification
-							getNotificationUtils().showNotifications(conversation, messages);
-						}
+				if(hasFocus) {
+					//If we have focus, play a notification sound
+					playSoundNotification();
+				} else {
+					//Otherwise show notifications
+					for(const [chatGUID, messages] of entries) {
+						//Finding the chat
+						const conversation = this.state.conversations.find((conversation) => conversation.guid === chatGUID);
+						if(!conversation) continue;
+						
+						//Sending a notification
+						getNotificationUtils().showNotifications(conversation, messages);
 					}
-				});
+				}
 			} else {
 				if(activeConversationUpdated) playSoundMessageIn();
 			}
