@@ -1,5 +1,6 @@
 import {ChromeMessage, PersonData} from "../../../window";
 import {Deferred} from "shared/util/deferred";
+import EventEmitter from "shared/util/eventEmitter";
 
 /**
  * A wrapper function to post a message to native
@@ -9,20 +10,28 @@ function postMessage(message: ChromeMessage) {
 	window.chrome.webview.postMessage(message);
 }
 
-let eventListenerInitialized = false;
+let hasFocusTask: Deferred<boolean> | undefined = undefined;
 let getContactsTask: Deferred<PersonData[]> | undefined = undefined;
 const findContactTaskMap = new Map<string, Deferred<PersonData>>();
 
+export const activateChatEventEmitter = new EventEmitter<string>();
+
 /**
- * Initializes the event listener for incoming messages from native
+ * Initializes the native-JS bridge
  */
-export function initEventListener() {
-	if(eventListenerInitialized) return;
-	
+export function initializeInterop() {
+	//Add event listener
 	window.chrome.webview.addEventListener("message", (event) => {
 		const message = event.data;
 		
 		switch(message.type) {
+			case "activateChat":
+				activateChatEventEmitter.notify(message.chatID);
+				break;
+			case "hasFocus":
+				hasFocusTask?.resolve(message.hasFocus);
+				hasFocusTask = undefined;
+				break;
 			case "getPeople":
 				getContactsTask?.resolve(message.people);
 				getContactsTask = undefined;
@@ -37,16 +46,31 @@ export function initEventListener() {
 				break;
 		}
 	});
+}
+
+/**
+ * Registers for Windows-WebView2 activations
+ */
+export function windowsRegisterActivations() {
+	//Register for activations
+	postMessage({type: "registerActivations"});
+}
+
+/**
+ * Gets if the window is currently focused
+ */
+export function windowsHasFocus(): Promise<boolean> {
+	if(hasFocusTask !== undefined) return hasFocusTask.promise;
 	
-	eventListenerInitialized = true;
+	hasFocusTask = new Deferred<boolean>();
+	postMessage({type: "hasFocus"});
+	return hasFocusTask.promise;
 }
 
 /**
  * Gets an array of all contacts on the user's device
  */
 export function windowsGetPeople(): Promise<PersonData[]> {
-	initEventListener();
-	
 	if(getContactsTask !== undefined) return getContactsTask.promise;
 	
 	getContactsTask = new Deferred<PersonData[]>();
@@ -59,8 +83,6 @@ export function windowsGetPeople(): Promise<PersonData[]> {
  * @param address The email address or phone number of a contact to search for
  */
 export function windowsFindPerson(address: string): Promise<PersonData> {
-	initEventListener();
-	
 	const existingTask = findContactTaskMap.get(address);
 	if(existingTask !== undefined) return existingTask.promise;
 	

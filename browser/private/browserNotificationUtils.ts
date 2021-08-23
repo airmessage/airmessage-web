@@ -1,6 +1,7 @@
 import {getConversationTitle, getMessageDescription, NotificationUtils} from "shared/util/notificationUtils";
 import EventEmitter from "shared/util/eventEmitter";
 import {Conversation, MessageItem} from "shared/data/blocks";
+import {playSoundNotification} from "shared/util/soundUtils";
 
 export default class BrowserNotificationUtils extends NotificationUtils {
 	private readonly notificationBacklog = new Map<string, [Notification, number]>();
@@ -13,6 +14,7 @@ export default class BrowserNotificationUtils extends NotificationUtils {
 		}
 	}
 	
+	private notificationSoundPlayed = false;
 	async showNotifications(conversation: Conversation, messages: MessageItem[]) {
 		//Ignoring if the app isn't allowed to send notifications,
 		//or if there aren't any messages to notify
@@ -56,6 +58,13 @@ export default class BrowserNotificationUtils extends NotificationUtils {
 		
 		//Updating the backlog
 		this.notificationBacklog.set(chatGUID, [notification, finalItemCount]);
+		
+		//Playing a sound (limit to once every second)
+		if(!this.notificationSoundPlayed) {
+			playSoundNotification();
+			this.notificationSoundPlayed = true;
+			setTimeout(() => this.notificationSoundPlayed = false, 1000);
+		}
 	}
 	
 	dismissNotifications(chatID: string) {

@@ -1,4 +1,5 @@
-﻿using Microsoft.UI.Xaml;
+﻿using Microsoft.Toolkit.Uwp.Notifications;
+using Microsoft.UI.Xaml;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -10,6 +11,8 @@ namespace AirMessageWindows
     /// </summary>
     public partial class App : Application
     {
+        private Window m_window;
+        
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -28,8 +31,10 @@ namespace AirMessageWindows
         {
             m_window = new MainWindow();
             m_window.Activate();
+            
+            //Register for activation events
+            ActivationHelper.MainWindow = m_window;
+            ToastNotificationManagerCompat.OnActivated += ActivationHelper.ToastNotificationManagerCompatOnOnActivated;
         }
-
-        private Window m_window;
     }
 }

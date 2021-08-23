@@ -83,4 +83,28 @@ namespace AirMessageWindows
         public string address { get; }
         public JSPersonData? person { get; }
     }
+    
+    public readonly struct JSMessageActivateChat
+    {
+        public JSMessageActivateChat(string type, string chatID)
+        {
+            this.type = type;
+            this.chatID = chatID;
+        }
+
+        public string type { get; }
+        public string chatID { get; }
+    }
+    
+    public readonly struct JSMessageHasFocus
+    {
+        public JSMessageHasFocus(string type, bool hasFocus)
+        {
+            this.type = type;
+            this.hasFocus = hasFocus;
+        }
+
+        public string type { get; }
+        public bool hasFocus { get; }
+    }
 }

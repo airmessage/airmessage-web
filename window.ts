@@ -18,6 +18,9 @@ export interface PersonData {
 }
 
 export type ChromeMessage =
+	//Platform
+	{type: "registerActivations"} |
+	{type: "hasFocus"} |
 	//Contacts
 	{type: "getPeople"} |
 	{type: "findPerson", address: string} |
@@ -30,6 +33,10 @@ export type ChromeMessage =
 	{type: "disconnect"};
 
 export type ChromeEventData =
+	//Activations
+	{type: "activateChat", chatID: string} |
+	//Platform
+	{type: "hasFocus", hasFocus: boolean} |
 	//Contacts
 	{type: "getPeople", people: PersonData[]} |
 	{type: "findPerson", address: string, person: PersonData | undefined} |

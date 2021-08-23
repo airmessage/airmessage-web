@@ -102,7 +102,7 @@
     <Content Include="Images\Wide310x150Logo.scale-400.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\AirMessageWindows\webassets\**" CopyToPublishDirectory="PreserveNewest" Link="AirMessageWindows\webassets\%(RecursiveDir)\%(Filename)%(Extension)" />
+    <Content Include="..\AirMessageWindows\webassets\**\*.*" CopyToPublishDirectory="Always" Link="AirMessageWindows\webassets\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AirMessageWindows\AirMessageWindows.csproj">

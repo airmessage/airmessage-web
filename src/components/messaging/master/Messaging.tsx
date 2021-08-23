@@ -24,9 +24,10 @@ import DetailCreate from "../create/DetailCreate";
 import DetailLoading from "../detail/DetailLoading";
 import DetailError from "../detail/DetailError";
 import SnackbarProvider from "../../control/SnackbarProvider";
-import {playSoundMessageIn, playSoundNotification, playSoundTapback} from "../../../util/soundUtils";
+import {playSoundMessageIn, playSoundTapback} from "../../../util/soundUtils";
 import {getNotificationUtils} from "shared/util/notificationUtils";
 import {sortConversationItems} from "shared/util/sortUtils";
+import {getPlatformUtils} from "shared/util/platformUtils";
 
 interface Props {
 	theme: Theme;
@@ -77,8 +78,8 @@ class Messaging extends React.Component<Props, State> {
 			}
 		},
 		onOpen: () => {
-			//Requesting conversation details
 			if(!this.state.conversationsAvailable) {
+				//Requesting conversation details
 				ConnectionManager.fetchConversations().then(data => {
 					if(data.length > 0) {
 						this.setState({
@@ -92,6 +93,10 @@ class Messaging extends React.Component<Props, State> {
 							detailPane: {type: DetailType.Welcome}
 						});
 					}
+					
+					//Registering for activations
+					getPlatformUtils().initializeActivations();
+					getPlatformUtils().getChatActivationEmitter()?.registerListener(this.onConversationSelected);
 				}).catch((reason: MessageError) => {
 					console.error("Failed to fetch conversations", reason);
 					ConnectionManager.disconnect();
@@ -172,10 +177,10 @@ class Messaging extends React.Component<Props, State> {
 		);
 	}
 	
-	private readonly onConversationSelected = (conversationID: string): void => {
+	private readonly onConversationSelected = (conversationGUID: string): void => {
 		this.setState((prevState) => {
 			//Finding the existing conversation
-			const existingConversationIndex = prevState.conversations.findIndex(conversation => conversation.guid === conversationID)!;
+			const existingConversationIndex = prevState.conversations.findIndex(conversation => conversation.guid === conversationGUID)!;
 			const existingConversation = prevState.conversations[existingConversationIndex];
 			if(existingConversation.unreadMessages) {
 				//Clear the conversation's unread status
@@ -187,13 +192,13 @@ class Messaging extends React.Component<Props, State> {
 				
 				return {
 					conversations: pendingConversations,
-					detailPane: {type: DetailType.Thread, conversationGUID: conversationID}
+					detailPane: {type: DetailType.Thread, conversationGUID: conversationGUID}
 				};
 			} else {
 				//Just select the conversation
 				return {
 					conversations: prevState.conversations,
-					detailPane: {type: DetailType.Thread, conversationGUID: conversationID}
+					detailPane: {type: DetailType.Thread, conversationGUID: conversationGUID}
 				};
 			}
 		});
@@ -256,6 +261,7 @@ class Messaging extends React.Component<Props, State> {
 		
 		//Unregistering the notification selection listener
 		getNotificationUtils().getActionEmitter().unregisterListener(this.onConversationSelected);
+		getPlatformUtils().getChatActivationEmitter()?.unregisterListener(this.onConversationSelected);
 		
 		//Disconnecting
 		ConnectionManager.disconnect();
@@ -361,7 +367,6 @@ class Messaging extends React.Component<Props, State> {
 			//Requesting information for new chats
 			ConnectionManager.fetchConversationInfo(Object.keys(unlinkedTopItems))
 				.then((result) => {
-					let notificationSent = false;
 					const newConversationArray: Conversation[] = [];
 					
 					//Filter out failed conversations and map to conversation map
@@ -384,18 +389,18 @@ class Messaging extends React.Component<Props, State> {
 							if(data.notificationMessages.length > 0) conversation.unreadMessages = true;
 							
 							//Sending a notification
-							if(document.visibilityState === "hidden" && data.notificationMessages.length > 0) {
-								getNotificationUtils().showNotifications(conversation, data.notificationMessages);
-								notificationSent = true;
+							if(data.notificationMessages.length > 0) {
+								getPlatformUtils().hasFocus().then((hasFocus) => {
+									if(!hasFocus) {
+										getNotificationUtils().showNotifications(conversation, data.notificationMessages);
+									}
+								});
 							}
 						}
 						
 						//Adding the conversation to the array
 						newConversationArray.push(conversation);
 					}
-					
-					//Playing a notification sound
-					if(notificationSent) playSoundNotification();
 					
 					if(newConversationArray.length > 0) {
 						//Adding the new conversations
@@ -487,20 +492,19 @@ class Messaging extends React.Component<Props, State> {
 		{
 			const entries = Object.entries(notificationMessages);
 			if(entries.length > 0) {
-				//Playing a notification sound
-				playSoundNotification();
-				
 				//Only show notifications if the window isn't focused
-				if(document.visibilityState === "hidden") {
-					for(const [chatGUID, messages] of entries) {
-						//Finding the chat
-						const conversation = this.state.conversations.find((conversation) => conversation.guid === chatGUID);
-						if(!conversation) continue;
-						
-						//Sending a notification
-						getNotificationUtils().showNotifications(conversation, messages);
+				getPlatformUtils().hasFocus().then((hasFocus) => {
+					if(!hasFocus) {
+						for(const [chatGUID, messages] of entries) {
+							//Finding the chat
+							const conversation = this.state.conversations.find((conversation) => conversation.guid === chatGUID);
+							if(!conversation) continue;
+							
+							//Sending a notification
+							getNotificationUtils().showNotifications(conversation, messages);
+						}
 					}
-				}
+				});
 			} else {
 				if(activeConversationUpdated) playSoundMessageIn();
 			}

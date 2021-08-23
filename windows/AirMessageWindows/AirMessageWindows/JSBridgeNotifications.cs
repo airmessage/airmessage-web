@@ -14,9 +14,14 @@ namespace AirMessageWindows
             var thumbnailUri = await GetPersonId(personId);
 
             var builder = new ToastContentBuilder()
-                .AddArgument("action", "viewConversation")
-                .AddArgument("chatId", chatId)
-                .AddHeader(chatId, chatName, $"action=viewConversation&chatId={chatId}")
+                .AddArgument(ActivationHelper.ToastAction, ActivationHelper.ToastActionConversation)
+                .AddArgument(ActivationHelper.ToastActionConversationChat, chatId)
+                .AddHeader(
+                    chatId,
+                    chatName,
+                    $"{ActivationHelper.ToastAction}={ActivationHelper.ToastActionConversation}&" +
+                    $"{ActivationHelper.ToastActionConversationChat}={chatId}"
+                )
                 .AddText(contactName)
                 .AddText(message);
             

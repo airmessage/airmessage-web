@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Web;
 using Windows.ApplicationModel.Contacts;
 using Windows.System;
+using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.UI.Xaml;
 using Microsoft.Web.WebView2.Core;
 using PInvoke;
@@ -86,7 +87,7 @@ namespace AirMessageWindows
             //Register for incoming events
             MainWebView.CoreWebView2.NavigationStarting += CoreWebView2OnNavigationStarting;
             MainWebView.CoreWebView2.WebMessageReceived += CoreWebView2OnWebMessageReceived;
-            
+
             //Post connection events
             ConnectionManager.Connected += (sender, args) =>
                 MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageSimple("connect"), JsonOptions));
@@ -104,7 +105,7 @@ namespace AirMessageWindows
             MainWebView.CoreWebView2.SetVirtualHostNameToFolderMapping("windowsweb.airmessage.org", "webassets", CoreWebView2HostResourceAccessKind.Allow);
             MainWebView.Source = new Uri("https://windowsweb.airmessage.org/index.html");
         }
-        
+
         private void CoreWebView2OnNavigationStarting(CoreWebView2 sender, CoreWebView2NavigationStartingEventArgs args)
         {
             //Disconnect from server
@@ -118,6 +119,29 @@ namespace AirMessageWindows
 
             switch (doc.RootElement.GetProperty("type").GetString()!)
             {
+                //Platform
+                case "registerActivations":
+                {
+                    //Post pending activations
+                    if (ActivationHelper.PendingChatId != null)
+                    {
+                        MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageActivateChat("activateChat", ActivationHelper.PendingChatId)));
+                        ActivationHelper.PendingChatId = null;
+                    }
+
+                    //Register for activation events
+                    ActivationHelper.ChatActivated += (_, chatId) =>
+                        MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageActivateChat("activateChat", chatId)));
+
+                    break;
+                }
+                case "hasFocus":
+                {
+                    bool hasFocus = ApplicationIsActivated();
+                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageHasFocus("hasFocus", hasFocus), JsonOptions));
+                    break;
+                }
+                    
                 //People
                 case "getPeople":
                 {
