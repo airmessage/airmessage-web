@@ -10,7 +10,7 @@ module.exports = (env) => ({
 	entry: "./src/index.tsx",
 	target: "web",
 	mode: env.WEBPACK_SERVE ? "development" : "production",
-	devtool: env.WEBPACK_SERVE ? "cheap-source-map" : "source-map",
+	devtool: env.WEBPACK_SERVE ? "cheap-source-map" : (env.windows ? "inline-source-map" : "source-map"),
 	devServer: {
 		contentBase: path.join(__dirname, "public"),
 		port: 8080,
