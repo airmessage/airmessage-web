@@ -4,7 +4,7 @@ import ByteBuffer from "bytebuffer";
 import {decryptData, encryptData} from "shared/util/encryptionUtils";
 import {getSecureLS, SecureStorageKey} from "shared/util/secureStorageUtils";
 import {decodeBase64, encodeBase64} from "shared/util/dataHelper";
-import {serverConnect, serverDisconnect, serverSend} from "../private/interopUtils";
+import {windowsServerConnect, windowsServerDisconnect, windowsServerSend} from "../private/interopUtils";
 import {ChromeEventListener} from "../../../window";
 
 interface AddressData {
@@ -71,7 +71,7 @@ export default class DataProxyTCP extends DataProxy {
 			.writeByte(isEncrypted ? 1 : 0)
 			.append(data);
 		
-		serverSend(encodeBase64(byteBuffer.buffer));
+		windowsServerSend(encodeBase64(byteBuffer.buffer));
 	}
 	
 	//previousDecrypt ensures that all read messages are decrypted in parallel
@@ -101,7 +101,7 @@ export default class DataProxyTCP extends DataProxy {
 			}
 		}
 		
-		serverConnect(addressPrimary.host, addressPrimary.port);
+		windowsServerConnect(addressPrimary.host, addressPrimary.port);
 		
 		const chromeEventListener: ChromeEventListener = (event) => {
 			const message = event.data;
@@ -116,7 +116,7 @@ export default class DataProxyTCP extends DataProxy {
 				case "disconnect": {
 					//Connect using fallback parameters if we haven't been asked to disconnect
 					if(!this.isStopping && addressSecondary !== undefined) {
-						serverConnect(addressSecondary.host, addressSecondary.port);
+						windowsServerConnect(addressSecondary.host, addressSecondary.port);
 					} else {
 						window.chrome.webview.removeEventListener("message", chromeEventListener);
 						this.notifyClose(ConnectionErrorCode.Connection);
@@ -160,6 +160,6 @@ export default class DataProxyTCP extends DataProxy {
 		this.isStopping = true;
 		
 		//Closing the socket
-		serverDisconnect();
+		windowsServerDisconnect();
 	}
 }

@@ -118,23 +118,45 @@ namespace AirMessageWindows
 
             switch (doc.RootElement.GetProperty("type").GetString()!)
             {
-                //Contacts
-                case "getContacts":
+                //People
+                case "getPeople":
                 {
-                    List<JSPersonData> contacts = await JSBridgeContacts.GetContacts();
-
-                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageGetContacts("getContacts", contacts), JsonOptions));
+                    List<JSPersonData> people = await JSBridgePeople.GetPeople();
+                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageGetPeople("getPeople", people), JsonOptions));
                     break;
                 }
-                case "findContact":
+                case "findPerson":
                 {
                     string address = doc.RootElement.GetProperty("address").GetString()!;
-                    JSContactData? contact = await JSBridgeContacts.FindContact(address);
-                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageFindContact("findContact", address, contact), JsonOptions));
+                    JSPersonData? person = await JSBridgePeople.FindPerson(address);
+                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageFindPerson("findPerson", address, person), JsonOptions));
                     
                     break;
                 }
+                
+                //Notifications
+                case "showNotification":
+                {
+                    string chatId = doc.RootElement.GetProperty("chatID").GetString()!;
+                    string? personId = doc.RootElement.GetProperty("personID").GetString();
+                    string messageId = doc.RootElement.GetProperty("messageID").GetString()!;
+                    string chatName = doc.RootElement.GetProperty("chatName").GetString()!;
+                    string contactName = doc.RootElement.GetProperty("contactName").GetString()!;
+                    string message = doc.RootElement.GetProperty("message").GetString()!;
 
+                    User32.GetForegroundWindow();
+                    Debug.WriteLine("Activation state: " + ApplicationIsActivated());
+                    await JSBridgeNotifications.SendNotification(chatId, personId, messageId, chatName, contactName, message);
+                    
+                    break;
+                }
+                case "dismissNotifications":
+                {
+                    string chatId = doc.RootElement.GetProperty("chatID").GetString()!;
+                    JSBridgeNotifications.DismissNotifications(chatId);
+
+                    break;
+                }
                 //Connection
                 case "connect":
                 {
@@ -213,12 +235,19 @@ namespace AirMessageWindows
             User32.SendMessage(hwnd, User32.WindowMessage.WM_SETICON, (IntPtr) 0, hIcon);
         }
         
-        [ComImport]
-        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-        [Guid("EECDBF0E-BAE9-4CB6-A68E-9598E1CB57BB")]
-        internal interface IWindowNative
+        /// <summary>Returns true if the current application has focus, false otherwise</summary>
+        public static bool ApplicationIsActivated()
         {
-            IntPtr WindowHandle { get; }
+            var activatedHandle = User32.GetForegroundWindow();
+            if (activatedHandle == IntPtr.Zero) {
+                //No window is currently activated
+                return false;
+            }
+
+            var procId = Environment.ProcessId;
+            User32.GetWindowThreadProcessId(activatedHandle, out var activeProcId);
+
+            return activeProcId == procId;
         }
     }
 }

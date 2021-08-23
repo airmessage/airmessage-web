@@ -1,23 +1,17 @@
-import {ContactData, PersonData} from "../../../window";
+import {ChromeMessage, PersonData} from "../../../window";
 import {Deferred} from "shared/util/deferred";
 
 /**
  * A wrapper function to post a message to native
  * that accepts an object with compile time type safety
  */
-function postMessage(message:
-	{type: "getContacts"} |
-	{type: "findContact", address: string} |
-	{type: "connect", hostname: string, port: number} |
-	{type: "send", data: string} |
-	{type: "disconnect"}
-) {
+function postMessage(message: ChromeMessage) {
 	window.chrome.webview.postMessage(message);
 }
 
 let eventListenerInitialized = false;
 let getContactsTask: Deferred<PersonData[]> | undefined = undefined;
-const findContactTaskMap = new Map<string, Deferred<ContactData>>();
+const findContactTaskMap = new Map<string, Deferred<PersonData>>();
 
 /**
  * Initializes the event listener for incoming messages from native
@@ -29,15 +23,15 @@ export function initEventListener() {
 		const message = event.data;
 		
 		switch(message.type) {
-			case "getContacts":
-				getContactsTask?.resolve(message.contacts);
+			case "getPeople":
+				getContactsTask?.resolve(message.people);
 				getContactsTask = undefined;
 				break;
-			case "findContact":
-				if(message.contact === undefined) {
+			case "findPerson":
+				if(message.person === undefined) {
 					findContactTaskMap.get(message.address)?.reject(`Contact ${message.address} not found`);
 				} else {
-					findContactTaskMap.get(message.address)?.resolve(message.contact);
+					findContactTaskMap.get(message.address)?.resolve(message.person);
 				}
 				findContactTaskMap.delete(message.address);
 				break;
@@ -50,13 +44,13 @@ export function initEventListener() {
 /**
  * Gets an array of all contacts on the user's device
  */
-export function getContacts(): Promise<PersonData[]> {
+export function windowsGetPeople(): Promise<PersonData[]> {
 	initEventListener();
 	
 	if(getContactsTask !== undefined) return getContactsTask.promise;
 	
 	getContactsTask = new Deferred<PersonData[]>();
-	postMessage({type: "getContacts"});
+	postMessage({type: "getPeople"});
 	return getContactsTask.promise;
 }
 
@@ -64,16 +58,37 @@ export function getContacts(): Promise<PersonData[]> {
  * Finds a specific contact that matches an address, or throws an error if not found
  * @param address The email address or phone number of a contact to search for
  */
-export function findContact(address: string): Promise<ContactData> {
+export function windowsFindPerson(address: string): Promise<PersonData> {
 	initEventListener();
 	
 	const existingTask = findContactTaskMap.get(address);
 	if(existingTask !== undefined) return existingTask.promise;
 	
-	const task = new Deferred<ContactData>();
+	const task = new Deferred<PersonData>();
 	findContactTaskMap.set(address, task);
-	postMessage({type: "findContact", address: address});
+	postMessage({type: "findPerson", address: address});
 	return task.promise;
+}
+
+/**
+ * Shows a notification
+ * @param chatID The ID of the chat
+ * @param personID The ID of the person who sent the message (optional)
+ * @param messageID The ID of the message
+ * @param chatName The display name of the chat
+ * @param contactName The display name or address of the contact who sent the message
+ * @param message The message content
+ */
+export function windowsShowNotification(chatID: string, personID: string | undefined, messageID: string, chatName: string, contactName: string, message: string) {
+	postMessage({type: "showNotification", chatID, personID, messageID, chatName, contactName, message});
+}
+
+/**
+ * Dismisses all notifications from the specified chat
+ * @param chatID The ID of the chat to dismiss notifications for
+ */
+export function windowsDismissNotifications(chatID: string) {
+	postMessage({type: "dismissNotifications", chatID});
 }
 
 /**
@@ -81,7 +96,7 @@ export function findContact(address: string): Promise<ContactData> {
  * @param hostname The hostname to connect to
  * @param port The port number to connect to
  */
-export function serverConnect(hostname: string, port: number) {
+export function windowsServerConnect(hostname: string, port: number) {
 	postMessage({type: "connect", hostname: hostname, port: port});
 }
 
@@ -89,13 +104,13 @@ export function serverConnect(hostname: string, port: number) {
  * Sends a message to the server
  * @param data The base64-encoded message content to send
  */
-export function serverSend(data: string) {
+export function windowsServerSend(data: string) {
 	postMessage({type: "send", data: data});
 }
 
 /**
  * Disconnects from the server
  */
-export function serverDisconnect() {
+export function windowsServerDisconnect() {
 	postMessage({type: "disconnect"});
 }

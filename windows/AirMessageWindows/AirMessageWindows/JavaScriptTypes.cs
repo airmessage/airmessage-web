@@ -33,18 +33,6 @@ namespace AirMessageWindows
         public string? avatar { get; }
         public IList<JSAddressData> addresses { get; }
     }
-    
-    public readonly struct JSContactData
-    {
-        public JSContactData(string name, string? avatar)
-        {
-            this.name = name;
-            this.avatar = avatar;
-        }
-
-        public string name { get; }
-        public string? avatar { get; }
-    }
 
     public readonly struct JSMessageSimple
     {
@@ -70,29 +58,29 @@ namespace AirMessageWindows
         public bool isEncrypted { get; }
     }
     
-    public readonly struct JSMessageGetContacts
+    public readonly struct JSMessageGetPeople
     {
-        public JSMessageGetContacts(string type, IList<JSPersonData> contacts)
+        public JSMessageGetPeople(string type, IList<JSPersonData> people)
         {
             this.type = type;
-            this.contacts = contacts;
+            this.people = people;
         }
 
         public string type { get; }
-        public IList<JSPersonData> contacts { get; }
+        public IList<JSPersonData> people { get; }
     }
 
-    public readonly struct JSMessageFindContact
+    public readonly struct JSMessageFindPerson
     {
-        public JSMessageFindContact(string type, string address, JSContactData? contact)
+        public JSMessageFindPerson(string type, string address, JSPersonData? person)
         {
             this.type = type;
             this.address = address;
-            this.contact = contact;
+            this.person = person;
         }
 
         public string type { get; }
         public string address { get; }
-        public JSContactData? contact { get; }
+        public JSPersonData? person { get; }
     }
 }

@@ -24,8 +24,9 @@ import DetailCreate from "../create/DetailCreate";
 import DetailLoading from "../detail/DetailLoading";
 import DetailError from "../detail/DetailError";
 import SnackbarProvider from "../../control/SnackbarProvider";
-import {initializeNotifications, notificationClickEmitter, sendMessageNotification} from "../../../util/notifyUtils";
 import {playSoundMessageIn, playSoundNotification, playSoundTapback} from "../../../util/soundUtils";
+import {getNotificationUtils} from "shared/util/notificationUtils";
+import {sortConversationItems} from "shared/util/sortUtils";
 
 interface Props {
 	theme: Theme;
@@ -59,9 +60,8 @@ type DetailPane = {
 
 interface PendingConversationData {
 	latestMessage: MessageItem;
-	notifyMessage?: MessageItem;
 	messageCount: number;
-	notificationCount: number;
+	notificationMessages: MessageItem[];
 }
 
 class Messaging extends React.Component<Props, State> {
@@ -226,7 +226,7 @@ class Messaging extends React.Component<Props, State> {
 		modifierUpdateEmitter.registerListener(this.onModifierUpdate);
 		
 		//Registering the notification selection listener
-		notificationClickEmitter.registerListener(this.onConversationSelected);
+		getNotificationUtils().getActionEmitter().registerListener(this.onConversationSelected);
 		
 		//Connecting
 		if(ConnectionManager.isDisconnected()) {
@@ -243,7 +243,7 @@ class Messaging extends React.Component<Props, State> {
 		initializePeople();
 		
 		//Initializing notifications
-		initializeNotifications();
+		getNotificationUtils().initialize();
 	}
 	
 	componentWillUnmount() {
@@ -255,29 +255,36 @@ class Messaging extends React.Component<Props, State> {
 		modifierUpdateEmitter.unregisterListener(this.onModifierUpdate);
 		
 		//Unregistering the notification selection listener
-		notificationClickEmitter.unregisterListener(this.onConversationSelected);
+		getNotificationUtils().getActionEmitter().unregisterListener(this.onConversationSelected);
 		
 		//Disconnecting
 		ConnectionManager.disconnect();
 	}
 	
 	private readonly onMessageUpdate = (itemArray: ConversationItem[]): void => {
-		function accumulateMessageItem(accumulator: {[index: string]: [MessageItem, number]}, item: MessageItem) {
+		//Keeps track of a single most recent message, along with the number of messages related (including the most recent message)
+		type MessageCounter = {message: MessageItem, count: number};
+		
+		//Accumulator function that reduces an array of messages to MessageCounter instances
+		function accumulateMessageItem(accumulator: {[chatGUID: string]: MessageCounter}, item: MessageItem) {
 			if(accumulator[item.chatGuid]) {
-				if(item.date > accumulator[item.chatGuid][0].date) accumulator[item.chatGuid][0] = item;
-				accumulator[item.chatGuid][1]++;
+				const accumulatorItem = accumulator[item.chatGuid];
+				
+				if(item.date > accumulatorItem.message.date) accumulatorItem.message = item;
+				accumulatorItem.count++;
 			} else {
-				accumulator[item.chatGuid] = [item, 1];
+				accumulator[item.chatGuid] = {message: item, count: 1};
 			}
 			
 			return accumulator;
 		}
 		
+		//Getting the currently selected conversation ID
 		const selectedConversationGUID = this.state.detailPane.type === DetailType.Thread ?
 			this.state.detailPane.conversationGUID : undefined;
 		
 		//Finding the most recent item per chat
-		const topItems = itemArray.reduce((accumulator: {[index: string]: [MessageItem, number]}, item: ConversationItem) => {
+		const topItems = itemArray.reduce((accumulator: {[chatGUID: string]: MessageCounter}, item: ConversationItem) => {
 			//If the new item isn't a message, ignore it
 			if(isConversationItemMessage(item)) {
 				accumulateMessageItem(accumulator, item);
@@ -286,19 +293,27 @@ class Messaging extends React.Component<Props, State> {
 			return accumulator;
 		}, {});
 		
-		//Used to determine if there is a new message for a selected conversation and deselected conversation respectively
-		let newSelectedIncomingMessages = false;
+		//Whether a message is received in the currently selected conversation
+		let activeConversationUpdated = false;
 		
-		//Finding the most recent notification-applicable item per chat
-		const topItemsNotification = itemArray.reduce((accumulator: {[index: string]: [MessageItem, number]}, item: ConversationItem) => {
+		//Sorting messages into their chats for notifications
+		const notificationMessages = itemArray.reduce((accumulator: {[chatGUID: string]: MessageItem[]}, item: ConversationItem) => {
 			//If the new item isn't an incoming message, ignore it
-			//if(isConversationItemMessage(item)) {
 			if(isConversationItemMessage(item) && item.sender !== undefined) {
 				if(item.chatGuid === selectedConversationGUID) {
-					newSelectedIncomingMessages = true;
 					//Don't display a desktop notification if the message's conversation is selected
+					activeConversationUpdated = true;
 				} else {
-					accumulateMessageItem(accumulator, item);
+					//Getting the message array for the message's conversation
+					let messageArray: MessageItem[] | undefined = accumulator[item.chatGuid];
+					if(messageArray === undefined) {
+						messageArray = [];
+						accumulator[item.chatGuid] = messageArray;
+					}
+					
+					//Adding the item to the array
+					messageArray.push(item);
+					messageArray.sort(sortConversationItems);
 				}
 			}
 			
@@ -306,7 +321,7 @@ class Messaging extends React.Component<Props, State> {
 		}, {});
 		
 		//Finding all chat GUIDs that we don't have indexed
-		const unlinkedTopItems = Object.entries(topItems).reduce((accumulator: {[index: string]: [MessageItem, number]}, [chatGUID, entry]) => {
+		const unlinkedTopItems = Object.entries(topItems).reduce((accumulator: {[chatGUID: string]: MessageCounter}, [chatGUID, entry]) => {
 			if(!this.state.conversations.find((conversation) => conversation.guid === chatGUID)) {
 				accumulator[chatGUID] = entry;
 			}
@@ -315,24 +330,30 @@ class Messaging extends React.Component<Props, State> {
 
 		if(Object.keys(unlinkedTopItems).length > 0) {
 			//Saving the items for later reference when we have conversation information
-			for(const [chatGUID, [latestMessage, messageCount]] of Object.entries(unlinkedTopItems)) {
-				//Finding the latest notification
-				const topNotificationEntry: [MessageItem, number] | undefined = topItemsNotification[chatGUID] ?? [];
-				const notificationMessage = topNotificationEntry ? topNotificationEntry[0] : undefined;
-				const notificationCount = topNotificationEntry ? topNotificationEntry[1] : 0;
+			for(const [chatGUID, {message: latestMessage, count: messageCount}] of Object.entries(unlinkedTopItems)) {
+				//Getting the notification messages
+				const chatNotificationMessages = notificationMessages[chatGUID] ?? [];
 				
 				const existingValue = this.pendingConversationDataMap.get(chatGUID);
-				if(existingValue) {
-					if(existingValue.latestMessage.date < latestMessage.date) existingValue.latestMessage = latestMessage;
-					if(notificationMessage && (!existingValue.notifyMessage || existingValue.notifyMessage.date < notificationMessage.date)) existingValue.notifyMessage = notificationMessage;
+				if(existingValue !== undefined) {
+					//Updating the latest message
+					if(existingValue.latestMessage.date < latestMessage.date) {
+						existingValue.latestMessage = latestMessage;
+					}
+					
+					//Updating the message count
 					existingValue.messageCount += messageCount;
-					existingValue.notificationCount += notificationCount;
+					
+					//Updating the notification messages
+					if(chatNotificationMessages.length > 0) {
+						existingValue.notificationMessages.push(...chatNotificationMessages);
+						existingValue.notificationMessages.sort(sortConversationItems);
+					}
 				} else {
 					this.pendingConversationDataMap.set(chatGUID, {
 						latestMessage: latestMessage,
-						notifyMessage: notificationMessage,
 						messageCount: messageCount,
-						notificationCount: notificationCount
+						notificationMessages: chatNotificationMessages
 					});
 				}
 			}
@@ -360,11 +381,11 @@ class Messaging extends React.Component<Props, State> {
 							
 							//Applying the data to the conversation
 							conversation.preview = messageItemToConversationPreview(data.latestMessage);
-							if(data.notificationCount > 0) conversation.unreadMessages = true;
+							if(data.notificationMessages.length > 0) conversation.unreadMessages = true;
 							
 							//Sending a notification
-							if(document.hidden && data.notifyMessage) {
-								sendMessageNotification(conversation, data.notifyMessage, data.notificationCount);
+							if(document.visibilityState === "hidden" && data.notificationMessages.length > 0) {
+								getNotificationUtils().showNotifications(conversation, data.notificationMessages);
 								notificationSent = true;
 							}
 						}
@@ -405,20 +426,20 @@ class Messaging extends React.Component<Props, State> {
 			const pendingConversationArray: Conversation[] = [...prevState.conversations];
 			
 			//Updating the conversation previews
-			for(const [chatGUID, [conversationItem]] of Object.entries(topItems)) {
+			for(const [chatGUID, {message}] of Object.entries(topItems)) {
 				const matchedConversationIndex = pendingConversationArray.findIndex((conversation) => conversation.guid === chatGUID);
 				if(matchedConversationIndex === -1) continue;
 				
 				//Creating the updated conversation
 				const updatedConversation: Conversation = {
 					...pendingConversationArray[matchedConversationIndex],
-					preview: messageItemToConversationPreview(conversationItem)
+					preview: messageItemToConversationPreview(message)
 				};
-				if(!(prevState.detailPane.type === DetailType.Thread && prevState.detailPane.conversationGUID === chatGUID) && conversationItem.sender) updatedConversation.unreadMessages = true;
+				if(!(prevState.detailPane.type === DetailType.Thread && prevState.detailPane.conversationGUID === chatGUID) && message.sender) updatedConversation.unreadMessages = true;
 				
 				//Re-sorting the conversation into the list
 				pendingConversationArray.splice(matchedConversationIndex, 1);
-				let olderConversationIndex = pendingConversationArray.findIndex(conversation => conversation.preview.date < conversationItem.date);
+				let olderConversationIndex = pendingConversationArray.findIndex(conversation => conversation.preview.date < message.date);
 				if(olderConversationIndex === -1) olderConversationIndex = pendingConversationArray.length;
 				pendingConversationArray.splice(olderConversationIndex, 0, updatedConversation);
 			}
@@ -464,24 +485,24 @@ class Messaging extends React.Component<Props, State> {
 		});
 		
 		{
-			const entries = Object.entries(topItemsNotification);
+			const entries = Object.entries(notificationMessages);
 			if(entries.length > 0) {
 				//Playing a notification sound
 				playSoundNotification();
 				
 				//Only show notifications if the window isn't focused
-				if(document.hidden) {
-					for(const [chatGUID, [message, messageCount]] of entries) {
+				if(document.visibilityState === "hidden") {
+					for(const [chatGUID, messages] of entries) {
 						//Finding the chat
 						const conversation = this.state.conversations.find((conversation) => conversation.guid === chatGUID);
 						if(!conversation) continue;
 						
 						//Sending a notification
-						sendMessageNotification(conversation, message, messageCount);
+						getNotificationUtils().showNotifications(conversation, messages);
 					}
 				}
 			} else {
-				if(newSelectedIncomingMessages) playSoundMessageIn();
+				if(activeConversationUpdated) playSoundMessageIn();
 			}
 		}
 	};

@@ -17,15 +17,22 @@ export interface PersonData {
 	addresses: AddressData[];
 }
 
-export interface ContactData {
-	name?: string;
-	avatar?: string;
-}
+export type ChromeMessage =
+	//Contacts
+	{type: "getPeople"} |
+	{type: "findPerson", address: string} |
+	//Notifications
+	{type: "showNotification", chatID: string, personID: string | undefined, messageID: string, chatName: string, contactName: string, message: string} |
+	{type: "dismissNotifications", chatID: string} |
+	//Connection
+	{type: "connect", hostname: string, port: number} |
+	{type: "send", data: string} |
+	{type: "disconnect"};
 
 export type ChromeEventData =
 	//Contacts
-	{type: "getContacts", contacts: PersonData[]} |
-	{type: "findContact", address: string, contact: ContactData | undefined} |
+	{type: "getPeople", people: PersonData[]} |
+	{type: "findPerson", address: string, person: PersonData | undefined} |
 	//Connection
 	{type: "connect" | "disconnect"} |
 	{type: "message", data: string, isEncrypted: boolean};
@@ -36,7 +43,7 @@ declare global {
 	interface Window {
 		chrome: {
 			webview: {
-				postMessage: (message: any) => void;
+				postMessage: (message: ChromeMessage) => void;
 				addEventListener: (event: "message", callback: ChromeEventListener) => void;
 				removeEventListener: (event: "message", callback: ChromeEventListener) => void;
 			}

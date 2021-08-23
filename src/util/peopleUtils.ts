@@ -1,12 +1,12 @@
 import {parsePhoneNumberFromString} from "libphonenumber-js";
-import {ContactData, PersonData} from "../../window";
+import {PersonData} from "../../window";
 
 export abstract class PeopleUtils {
 	abstract initialize(): void;
 	
 	abstract getPeople(): Promise<PersonData[]>;
 	
-	abstract findPerson(address: string): Promise<ContactData>;
+	abstract findPerson(address: string): Promise<PersonData>;
 }
 
 let peopleUtils: PeopleUtils;
@@ -18,7 +18,7 @@ export function getPeopleUtils() {
 }
 
 //Contacts that were previously queried for, for quick access
-const contactCacheMap: Map<string, ContactData> = new Map();
+const contactCacheMap: Map<string, PersonData> = new Map();
 const contactFailedArray: string[] = [];
 
 export function initializePeople() {
@@ -31,7 +31,7 @@ export function getPeople(): Promise<PersonData[]> {
 	else return peopleUtils.getPeople();
 }
 
-export function findPerson(address: string): Promise<ContactData> {
+export function findPerson(address: string): Promise<PersonData> {
 	if(!peopleUtils) return Promise.reject(new Error("No people handler assigned"));
 	
 	//Formatting the address
