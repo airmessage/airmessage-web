@@ -275,7 +275,7 @@ export default class ClientProtocol3 extends ProtocolManager {
 		const fileGUID = unpacker.unpackString();
 		const fileData = unpacker.unpackPayload();
 		
-		if(requestIndex === 0) this.communicationsManager.listener?.onFileRequestStart(requestID, fileLength!, new InflatorAccumulator());
+		if(requestIndex === 0) this.communicationsManager.listener?.onFileRequestStart(requestID, undefined, undefined, fileLength!, new InflatorAccumulator());
 		this.communicationsManager.listener?.onFileRequestData(requestID, fileData);
 		if(isLast) this.communicationsManager.listener?.onFileRequestComplete(requestID);
 	}

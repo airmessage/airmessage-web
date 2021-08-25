@@ -33,7 +33,7 @@ import {
 import {arrayBufferToHex} from "../../util/fileUtils";
 import SparkMD5 from "spark-md5";
 import {InflatorAccumulator} from "../transferAccumulator";
-import {encryptData} from "shared/util/encryptionUtils";
+import {encryptData, isCryptoPasswordAvailable} from "shared/util/encryptionUtils";
 
 
 const attachmentChunkSize = 2 * 1024 * 1024; //2 MiB
@@ -134,7 +134,7 @@ enum NSTGroupActionType {
 
 type AMBrowser = "chrome" | "safari" | "firefox" | "edge" | "browser";
 
-export default class ClientProtocol2 extends ProtocolManager {
+export default class ClientProtocol4 extends ProtocolManager {
 	processData(data: ArrayBuffer, wasEncrypted: boolean): void {
 		//Notifying the communications manager of a new incoming message
 		this.communicationsManager.listener?.onPacket();
@@ -157,7 +157,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 				this.communicationsManager.disconnect(ConnectionErrorCode.Connection);
 				break;
 			case nhtPing: {
-			//Replying with a pong
+				//Replying with a pong
 				const packer = AirPacker.get();
 				try {
 					packer.packInt(nhtPong);
@@ -269,13 +269,19 @@ export default class ClientProtocol2 extends ProtocolManager {
 		//Reading the response data
 		const requestID = unpacker.unpackShort();
 		const requestIndex = unpacker.unpackInt();
-		const fileLength = requestIndex === 0 ? unpacker.unpackLong() : undefined;
+		let downloadFileName: string | undefined = undefined;
+		let downloadFileType: string | undefined = undefined;
+		let fileLength: number | undefined = undefined;
+		if(requestIndex === 0) {
+			downloadFileName = unpacker.unpackNullableString();
+			downloadFileType = unpacker.unpackNullableString();
+			fileLength = unpacker.unpackLong();
+		}
 		const isLast = unpacker.unpackBoolean();
 		
-		const fileGUID = unpacker.unpackString();
 		const fileData = unpacker.unpackPayload();
 		
-		if(requestIndex === 0) this.communicationsManager.listener?.onFileRequestStart(requestID, undefined, undefined, fileLength!, new InflatorAccumulator());
+		if(requestIndex === 0) this.communicationsManager.listener?.onFileRequestStart(requestID, downloadFileName, downloadFileType, fileLength!, new InflatorAccumulator());
 		this.communicationsManager.listener?.onFileRequestData(requestID, fileData);
 		if(isLast) this.communicationsManager.listener?.onFileRequestComplete(requestID);
 	}
@@ -365,6 +371,13 @@ export default class ClientProtocol2 extends ProtocolManager {
 		
 		//Checking if the current protocol requires authentication
 		if(unpacker.unpackBoolean()) {
+			//Checking if we don't have a password to use
+			if(!isCryptoPasswordAvailable()) {
+				//Failing the connection
+				this.communicationsManager.disconnect(ConnectionErrorCode.Unauthorized);
+				return false;
+			}
+			
 			//Reading the transmission check
 			const transmissionCheck = unpacker.unpackPayload();
 			
@@ -575,6 +588,8 @@ export default class ClientProtocol2 extends ProtocolManager {
 			packer.packInt(nhtIDRetrieval);
 			
 			packer.packLong(idLower);
+			packer.packLong(timeLower.getTime());
+			packer.packLong(timeUpper.getTime());
 			
 			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
