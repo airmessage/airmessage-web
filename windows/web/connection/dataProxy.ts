@@ -42,7 +42,7 @@ export default class DataProxyTCP extends DataProxy {
 		this.override = override;
 	}
 	
-	//previousEncrypt ensures that all send messages are sent in parallel
+	//previousEncrypt ensures that all sent messages are sent in parallel
 	private previousEncrypt: Promise<any> | undefined;
 	async send(data: ArrayBuffer, encrypt: boolean) {
 		if(this.previousEncrypt) {
