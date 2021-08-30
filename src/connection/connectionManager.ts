@@ -550,6 +550,10 @@ export function getActiveCommVer(): string | undefined {
 	return communicationsManager?.communicationsVersion;
 }
 
+export function getActiveProxyType(): string {
+	return dataProxy.proxyType;
+}
+
 function pushKeyedArray<K, R>(map: Map<K, R[]>, key: K, value: R): void {
 	//Finding the array in the map
 	const array = map.get(key);

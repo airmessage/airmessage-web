@@ -21,6 +21,7 @@ export type ChromeMessage =
 	//Platform
 	{type: "registerActivations"} |
 	{type: "hasFocus"} |
+	{type: "getSystemVersion"} |
 	//Contacts
 	{type: "getPeople"} |
 	{type: "findPerson", address: string} |
@@ -37,6 +38,7 @@ export type ChromeEventData =
 	{type: "activateChat", chatID: string} |
 	//Platform
 	{type: "hasFocus", hasFocus: boolean} |
+	{type: "getSystemVersion", systemVersion: string} |
 	//Contacts
 	{type: "getPeople", people: PersonData[]} |
 	{type: "findPerson", address: string, person: PersonData | undefined} |

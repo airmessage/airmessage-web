@@ -1,5 +1,10 @@
 import {PlatformUtils} from "shared/util/platformUtils";
-import {activateChatEventEmitter, windowsHasFocus, windowsRegisterActivations} from "./interopUtils";
+import {
+	activateChatEventEmitter,
+	windowsGetSystemVersion,
+	windowsHasFocus,
+	windowsRegisterActivations
+} from "./interopUtils";
 
 export default class WindowsPlatformUtils extends PlatformUtils {
 	initializeActivations() {
@@ -12,5 +17,11 @@ export default class WindowsPlatformUtils extends PlatformUtils {
 	
 	getChatActivationEmitter() {
 		return activateChatEventEmitter;
+	}
+	
+	async getExtraEmailDetails() {
+		return {
+			"Windows version": await windowsGetSystemVersion()
+		};
 	}
 }

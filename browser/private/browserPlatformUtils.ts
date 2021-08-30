@@ -11,4 +11,8 @@ export default class BrowserPlatformUtils extends PlatformUtils {
 	hasFocus() {
 		return Promise.resolve(document.visibilityState === "visible");
 	}
+	
+	getExtraEmailDetails() {
+		return Promise.resolve({});
+	}
 }

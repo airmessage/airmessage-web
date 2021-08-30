@@ -14,6 +14,8 @@ import {decryptData, isCryptoPasswordAvailable} from "shared/util/encryptionUtil
 const handshakeTimeoutTime = 8 * 1000;
 
 export default class DataProxyConnect extends DataProxy {
+	proxyType = "Connect";
+	
 	private socket?: WebSocket;
 	private handshakeTimeout? : NodeJS.Timeout;
 	

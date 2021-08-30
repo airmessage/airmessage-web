@@ -16,6 +16,11 @@ export abstract class PlatformUtils {
 	 * Checks if the app currently has focus.
 	 */
 	abstract hasFocus(): Promise<boolean>;
+	
+	/**
+	 * Gets extra items to add to the device information section of the feedback email
+	 */
+	abstract getExtraEmailDetails(): Promise<{[key: string]: string}>;
 }
 
 let platformUtils: PlatformUtils;

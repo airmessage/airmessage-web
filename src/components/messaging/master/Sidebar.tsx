@@ -31,7 +31,7 @@ import {ConnectionErrorCode} from "../../../data/stateCodes";
 import {communityPage, supportEmail} from "../../../data/linkConstants";
 import {appVersion, getFormattedBuildDate, releaseHash} from "../../../data/releaseInfo";
 import {
-	getActiveCommVer,
+	getActiveCommVer, getActiveProxyType,
 	getServerSoftwareVersion,
 	getServerSystemVersion,
 	targetCommVer
@@ -39,6 +39,7 @@ import {
 import Markdown from "../../Markdown";
 import changelog from "../../../resources/text/changelog.md";
 import LoginContext from "shared/components/LoginContext";
+import {getPlatformUtils} from "shared/util/platformUtils";
 
 interface Props {
 	conversations: Conversation[] | undefined;
@@ -207,24 +208,27 @@ function ChangelogDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 }
 
 function FeedbackDialog(props: {isOpen: boolean, onDismiss: () => void}) {
-	function onClickEmail() {
+	const onClickEmail = useCallback(async () => {
 		const body =
 			`\n\n---------- DEVICE INFORMATION ----------` +
+			Object.entries(await getPlatformUtils().getExtraEmailDetails())
+				.map(([key, value]) => `\n${key}: ${value}`)
+				.join("") +
 			`\nUser agent: ${navigator.userAgent}` +
 			`\nClient version: ${appVersion}` +
 			`\nCommunications version: ${getActiveCommVer()} (target ${targetCommVer})` +
-			`\nProxy type: Connect` +
+			`\nProxy type: ${getActiveProxyType()}` +
 			`\nServer system version: ${getServerSystemVersion()}` +
 			`\nServer software version: ${getServerSoftwareVersion()}`;
 		const url = `mailto:${supportEmail}?subject=${encodeURIComponent("AirMessage feedback")}&body=${encodeURIComponent(body)}`;
 		window.open(url, "_blank");
 		props.onDismiss();
-	}
+	}, [props.onDismiss]);
 	
-	function onClickCommunity() {
+	const onClickCommunity = useCallback(() => {
 		window.open(communityPage, "_blank");
 		props.onDismiss();
-	}
+	}, [props.onDismiss]);
 	
 	return (
 		<Dialog

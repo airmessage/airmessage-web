@@ -33,6 +33,7 @@ function parseAddress(address: string): AddressData {
 }
 
 export default class DataProxyTCP extends DataProxy {
+	proxyType = "Direct";
 	private readonly override: AddressOverride | undefined;
 	private isStopping = false;
 	

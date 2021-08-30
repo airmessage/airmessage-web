@@ -107,4 +107,16 @@ namespace AirMessageWindows
         public string type { get; }
         public bool hasFocus { get; }
     }
+    
+    public readonly struct JSMessageSystemVersion
+    {
+        public JSMessageSystemVersion(string type, string systemVersion)
+        {
+            this.type = type;
+            this.systemVersion = systemVersion;
+        }
+
+        public string type { get; }
+        public string systemVersion { get; }
+    }
 }

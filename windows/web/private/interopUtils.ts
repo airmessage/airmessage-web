@@ -11,6 +11,7 @@ function postMessage(message: ChromeMessage) {
 }
 
 let hasFocusTask: Deferred<boolean> | undefined = undefined;
+let getSystemVersionTask: Deferred<string> | undefined = undefined;
 let getContactsTask: Deferred<PersonData[]> | undefined = undefined;
 const findContactTaskMap = new Map<string, Deferred<PersonData>>();
 
@@ -31,6 +32,10 @@ export function initializeInterop() {
 			case "hasFocus":
 				hasFocusTask?.resolve(message.hasFocus);
 				hasFocusTask = undefined;
+				break;
+			case "getSystemVersion":
+				getSystemVersionTask?.resolve(message.systemVersion);
+				//Don't set to undefined, cache result since system version shouldn't change
 				break;
 			case "getPeople":
 				getContactsTask?.resolve(message.people);
@@ -65,6 +70,17 @@ export function windowsHasFocus(): Promise<boolean> {
 	hasFocusTask = new Deferred<boolean>();
 	postMessage({type: "hasFocus"});
 	return hasFocusTask.promise;
+}
+
+/**
+ * Gets a string that represents the current system version
+ */
+export function windowsGetSystemVersion(): Promise<string> {
+	if(getSystemVersionTask !== undefined) return getSystemVersionTask.promise;
+	
+	getSystemVersionTask = new Deferred<string>();
+	postMessage({type: "getSystemVersion"});
+	return getSystemVersionTask.promise;
 }
 
 /**

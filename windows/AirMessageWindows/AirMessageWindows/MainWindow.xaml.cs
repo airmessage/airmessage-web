@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
-using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Web;
 using Windows.ApplicationModel.Contacts;
 using Windows.System;
-using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.UI.Xaml;
 using Microsoft.Web.WebView2.Core;
 using PInvoke;
@@ -141,7 +139,11 @@ namespace AirMessageWindows
                     MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageHasFocus("hasFocus", hasFocus), JsonOptions));
                     break;
                 }
-                    
+                case "getSystemVersion":
+                {
+                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageSystemVersion("getSystemVersion", Environment.OSVersion.VersionString), JsonOptions));
+                    break;
+                }
                 //People
                 case "getPeople":
                 {
