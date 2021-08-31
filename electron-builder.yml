@@ -1,8 +1,0 @@
-appId: "me.tagavari.airmessage"
-productName: "AirMessage"
-
-files:
-    - "build"
-
-extraMetadata:
-  main: build/electron.js

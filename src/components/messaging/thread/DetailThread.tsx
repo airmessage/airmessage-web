@@ -19,9 +19,9 @@ import {
 import {ConversationItemType, MessageError, MessageStatusCode} from "../../../data/stateCodes";
 import {DetailFrame} from "../master/DetailFrame";
 import EventEmitter from "../../../util/eventEmitter";
-import {dismissMessageNotifications} from "../../../util/notifyUtils";
 import {playSoundMessageOut} from "../../../util/soundUtils";
 import {appleServiceAppleMessage} from "../../../data/appleConstants";
+import {getNotificationUtils} from "shared/util/notificationUtils";
 
 type HistoryLoadState = "idle" | "loading" | "complete";
 
@@ -403,7 +403,7 @@ export default class DetailThread extends React.Component<Props, State> {
 	
 	componentDidMount() {
 		//Clearing notifications
-		dismissMessageNotifications(this.props.conversation.guid);
+		getNotificationUtils().dismissNotifications(this.props.conversation.guid);
 		
 		//Fetching messages
 		this.requestMessages();

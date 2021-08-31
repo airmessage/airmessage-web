@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useCallback, useContext} from "react";
 import styles from "./Sidebar.module.css";
 
 import firebase from "firebase/app";
@@ -31,13 +31,15 @@ import {ConnectionErrorCode} from "../../../data/stateCodes";
 import {communityPage, supportEmail} from "../../../data/linkConstants";
 import {appVersion, getFormattedBuildDate, releaseHash} from "../../../data/releaseInfo";
 import {
-	getActiveCommVer,
+	getActiveCommVer, getActiveProxyType,
 	getServerSoftwareVersion,
 	getServerSystemVersion,
 	targetCommVer
 } from "../../../connection/connectionManager";
 import Markdown from "../../Markdown";
 import changelog from "../../../resources/text/changelog.md";
+import LoginContext from "shared/components/LoginContext";
+import {getPlatformUtils} from "shared/util/platformUtils";
 
 interface Props {
 	conversations: Conversation[] | undefined;
@@ -110,14 +112,6 @@ export default class Sidebar extends React.Component<Props, State> {
 	
 	private readonly dismissLogOut = () => {
 		this.setState({showLogOutDialog: false});
-	};
-	
-	private readonly confirmLogOut = () => {
-		//Dismissing the log out dialog
-		this.dismissLogOut();
-		
-		//Logging out
-		firebase.auth().signOut();
 	};
 	
 	render() {
@@ -214,24 +208,27 @@ function ChangelogDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 }
 
 function FeedbackDialog(props: {isOpen: boolean, onDismiss: () => void}) {
-	function onClickEmail() {
+	const onClickEmail = useCallback(async () => {
 		const body =
 			`\n\n---------- DEVICE INFORMATION ----------` +
+			Object.entries(await getPlatformUtils().getExtraEmailDetails())
+				.map(([key, value]) => `\n${key}: ${value}`)
+				.join("") +
 			`\nUser agent: ${navigator.userAgent}` +
 			`\nClient version: ${appVersion}` +
 			`\nCommunications version: ${getActiveCommVer()} (target ${targetCommVer})` +
-			`\nProxy type: Connect` +
+			`\nProxy type: ${getActiveProxyType()}` +
 			`\nServer system version: ${getServerSystemVersion()}` +
 			`\nServer software version: ${getServerSoftwareVersion()}`;
 		const url = `mailto:${supportEmail}?subject=${encodeURIComponent("AirMessage feedback")}&body=${encodeURIComponent(body)}`;
 		window.open(url, "_blank");
 		props.onDismiss();
-	}
+	}, [props.onDismiss]);
 	
-	function onClickCommunity() {
+	const onClickCommunity = useCallback(() => {
 		window.open(communityPage, "_blank");
 		props.onDismiss();
-	}
+	}, [props.onDismiss]);
 	
 	return (
 		<Dialog
@@ -256,13 +253,15 @@ function FeedbackDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 }
 
 function SignOutDialog(props: {isOpen: boolean, onDismiss: () => void}) {
-	function onConfirm() {
+	const onDismiss = props.onDismiss;
+	const signOut = useContext(LoginContext).signOut;
+	const onConfirm = useCallback(() => {
 		//Dismissing the dialog
-		props.onDismiss();
+		onDismiss();
 		
-		//Logging out
-		firebase.auth().signOut();
-	}
+		//Signing out
+		signOut();
+	}, [onDismiss, signOut]);
 	
 	return (
 		<Dialog

@@ -27,13 +27,14 @@
 			"shared/*": ["./src/*"],
 			"platform-components/*": ["./browser/*"]
 		},
-		"sourceMap": true
+		"sourceMap": true,
+		"inlineSources": true
 	},
 	"include": [
 		"src",
 		"browser",
-		"electron-main",
-		"electron-renderer",
-		"index.d.ts"
+		"windows/web",
+		"index.d.ts",
+		"window.ts"
 	]
 }

@@ -14,7 +14,7 @@ import {
 	Typography
 } from "@material-ui/core";
 import {getDeliveryStatusTime, getTimeDivider} from "../../../../util/dateUtils";
-import {ContactData, findPerson} from "../../../../util/peopleUtils";
+import {findPerson} from "../../../../util/peopleUtils";
 import {MessageErrorCode, MessageStatusCode} from "../../../../data/stateCodes";
 import MessageAttachmentDownloadable from "../attachment/MessageAttachmentDownloadable";
 import MessageAttachmentImage from "../attachment/MessageAttachmentImage";
@@ -28,6 +28,7 @@ import {Anchorme} from "react-anchorme";
 import {PaletteColor} from "@material-ui/core/styles/createPalette";
 import {appleServiceAppleMessage} from "../../../../data/appleConstants";
 import FileDownloadResult, {FileDisplayResult} from "shared/data/fileDownloadResult";
+import {PersonData} from "../../../../../window";
 
 const radiusLinked = "4px";
 const radiusUnlinked = "16px";
@@ -217,21 +218,21 @@ export default function Message(props: Props) {
 	};
 	
 	//Initializing state
-	const [contactData, setContactData] = useState<ContactData | undefined>();
+	const [personData, setPersonData] = useState<PersonData | undefined>();
 	useEffect(() => {
 		if(!props.message.sender) return;
 		
 		//Requesting contact data
-		findPerson(props.message.sender).then((contact) => setContactData(contact), console.warn);
+		findPerson(props.message.sender).then(setPersonData, console.warn);
 	}, [props.message.sender]);
 	
 	//Building and returning the component
 	return (
 		<div className={styles.message} style={messageStyle}>
 			{props.flow.showDivider && <Typography className={styles.separator} variant="body2" color="textSecondary">{getTimeDivider(props.message.date)}</Typography>}
-			{displaySender && <Typography className={styles.labelSender} variant="caption" color="textSecondary">{contactData?.name ?? props.message.sender}</Typography>}
+			{displaySender && <Typography className={styles.labelSender} variant="caption" color="textSecondary">{personData?.name ?? props.message.sender}</Typography>}
 			<div className={styles.messageSplit}>
-				{<Avatar className={styles.avatar} src={contactData?.avatar} style={displayAvatar ? {visibility: "visible", backgroundColor: colorFromContact(props.message.sender ?? "")} : {visibility: "hidden"}} />}
+				{<Avatar className={styles.avatar} src={personData?.avatar} style={displayAvatar ? {visibility: "visible", backgroundColor: colorFromContact(props.message.sender ?? "")} : {visibility: "hidden"}} />}
 				<div className={styles.messageParts}>
 					{components}
 				</div>
