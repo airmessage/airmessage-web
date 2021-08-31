@@ -272,8 +272,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 	}, onIDUpdate(messageID: number): void {
 		//Recording the last message ID
 		lastServerMessageID = messageID;
-	},
-	onMessageConversations(data: Conversation[]): void {
+	}, onMessageConversations(data: Conversation[]): void {
 		//Resolving pending promises
 		for(const promise of liteConversationPromiseArray) promise.resolve(data);
 		

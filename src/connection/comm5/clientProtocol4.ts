@@ -139,15 +139,19 @@ export default class ClientProtocol4 extends ProtocolManager {
 		//Notifying the communications manager of a new incoming message
 		this.communicationsManager.listener?.onPacket();
 		
-		//Unpacking the message
-		const unpacker = new AirUnpacker(data);
-		const messageType = unpacker.unpackInt();
-		
-		//Processing the message data
-		if(wasEncrypted) {
-			this.processDataSecure(messageType, unpacker);
-		} else {
-			this.processDataInsecure(messageType, unpacker);
+		try {
+			//Unpacking the message
+			const unpacker = new AirUnpacker(data);
+			const messageType = unpacker.unpackInt();
+			
+			//Processing the message data
+			if(wasEncrypted) {
+				this.processDataSecure(messageType, unpacker);
+			} else {
+				this.processDataInsecure(messageType, unpacker);
+			}
+		} catch(error) {
+			console.warn(error);
 		}
 	}
 	
