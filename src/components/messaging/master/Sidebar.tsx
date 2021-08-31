@@ -1,9 +1,6 @@
 import React, {useCallback, useContext} from "react";
 import styles from "./Sidebar.module.css";
 
-import firebase from "firebase/app";
-import "firebase/auth";
-
 import AirMessageLogo from "../../logo/AirMessageLogo";
 import {
 	Button,
@@ -31,7 +28,8 @@ import {ConnectionErrorCode} from "../../../data/stateCodes";
 import {communityPage, supportEmail} from "../../../data/linkConstants";
 import {appVersion, getFormattedBuildDate, releaseHash} from "../../../data/releaseInfo";
 import {
-	getActiveCommVer, getActiveProxyType,
+	getActiveCommVer,
+	getActiveProxyType,
 	getServerSoftwareVersion,
 	getServerSystemVersion,
 	targetCommVer
@@ -208,6 +206,8 @@ function ChangelogDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 }
 
 function FeedbackDialog(props: {isOpen: boolean, onDismiss: () => void}) {
+	const propsOnDismiss = props.onDismiss;
+	
 	const onClickEmail = useCallback(async () => {
 		const body =
 			`\n\n---------- DEVICE INFORMATION ----------` +
@@ -222,13 +222,13 @@ function FeedbackDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 			`\nServer software version: ${getServerSoftwareVersion()}`;
 		const url = `mailto:${supportEmail}?subject=${encodeURIComponent("AirMessage feedback")}&body=${encodeURIComponent(body)}`;
 		window.open(url, "_blank");
-		props.onDismiss();
-	}, [props.onDismiss]);
+		propsOnDismiss();
+	}, [propsOnDismiss]);
 	
 	const onClickCommunity = useCallback(() => {
 		window.open(communityPage, "_blank");
-		props.onDismiss();
-	}, [props.onDismiss]);
+		propsOnDismiss();
+	}, [propsOnDismiss]);
 	
 	return (
 		<Dialog

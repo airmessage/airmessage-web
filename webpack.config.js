@@ -13,7 +13,9 @@ module.exports = (env) => ({
 	mode: env.WEBPACK_SERVE ? "development" : "production",
 	devtool: env.WEBPACK_SERVE ? "cheap-source-map" : (env.windows ? "inline-source-map" : "source-map"),
 	devServer: {
-		contentBase: path.join(__dirname, "public"),
+		static: {
+			directory: path.join(__dirname, "public")
+		},
 		port: 8080,
 		https: env.secure ? {
 			key: fs.readFileSync("webpack.key"),

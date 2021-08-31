@@ -3,9 +3,7 @@ import DataProxy from "shared/connection/dataProxy";
 import * as CloseFrame from "./private/webSocketCloseEventCodes";
 import * as NHT from "./private/nht";
 import ByteBuffer from "bytebuffer";
-import firebase from "firebase/app";
-import "firebase/auth";
-
+import {getAuth, getIdToken} from "firebase/auth";
 import {getInstallationID} from "shared/util/installationUtils";
 import {ConnectionErrorCode} from "shared/data/stateCodes";
 import {connectHostname} from "shared/secrets";
@@ -21,7 +19,7 @@ export default class DataProxyConnect extends DataProxy {
 	
 	start(): void {
 		//Getting the user's ID token
-		firebase.auth().currentUser!.getIdToken().then((idToken: string) => {
+		getIdToken(getAuth().currentUser!).then((idToken: string) => {
 			//Building the URL
 			const url = new URL(connectHostname);
 			url.searchParams.set("communications", String(NHT.commVer));

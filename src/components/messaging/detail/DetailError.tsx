@@ -5,10 +5,9 @@ import WifiOffRoundedIcon from "@material-ui/icons/WifiOffRounded";
 import LockRoundedIcon from "@material-ui/icons/LockRounded";
 import {ConnectionErrorCode} from "../../../data/stateCodes";
 import {connect} from "../../../connection/connectionManager";
-import firebase from "firebase/app";
-import "firebase/auth";
 import {setCryptoPassword} from "shared/util/encryptionUtils";
 import {SecureStorageKey, setSecureLS} from "shared/util/secureStorageUtils";
+import {getAuth, signOut} from "firebase/auth";
 
 interface ErrorDisplay {
 	title: string;
@@ -179,7 +178,7 @@ function errorCodeToDisplay(error: ConnectionErrorCode): ErrorDisplay {
 				buttonPrimary: {
 					label: "Sign out",
 					onClick: () => {
-						firebase.auth().signOut();
+						signOut(getAuth());
 					}
 				}
 			};
