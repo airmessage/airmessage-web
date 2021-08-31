@@ -48,7 +48,7 @@ We kindly ask that you do not use AirMessage's official Connect servers with any
 
 ## Developing and running Windows builds
 
-![AirMessage running on Windows](README/windows-electron.png)
+![AirMessage running on Windows](README/windows-app.png)
 
 AirMessage is also able to run on Windows machines, with support for direct connections like the Android app.
 
