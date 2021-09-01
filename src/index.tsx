@@ -1,9 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import firebase from "firebase/app";
 import * as Sentry from "@sentry/react";
 import LoginGate from "platform-components/components/LoginGate";
 import AppTheme from "./components/control/AppTheme";
+import {initializeApp} from "firebase/app";
 import * as secrets from "./secrets";
 
 //Run initialization
@@ -21,9 +21,9 @@ if(WPEnv.ENVIRONMENT === "production") {
 }
 
 //Browser-specific features
-if(!WPEnv.IS_ELECTRON) {
+if(WPEnv.IS_WEB) {
 	//Initializing Firebase
-	firebase.initializeApp(secrets.firebaseConfig);
+	initializeApp(secrets.firebaseConfig);
 	
 	// Check that service workers are supported
 	if(WPEnv.ENVIRONMENT === "production" && "serviceWorker" in navigator) {

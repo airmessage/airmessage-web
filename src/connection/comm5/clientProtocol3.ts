@@ -139,15 +139,19 @@ export default class ClientProtocol3 extends ProtocolManager {
 		//Notifying the communications manager of a new incoming message
 		this.communicationsManager.listener?.onPacket();
 		
-		//Unpacking the message
-		const unpacker = new AirUnpacker(data);
-		const messageType = unpacker.unpackInt();
-		
-		//Processing the message data
-		if(wasEncrypted) {
-			this.processDataSecure(messageType, unpacker);
-		} else {
-			this.processDataInsecure(messageType, unpacker);
+		try {
+			//Unpacking the message
+			const unpacker = new AirUnpacker(data);
+			const messageType = unpacker.unpackInt();
+			
+			//Processing the message data
+			if(wasEncrypted) {
+				this.processDataSecure(messageType, unpacker);
+			} else {
+				this.processDataInsecure(messageType, unpacker);
+			}
+		} catch(error) {
+			console.warn(error);
 		}
 	}
 	
@@ -275,7 +279,7 @@ export default class ClientProtocol3 extends ProtocolManager {
 		const fileGUID = unpacker.unpackString();
 		const fileData = unpacker.unpackPayload();
 		
-		if(requestIndex === 0) this.communicationsManager.listener?.onFileRequestStart(requestID, fileLength!, new InflatorAccumulator());
+		if(requestIndex === 0) this.communicationsManager.listener?.onFileRequestStart(requestID, undefined, undefined, fileLength!, new InflatorAccumulator());
 		this.communicationsManager.listener?.onFileRequestData(requestID, fileData);
 		if(isLast) this.communicationsManager.listener?.onFileRequestComplete(requestID);
 	}

@@ -7,9 +7,9 @@ import * as secrets from "shared/secrets";
 
 import * as Sentry from "@sentry/react";
 import {promiseGAPI} from "shared/index";
-import firebase from "firebase/app";
-import "firebase/auth";
 import {googleScope} from "shared/constants";
+import LoginContext from "shared/components/LoginContext";
+import {getAuth, onAuthStateChanged, signInWithCredential, signOut, GoogleAuthProvider, User} from "firebase/auth";
 
 type LoginState = "waiting" | "logged-out" | "logged-in";
 
@@ -26,14 +26,26 @@ export default class LoginGate extends React.Component<any, State> {
 	};
 	
 	render() {
+		let main: React.ReactElement | null;
 		switch(this.state.state) {
 			case "waiting":
-				return null;
+				main = null;
+				break;
 			case "logged-in":
-				return <Messaging />;
+				main = <Messaging />;
+				break;
 			case "logged-out":
-				return <Onboarding />;
+				main = <Onboarding />;
+				break;
 		}
+		
+		return (
+			<LoginContext.Provider value={{
+				signOut: () => signOut(getAuth())
+			}}>
+				{main}
+			</LoginContext.Provider>
+		);
 	}
 	
 	componentDidMount() {
@@ -50,7 +62,7 @@ export default class LoginGate extends React.Component<any, State> {
 			});
 		});
 		
-		this.unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+		this.unsubscribe = onAuthStateChanged(getAuth(), (user) => {
 			//Updating the state
 			this.setState({
 				state: user ? "logged-in" : "logged-out"
@@ -82,14 +94,14 @@ export default class LoginGate extends React.Component<any, State> {
 			const googleUser = this.googleAuthInstance!.currentUser.get();
 			
 			// We need to register an Observer on Firebase Auth to make sure auth is initialized.
-			const unsubscribe = firebase.auth().onAuthStateChanged((firebaseUser) => {
+			const unsubscribe = onAuthStateChanged(getAuth(), (firebaseUser) => {
 				unsubscribe();
 				
 				//Returning if the same user is already signed in to Firebase
 				if(isUserEqual(googleUser, firebaseUser)) return;
 				
 				//Signing in to Firebase with the credential from Google
-				firebase.auth().signInWithCredential(firebase.auth.GoogleAuthProvider.credential(googleUser.getAuthResponse().id_token)).catch((error) => {
+				signInWithCredential(getAuth(), GoogleAuthProvider.credential(googleUser.getAuthResponse().id_token)).catch((error) => {
 					console.warn(`Unable to authenticate Google Sign-In token with Firebase: ${error.code}: ${error.message}`);
 					this.googleAuthInstance!.signOut();
 				});
@@ -98,16 +110,16 @@ export default class LoginGate extends React.Component<any, State> {
 			});
 		} else {
 			//Signing out of Firebase
-			firebase.auth().signOut();
+			signOut(getAuth());
 		}
 	}
 }
 
-function isUserEqual(googleUser: gapi.auth2.GoogleUser, firebaseUser: firebase.User | null) {
+function isUserEqual(googleUser: gapi.auth2.GoogleUser, firebaseUser: User | null) {
 	if(firebaseUser) {
 		const providerData = firebaseUser.providerData;
 		for(let i = 0; i < providerData.length; i++) {
-			if(providerData[i]!.providerId === firebase.auth.GoogleAuthProvider.PROVIDER_ID &&
+			if(providerData[i]!.providerId === GoogleAuthProvider.PROVIDER_ID &&
 				providerData[i]!.uid === googleUser.getBasicProfile().getId()) {
 				// We don't need to reauth the Firebase connection.
 				return true;

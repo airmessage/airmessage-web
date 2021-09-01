@@ -11,8 +11,20 @@ import {DecorativeMessageBubble, MessagePartProps} from "../item/Message";
 import {StickerItem, TapbackItem} from "../../../../data/blocks";
 import {SnackbarContext} from "../../../control/SnackbarProvider";
 import {AttachmentRequestErrorCode} from "../../../../data/stateCodes";
+import FileDownloadResult from "shared/data/fileDownloadResult";
 
-export default function MessageAttachmentDownloadable(props: {data?: ArrayBuffer | Blob, name: string | undefined, type: string, size: number, guid: string, onDataAvailable: (data: ArrayBuffer) => void, onDataClicked: (data: ArrayBuffer | Blob) => void, partProps: MessagePartProps, tapbacks?: TapbackItem[], stickers?: StickerItem[]}) {
+export default function MessageAttachmentDownloadable(props: {
+	data?: ArrayBuffer | Blob,
+	name: string | undefined,
+	type: string,
+	size: number,
+	guid: string,
+	onDataAvailable: (result: FileDownloadResult) => void,
+	onDataClicked: (data: ArrayBuffer | Blob) => void,
+	partProps: MessagePartProps,
+	tapbacks?: TapbackItem[],
+	stickers?: StickerItem[]}
+) {
 	//State
 	const [isDownloading, setIsDownloading] = useState(false);
 	const [sizeAvailable, setSizeAvailable] = useState(props.size);

@@ -1,3 +1,4 @@
+/*eslint-env node */
 const webpack = require("webpack");
 const path = require("path");
 const fs = require("fs");
@@ -6,23 +7,15 @@ const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const WorkboxPlugin = require("workbox-webpack-plugin");
 
-let nativeWindowsAvailable = false;
-try {
-	nativeWindowsAvailable = process.platform === "win32" && !!require.resolve("airmessage-winrt");
-} catch(e) {
-	console.log("Failed to resolve module airmessage-winrt");
-}
-if(!nativeWindowsAvailable) {
-	console.log("Skipping compilation of airmessage-winrt");
-}
-
 module.exports = (env) => ({
 	entry: "./src/index.tsx",
-	target: env.electron ? "electron-renderer" : "web",
+	target: "web",
 	mode: env.WEBPACK_SERVE ? "development" : "production",
-	devtool: env.WEBPACK_SERVE ? "cheap-source-map" : "source-map",
+	devtool: env.WEBPACK_SERVE ? "cheap-source-map" : (env.windows ? "inline-source-map" : "source-map"),
 	devServer: {
-		contentBase: path.join(__dirname, "public"),
+		static: {
+			directory: path.join(__dirname, "public")
+		},
 		port: 8080,
 		https: env.secure ? {
 			key: fs.readFileSync("webpack.key"),
@@ -43,9 +36,13 @@ module.exports = (env) => ({
 				loader: "ts-loader",
 				exclude: /node_modules/,
 				options: {
-					transpileOnly: true,
-					happyPackMode: true
+					transpileOnly: true
 				}
+			},
+			{
+				enforce: "pre",
+				test: /\.js$/,
+				loader: "source-map-loader"
 			},
 			{
 				test: /\.css$/,
@@ -70,10 +67,6 @@ module.exports = (env) => ({
 				include: /\.module\.css$/
 			},
 			{
-				test: /\.node$/,
-				loader: "node-loader"
-			},
-			{
 				test: /\.(svg)|(wav)$/,
 				type: "asset/resource"
 			},
@@ -91,27 +84,22 @@ module.exports = (env) => ({
 		],
 		alias: {
 			"shared": path.resolve(__dirname, "src"),
-			"platform-components": path.resolve(__dirname, env.electron ? "electron-renderer" : "browser"),
-			...(nativeWindowsAvailable ? {} : {"airmessage-winrt": false})
+			"platform-components": path.resolve(__dirname, env.windows ? "windows/web" : "browser")
 		}
 	},
 	optimization: {
 		usedExports: true
 	},
+	externals: {
+		chrome: {
+			root: ["window", "chrome"],
+		},
+	},
 	plugins: [
 		new ForkTsCheckerWebpackPlugin({
 			eslint: {
-				files: `./{src,browser${nativeWindowsAvailable ? ",electron-main,electron-renderer" : ""}}/**/*.{ts,tsx,js,jsx}`,
-			},
-			typescript: !nativeWindowsAvailable ? {
-				configOverwrite: {
-					exclude: [
-						//TypeScript check fails if the module isn't available
-						"electron-renderer/init.ts",
-						"electron-renderer/private/windowsPeopleUtils.ts"
-					]
-				}
-			} : {}
+				files: `./{src,browser}/**/*.{ts,tsx,js,jsx}`,
+			}
 		}),
 		/* new ESLintPlugin({
 			files: ["src", "browser", "electron-main", "electron-renderer"],
@@ -120,15 +108,14 @@ module.exports = (env) => ({
 		new CopyPlugin({
 			patterns: [
 				{from: "public"}
-			].concat(env.electron ? [{from: "electron-main"}] : []),
+			]
 		}),
 		new webpack.DefinePlugin({
 			"WPEnv.ENVIRONMENT": JSON.stringify(env.WEBPACK_SERVE ? "development" : "production"),
-			"WPEnv.IS_ELECTRON": env.electron,
+			"WPEnv.IS_WEB": !env.windows,
 			"WPEnv.PACKAGE_VERSION": JSON.stringify(process.env.npm_package_version),
 			"WPEnv.RELEASE_HASH": "\"undefined\"",
-			"WPEnv.BUILD_DATE": Date.now(),
-			"WPEnv.WINRT": nativeWindowsAvailable
+			"WPEnv.BUILD_DATE": Date.now()
 		}),
-	].concat(!env.WEBPACK_SERVE && !env.electron ? new WorkboxPlugin.GenerateSW() : [])
+	].concat(!env.WEBPACK_SERVE && !env.windows ? new WorkboxPlugin.GenerateSW() : [])
 });

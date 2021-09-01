@@ -10,7 +10,7 @@ export interface CommunicationsManagerListener {
 	onMessageUpdate: (data: ConversationItem[]) => void;
 	onConversationUpdate: (data: [string, Conversation | undefined][]) => void;
 	onModifierUpdate: (data: MessageModifier[]) => void;
-	onFileRequestStart: (requestID: number, dataLength: number, accumulator: TransferAccumulator) => void;
+	onFileRequestStart: (requestID: number, downloadFileName: string | undefined, downloadFileType: string | undefined, dataLength: number, accumulator: TransferAccumulator) => void;
 	onFileRequestData: (requestID: number, data: ArrayBuffer) => void;
 	onFileRequestComplete: (requestID: number) => void;
 	onFileRequestFail: (requestID: number, error: AttachmentRequestErrorCode) => void;

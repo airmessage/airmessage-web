@@ -17,8 +17,9 @@ import promiseTimeout from "../util/promiseTimeout";
 import {TransferAccumulator} from "./transferAccumulator";
 import {isCryptoPasswordSet, setCryptoPassword} from "shared/util/encryptionUtils";
 import {getSecureLS, SecureStorageKey} from "shared/util/secureStorageUtils";
+import FileDownloadResult from "shared/data/fileDownloadResult";
 
-export const targetCommVer = "5.2";
+export const targetCommVer = "5.4";
 
 //How often to try reconnecting when disconnected
 const reconnectInterval = 8 * 1000;
@@ -92,12 +93,15 @@ class FileDownloadState {
 	public get accumulatedDataOffset() {
 		return this.accumulator!.offset;
 	}
-	promise: ProgressPromiseExecutor<ArrayBuffer, FileDownloadProgress>;
+	promise: ProgressPromiseExecutor<FileDownloadResult, FileDownloadProgress>;
 	private readonly timeoutCallback: () => void;
 	
 	private timeoutID: any | undefined;
 	
-	constructor(promise: ProgressPromiseExecutor<ArrayBuffer, FileDownloadProgress>, timeoutCallback: () => void) {
+	public downloadFileName: string | undefined = undefined;
+	public downloadFileType: string | undefined = undefined;
+	
+	constructor(promise: ProgressPromiseExecutor<FileDownloadResult, FileDownloadProgress>, timeoutCallback: () => void) {
 		this.promise = promise;
 		this.timeoutCallback = timeoutCallback;
 	}
@@ -216,10 +220,14 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 	}, onModifierUpdate(data: MessageModifier[]): void {
 		//Notifying the listeners
 		modifierUpdateEmitter.notify(data);
-	}, onFileRequestStart(requestID: number, dataLength: number, accumulator: TransferAccumulator): void {
+	}, onFileRequestStart(requestID, downloadFileName, downloadFileType, dataLength, accumulator) {
 		//Finding the local request
 		const state = fileDownloadStateMap.get(requestID);
 		if(!state) return;
+		
+		//Setting the download file information
+		state.downloadFileName = downloadFileName;
+		state.downloadFileType = downloadFileType;
 		
 		//Setting the accumulator
 		state.initializeAccumulator(accumulator);
@@ -243,7 +251,11 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		
 		//Finishing the request
 		state.finish();
-		state.promise.resolve(state.accumulatedData);
+		state.promise.resolve({
+			data: state.accumulatedData,
+			downloadName: state.downloadFileName,
+			downloadType: state.downloadFileType,
+		});
 		
 		//Removing the request
 		fileDownloadStateMap.delete(requestID);
@@ -260,8 +272,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 	}, onIDUpdate(messageID: number): void {
 		//Recording the last message ID
 		lastServerMessageID = messageID;
-	},
-	onMessageConversations(data: Conversation[]): void {
+	}, onMessageConversations(data: Conversation[]): void {
 		//Resolving pending promises
 		for(const promise of liteConversationPromiseArray) promise.resolve(data);
 		
@@ -492,12 +503,12 @@ export function fetchThread(chatGUID: string, firstMessageID?: number): Promise<
 	}));
 }
 
-export function fetchAttachment(attachmentGUID: string): ProgressPromise<ArrayBuffer, FileDownloadProgress> {
+export function fetchAttachment(attachmentGUID: string): ProgressPromise<FileDownloadResult, FileDownloadProgress> {
 	//Failing immediately if there is no network connection
-	if(!isConnected()) return ProgressPromise.reject(AttachmentRequestErrorCode.Timeout) as ProgressPromise<ArrayBuffer, FileDownloadProgress>;
+	if(!isConnected()) return ProgressPromise.reject(AttachmentRequestErrorCode.Timeout) as ProgressPromise<FileDownloadResult, FileDownloadProgress>;
 	
 	//Starting a new promise
-	return new ProgressPromise<ArrayBuffer, FileDownloadProgress>((resolve, reject, progress) => {
+	return new ProgressPromise<FileDownloadResult, FileDownloadProgress>((resolve, reject, progress) => {
 		const requestID = generateRequestID();
 		
 		//Sending the request
@@ -548,6 +559,10 @@ export function removeConnectionListener(listener: ConnectionListener) {
 
 export function getActiveCommVer(): string | undefined {
 	return communicationsManager?.communicationsVersion;
+}
+
+export function getActiveProxyType(): string {
+	return dataProxy.proxyType;
 }
 
 function pushKeyedArray<K, R>(map: Map<K, R[]>, key: K, value: R): void {

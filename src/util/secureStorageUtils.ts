@@ -1,4 +1,5 @@
 import * as secrets from "../secrets";
+import {decodeBase64, encodeBase64} from "shared/util/dataHelper";
 
 const keyServerPassword = "serverPassword";
 const ivLen = 12;
@@ -42,14 +43,6 @@ async function decrypt(inData: ArrayBuffer, useIV: boolean): Promise<ArrayBuffer
 	} else {
 		return crypto.subtle.decrypt({name: "AES-GCM", iv: new Int8Array(ivLen)}, await cryptoKey, inData);
 	}
-}
-
-function encodeBase64(value: ArrayBuffer): string {
-	return btoa(String.fromCharCode(...new Uint8Array(value)));
-}
-
-function decodeBase64(value: string): ArrayBuffer {
-	return Uint8Array.from(atob(value), c => c.charCodeAt(0));
 }
 
 /**

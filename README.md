@@ -29,15 +29,14 @@ To launch a development server, run `npm start`. To build a production-optimized
 - `/public` holds static files that are copied in at build time. It also holds the app's entry point, `index.html`.
 - `/src` holds shared source files - where most of the UI logic resides.
 - `/browser` holds all browser-specific code. This includes logic for authenticating with Firebase and using AirMessage's WebSocket proxy.
-- `/electron-main` holds the code that runs on Electron's main process.
-- `/electron-renderer` holds all code that runs on Electron's renderer process. This includes UI and logic for establishing direct TCP connections.
-- `/native` holds platform-specific C++ code, used to provide deeper system integration when running under Electron.
-- Builds are located in `/build` for web builds, and `/dist` for Electron builds.
+- `/windows/web` holds all web-side Windows-specific code.
+- `/windows/AirMessageWindows` is a Visual Studio project that builds to AirMessage's Windows client.
+- Builds are located in `/build` for web builds.
 
-`/browser` and `/electron-renderer` are aliased to the import prefix `/platform-components` at build time, depending on the build target.
+`/browser` and `/windows/web` are aliased to the import prefix `/platform-components` at build time, depending on the build target.
 As such, components that are imported from `/src` must be available in both directories. If you're adding or modifying any files in these build-specific directories, please ensure that they are imported properly with the `/platform-components` alias.
 
-Any extra files under build-specific directories (`/browser` or `/electron-renderer`) that aren't used by `/src` should be under a `private` subdirectory.
+Any extra files under build-specific directories (`/browser` or `/windows/web`) that aren't used by `/src` should be under a `private` subdirectory.
 
 ## Building and running for AirMessage Connect
 
@@ -47,28 +46,25 @@ Since this version of AirMessage Connect is hosted in a separate environment fro
 
 We kindly ask that you do not use AirMessage's official Connect servers with any unofficial builds of AirMessage-compatible software.
 
-## Developing and running Electron builds
+## Developing and running Windows builds
 
-![AirMessage running on Electron](README/windows-electron.png)
+![AirMessage running on Windows](README/windows-app.png)
 
-AirMessage has recently acquired support for running in Electron environments, enabling direct connections back to servers.
-However, this is still in development and still lacks some features that would be needed for day-to-day use.
+AirMessage is also able to run on Windows machines, with support for direct connections like the Android app.
 
-Builds for web browsers and Electron will be kept in sync, so any changes made to files under the `/src` directory will make their way into the web app as well.
+Builds for web browsers and Windows will be kept in sync, so any changes made to files under the `/src` directory will make their way into the web app as well.
 
-To launch Electron in a development environment with fast refresh, run `npm run electron-start`.
-To build Electron for your platform, run `npm run electron-distribute`.
+On top of the dependencies for AirMessage for web, AirMessage for Windows uses
+[Visual Studio](https://visualstudio.microsoft.com/),
+the [Windows App SDK](https://docs.microsoft.com/en-us/windows/apps/windows-app-sdk/),
+and [Microsoft Edge WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/).
 
-### Enabling native integration on Windows 10
+To build and run, please make sure you have installed
+[Visual Studio](https://visualstudio.microsoft.com/downloads/),
+[prepared your PC for Windows app development](https://docs.microsoft.com/en-us/windows/apps/windows-app-sdk/set-up-your-development-environment),
+and installed [Microsoft Edge WebView2](https://go.microsoft.com/fwlink/p/?LinkId=2124703).
 
-AirMessage takes advantage of Node's [C++ addons](https://nodejs.org/api/addons.html) to utilize [C++/WinRT](https://docs.microsoft.com/en-us/windows/uwp/cpp-and-winrt-apis/) for a more native experience.
-This functionality is included in `native/airmessage-winrt`, which is a separate module designed exclusively to expose specific WinRT functionality to the main JavaScript app.
-
-`native/airmessage-winrt` is included as an optional dependency, so it will be skipped if you don't have the correct build environment.
-AirMessage's Electron builds will still function without it, though your builds will miss out on native functionality.
-
-To properly compile and install `native/airmessage-winrt`, please install the Windows 10 SDK, either [through the Visual Studio installer](https://developer.microsoft.com/en-us/windows/downloads/) or [as a standalone package](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk/).
-Then, run `npm install` again, and watch the console for any errors.
+Then, open the project in Visual Studio at `/windows/AirMessageWindows/AirMessageWindows.sln`, and run **AirMessageWindows (Package)**.
 
 ---
 

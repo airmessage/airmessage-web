@@ -1,7 +1,6 @@
 import {ConnectionErrorCode} from "shared/data/stateCodes";
 import {connect as connectToServer} from "shared/connection/connectionManager";
-import firebase from "firebase/app";
-import "firebase/auth";
+import {getAuth, signOut} from "firebase/auth";
 
 export interface ErrorDisplay {
 	message: string;
@@ -83,7 +82,7 @@ export function errorCodeToShortDisplay(error: ConnectionErrorCode, isDirect?: b
 				button: {
 					label: "Sign out",
 					onClick: () => {
-						firebase.auth().signOut();
+						signOut(getAuth());
 					}
 				}
 			};

@@ -7,6 +7,7 @@ export type DataProxyListener = {
 };
 
 export default abstract class DataProxy {
+	abstract readonly proxyType: string;
 	public listener?: DataProxyListener;
 	private pendingErrorCode: ConnectionErrorCode | undefined = undefined;
 	

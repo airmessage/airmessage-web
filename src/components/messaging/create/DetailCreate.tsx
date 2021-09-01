@@ -14,7 +14,7 @@ import {
 	Typography,
 	useTheme
 } from "@material-ui/core";
-import {AddressData, AddressType, getPeople, PersonData} from "../../../util/peopleUtils";
+import {getPeople} from "../../../util/peopleUtils";
 import ChatBubbleOutlineIcon from "@material-ui/icons/ChatBubbleOutline";
 import MessageCheckIcon from "../../icon/MessageCheckIcon";
 import {ConversationPreviewType, CreateChatErrorCode} from "../../../data/stateCodes";
@@ -22,6 +22,7 @@ import {Conversation} from "../../../data/blocks";
 import {parsePhoneNumberFromString} from "libphonenumber-js";
 import {makeStyles} from "@material-ui/core/styles";
 import {SnackbarContext} from "../../control/SnackbarProvider";
+import {AddressData, AddressType, PersonData} from "../../../../window";
 
 const messagingService = "iMessage";
 
@@ -169,12 +170,15 @@ export default function DetailCreate(props: {onConversationCreated: (conversatio
 						date: new Date()
 					}
 				});
-			}).catch((reason: [CreateChatErrorCode, string | undefined]) => {
+			}).catch(([errorCode, errorDesc]: [CreateChatErrorCode, string | undefined]) => {
 				//Cancelling loading
 				setLoading(false);
 				
 				//Displaying a snackbar
 				displaySnackbar({message: "Failed to create conversation"});
+				
+				//Logging the error
+				console.warn(`Failed to create chat: ${errorCode} / ${errorDesc}`);
 			});
 	}
 	

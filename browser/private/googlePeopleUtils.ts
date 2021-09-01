@@ -1,13 +1,14 @@
-import {AddressData, AddressType, ContactData, PeopleUtils, PersonData} from "shared/util/peopleUtils";
+import {PeopleUtils} from "shared/util/peopleUtils";
 import * as secrets from "shared/secrets";
 import {formatAddress} from "shared/util/conversationUtils";
 import {googleScope} from "shared/constants";
 import {promiseGAPI} from "shared/index";
+import {AddressData, AddressType, PersonData} from "../../window";
 
 //All contacts loaded from Google
 let initializationPromise: Promise<any> | undefined;
 let personArray: PersonData[] | undefined;
-let contactMap: Map<string, ContactData> | undefined;
+let personMap: Map<string, PersonData> | undefined;
 
 export default class GooglePeopleUtils extends PeopleUtils {
 	initialize(): void {
@@ -21,9 +22,9 @@ export default class GooglePeopleUtils extends PeopleUtils {
 				}).then(() => {
 					//Loading contacts
 					loadPeople().then((data) => {
-						console.log("Loaded " + data.personArray.length + " contacts (" + data.contactMap.size + " addresses)");
+						console.log("Loaded " + data.personArray.length + " contacts (" + data.personMap.size + " addresses)");
 						personArray = data.personArray;
-						contactMap = data.contactMap;
+						personMap = data.personMap;
 						
 						resolve(undefined);
 					}).catch((error) => {
@@ -46,23 +47,23 @@ export default class GooglePeopleUtils extends PeopleUtils {
 		return personArray;
 	}
 	
-	async findPerson(address: string): Promise<ContactData> {
+	async findPerson(address: string): Promise<PersonData> {
 		//Waiting for contact data to be loaded
 		if(!initializationPromise) throw new Error("Contacts not requested");
 		await initializationPromise;
-		if(!contactMap) throw new Error("Contacts not loaded");
+		if(!personMap) throw new Error("Contacts not loaded");
 		
 		//Searching for the person in the map
-		const contact = contactMap.get(address);
+		const contact = personMap.get(address);
 		if(contact) return contact;
 		else throw new Error("Contact " + address + " not found");
 	}
 }
 
-async function loadPeople(): Promise<{personArray: PersonData[], contactMap: Map<string, ContactData>}> {
+async function loadPeople(): Promise<{personArray: PersonData[], personMap: Map<string, PersonData>}> {
 	//Creating the return values
 	const personArray: PersonData[] = [];
-	const contactMap: Map<string, ContactData> = new Map();
+	const contactMap: Map<string, PersonData> = new Map();
 	
 	let nextPageToken: string | undefined = undefined;
 	let requestIndex = 0;
@@ -112,7 +113,7 @@ async function loadPeople(): Promise<{personArray: PersonData[], contactMap: Map
 	} while(nextPageToken);
 	
 	//Returning the data
-	return {personArray: personArray, contactMap: contactMap};
+	return {personArray: personArray, personMap: contactMap};
 }
 
 function googlePersonToPersonData(person: gapi.client.people.Person): PersonData {

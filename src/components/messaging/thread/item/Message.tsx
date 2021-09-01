@@ -1,4 +1,4 @@
-import React, {CSSProperties, useEffect, useState} from "react";
+import React, {CSSProperties, useCallback, useEffect, useState} from "react";
 import styles from "./Message.module.css";
 
 import * as Blocks from "../../../../data/blocks";
@@ -14,7 +14,7 @@ import {
 	Typography
 } from "@material-ui/core";
 import {getDeliveryStatusTime, getTimeDivider} from "../../../../util/dateUtils";
-import {ContactData, findPerson} from "../../../../util/peopleUtils";
+import {findPerson} from "../../../../util/peopleUtils";
 import {MessageErrorCode, MessageStatusCode} from "../../../../data/stateCodes";
 import MessageAttachmentDownloadable from "../attachment/MessageAttachmentDownloadable";
 import MessageAttachmentImage from "../attachment/MessageAttachmentImage";
@@ -27,6 +27,8 @@ import {colorFromContact} from "../../../../util/avatarUtils";
 import {Anchorme} from "react-anchorme";
 import {PaletteColor} from "@material-ui/core/styles/createPalette";
 import {appleServiceAppleMessage} from "../../../../data/appleConstants";
+import FileDownloadResult, {FileDisplayResult} from "shared/data/fileDownloadResult";
+import {PersonData} from "../../../../../window";
 
 const radiusLinked = "4px";
 const radiusUnlinked = "16px";
@@ -64,7 +66,7 @@ interface Props {
 
 export default function Message(props: Props) {
 	//State
-	const [attachmentDataArray, setAttachmentDataArray] = useState<ArrayBuffer[]>([]);
+	const [attachmentDataArray, setAttachmentDataArray] = useState<FileDownloadResult[]>([]);
 	const [dialogOpen, setDialogOpen] = useState<"error" | "rawError" | undefined>(undefined);
 	
 	function closeDialog() {
@@ -129,15 +131,15 @@ export default function Message(props: Props) {
 		components.push(component);
 	}
 	
-	function onAttachmentData(attachmentIndex: number, shouldDownload: boolean, data: ArrayBuffer) {
+	function onAttachmentData(attachmentIndex: number, shouldDownload: boolean, result: FileDownloadResult) {
 		if(shouldDownload) {
 			//Downloading the file
 			const attachment = props.message.attachments[attachmentIndex];
-			downloadArrayBuffer(data, attachment.type, attachment.name);
+			downloadArrayBuffer(result.data, result.downloadType ?? attachment.type, result.downloadName ?? attachment.name);
 		} else {
 			//Updating the data
 			const newArray = [...attachmentDataArray];
-			newArray[attachmentIndex] = data;
+			newArray[attachmentIndex] = result;
 			setAttachmentDataArray(newArray);
 		}
 	}
@@ -151,6 +153,26 @@ export default function Message(props: Props) {
 		}
 	}
 	
+	/**
+	 * Computes the file data to display to the user
+	 */
+	const getComputedFileData = useCallback((attachmentIndex: number): FileDisplayResult => {
+		const attachment = props.message.attachments[attachmentIndex];
+		const downloadData = attachmentDataArray[attachmentIndex];
+		
+		if(downloadData === undefined) {
+			return {
+				data: attachment.data,
+				name: attachment.name,
+				type: attachment.type
+			};
+		} else return {
+			data: downloadData.data,
+			name: downloadData.downloadName ?? attachment.name,
+			type: downloadData.downloadType ?? attachment.type
+		};
+	}, [props.message.attachments, attachmentDataArray]);
+	
 	//Adding the attachments
 	for(let i = 0; i < props.message.attachments.length; i++) {
 		const index = props.message.text ? i + 1 : i;
@@ -163,27 +185,27 @@ export default function Message(props: Props) {
 		} as MessagePartProps;
 		
 		//Checking if the attachment has data
-		const attachmentData = attachment.data ?? attachmentDataArray[i];
-		if(attachmentData && isAttachmentPreviewable(attachment.type)) {
+		const attachmentData = getComputedFileData(i);
+		if(attachmentData.data !== undefined && isAttachmentPreviewable(attachmentData.type)) {
 			//Custom background color
 			const imagePartProps = {
 				...partProps,
 				backgroundColor: theme.palette.background.sidebar,
 			};
 			
-			if(attachment.type.startsWith("image/")) {
-				components.push(<MessageAttachmentImage key={attachment.guid ?? attachment.localID} data={attachmentData} name={attachment.name} type={attachment.type} partProps={imagePartProps} stickers={stickerGroups[index]} tapbacks={tapbackGroups[index]} />);
+			if(attachmentData.type.startsWith("image/")) {
+				components.push(<MessageAttachmentImage key={attachment.guid ?? attachment.localID} data={attachmentData.data} name={attachmentData.name} type={attachmentData.type} partProps={imagePartProps} stickers={stickerGroups[index]} tapbacks={tapbackGroups[index]} />);
 			}
 		} else {
 			//Adding a generic download attachment
 			components.push(<MessageAttachmentDownloadable
 				key={attachment.guid ?? attachment.localID}
-				data={attachmentData}
-				name={attachment.name}
-				type={attachment.type}
+				data={attachmentData.data}
+				name={attachmentData.name}
+				type={attachmentData.type}
 				size={attachment.size}
 				guid={attachment.guid!}
-				onDataAvailable={(data) => onAttachmentData(i, !isAttachmentPreviewable(attachment.type), data)}
+				onDataAvailable={(data) => onAttachmentData(i, !isAttachmentPreviewable(data.downloadType ?? attachment.type), data)}
 				onDataClicked={(data) => downloadData(i, data)}
 				partProps={partProps}
 				stickers={stickerGroups[index]}
@@ -196,21 +218,21 @@ export default function Message(props: Props) {
 	};
 	
 	//Initializing state
-	const [contactData, setContactData] = useState<ContactData | undefined>();
+	const [personData, setPersonData] = useState<PersonData | undefined>();
 	useEffect(() => {
 		if(!props.message.sender) return;
 		
 		//Requesting contact data
-		findPerson(props.message.sender).then((contact) => setContactData(contact), console.warn);
+		findPerson(props.message.sender).then(setPersonData, console.warn);
 	}, [props.message.sender]);
 	
 	//Building and returning the component
 	return (
 		<div className={styles.message} style={messageStyle}>
 			{props.flow.showDivider && <Typography className={styles.separator} variant="body2" color="textSecondary">{getTimeDivider(props.message.date)}</Typography>}
-			{displaySender && <Typography className={styles.labelSender} variant="caption" color="textSecondary">{contactData?.name ?? props.message.sender}</Typography>}
+			{displaySender && <Typography className={styles.labelSender} variant="caption" color="textSecondary">{personData?.name ?? props.message.sender}</Typography>}
 			<div className={styles.messageSplit}>
-				{<Avatar className={styles.avatar} src={contactData?.avatar} style={displayAvatar ? {visibility: "visible", backgroundColor: colorFromContact(props.message.sender ?? "")} : {visibility: "hidden"}} />}
+				{<Avatar className={styles.avatar} src={personData?.avatar} style={displayAvatar ? {visibility: "visible", backgroundColor: colorFromContact(props.message.sender ?? "")} : {visibility: "hidden"}} />}
 				<div className={styles.messageParts}>
 					{components}
 				</div>
