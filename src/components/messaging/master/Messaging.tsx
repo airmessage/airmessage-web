@@ -1,7 +1,5 @@
 import React from "react";
 
-import {Theme, withTheme} from "@material-ui/core/styles";
-
 import styles from "./Messaging.module.css";
 import Sidebar from "../master/Sidebar";
 import DetailThread from "../thread/DetailThread";
@@ -28,6 +26,7 @@ import {playSoundMessageIn, playSoundNotification, playSoundTapback} from "../..
 import {getNotificationUtils} from "shared/util/notificationUtils";
 import {sortConversationItems} from "shared/util/sortUtils";
 import {getPlatformUtils} from "shared/util/platformUtils";
+import {Theme} from "@mui/material";
 
 interface Props {
 	theme: Theme;

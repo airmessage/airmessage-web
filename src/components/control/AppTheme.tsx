@@ -1,7 +1,5 @@
 import React from "react";
-
-import {ThemeProvider} from "@material-ui/core/styles";
-import {createTheme, CssBaseline, useMediaQuery} from "@material-ui/core";
+import {createTheme, Theme, useMediaQuery} from "@mui/material";
 
 export default function AppTheme(props: {children: React.ReactNode}) {
 	const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
@@ -69,7 +67,7 @@ export default function AppTheme(props: {children: React.ReactNode}) {
 	);
 }
 
-declare module "@material-ui/core/styles/createPalette" {
+declare module "@mui/material/styles" {
 	interface Palette {
 		messageIncoming: Palette["primary"];
 		messageOutgoing: Palette["primary"];
