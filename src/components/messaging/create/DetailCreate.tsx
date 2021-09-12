@@ -4,11 +4,12 @@ import styles from "./DetailCreate.module.css";
 import * as ConnectionManager from "../../../connection/connectionManager";
 import {DetailFrame} from "../master/DetailFrame";
 import {
+	alpha,
 	Avatar,
 	Button,
 	ButtonBase,
 	Chip,
-	CircularProgress, fade,
+	CircularProgress,
 	InputBase, Theme,
 	Tooltip,
 	Typography,
@@ -393,7 +394,7 @@ export const useDirectSendButtonStyles = makeStyles((theme: Theme) => ({
 		flexDirection: "row",
 		justifyContent: "flex-start",
 		"&:hover": {
-			backgroundColor: fade(theme.palette.text.primary, theme.palette.action.hoverOpacity),
+			backgroundColor: alpha(theme.palette.text.primary, theme.palette.action.hoverOpacity),
 		}
 	},
 	avatar: {
