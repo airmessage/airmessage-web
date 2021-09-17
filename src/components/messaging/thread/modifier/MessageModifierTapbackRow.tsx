@@ -3,7 +3,7 @@ import styles from "./MessageModifierTapbackRow.module.css";
 
 import {TapbackItem} from "../../../../data/blocks";
 import {TapbackType} from "../../../../data/stateCodes";
-import {useTheme} from "@material-ui/core";
+import {useTheme} from "@mui/material/styles";
 import TapbackLoveIcon from "../../../icon/TapbackLoveIcon";
 import TapbackLikeIcon from "../../../icon/TapbackLikeIcon";
 import TapbackDislikeIcon from "../../../icon/TapbackDislikeIcon";

@@ -3,13 +3,12 @@ import styles from "./ListConversation.module.css";
 
 import * as ConversationUtils from "../../../util/conversationUtils";
 
-import {ListItem, ListItemAvatar, ListItemText, Typography} from "@material-ui/core";
+import {ListItem, ListItemAvatar, ListItemText, Typography, TypographyProps} from "@mui/material";
 
 import {Conversation, ConversationPreview} from "../../../data/blocks";
 import {appleSendStyleBubbleInvisibleInk} from "../../../data/appleConstants";
 import {getLastUpdateStatusTime} from "../../../util/dateUtils";
 import GroupAvatar from "./GroupAvatar";
-import {TypographyProps} from "@material-ui/core/Typography";
 import {ConversationPreviewType} from "../../../data/stateCodes";
 import {isConversationPreviewMessage} from "../../../util/conversationUtils";
 

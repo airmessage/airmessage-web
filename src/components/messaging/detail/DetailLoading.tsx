@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./DetailLoading.module.css";
 
-import {LinearProgress, Typography} from "@material-ui/core";
+import {LinearProgress, Typography} from "@mui/material";
 
 export default class DetailLoading extends React.Component {
 	render() {

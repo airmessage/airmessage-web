@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./SoftDivider.module.css";
 
-import {useTheme} from "@material-ui/core";
+import {useTheme} from "@mui/material/styles";
 
 export default function SoftDivider(props: {vertical?: boolean}) {
 	const color = useTheme().palette.divider;

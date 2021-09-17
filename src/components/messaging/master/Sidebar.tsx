@@ -13,16 +13,13 @@ import {
 	Menu,
 	MenuItem,
 	Toolbar,
-	Typography
-} from "@material-ui/core";
-import AddRoundedIcon from "@material-ui/icons/AddRounded";
-import MoreVertRoundedIcon from "@material-ui/icons/MoreVertRounded";
+	Typography,
+	Skeleton, List
+} from "@mui/material";
 
 import ListConversation from "./ListConversation";
-import List from "@material-ui/core/List";
 import {Conversation} from "../../../data/blocks";
 import {Flipped, Flipper} from "react-flip-toolkit";
-import {Skeleton} from "@material-ui/lab";
 import ConnectionBanner from "./ConnectionBanner";
 import {ConnectionErrorCode} from "../../../data/stateCodes";
 import {communityPage, supportEmail} from "../../../data/linkConstants";
@@ -38,6 +35,7 @@ import Markdown from "../../Markdown";
 import changelog from "../../../resources/text/changelog.md";
 import LoginContext from "shared/components/LoginContext";
 import {getPlatformUtils} from "shared/util/platformUtils";
+import {AddRounded, MoreVertRounded} from "@mui/icons-material";
 
 interface Props {
 	conversations: Conversation[] | undefined;
@@ -126,14 +124,14 @@ export default class Sidebar extends React.Component<Props, State> {
 						color="inherit"
 						onClick={this.props.onCreateSelected}
 						disabled={!this.props.conversations}>
-						<AddRoundedIcon />
+						<AddRounded />
 					</IconButton>
 					<IconButton
 						aria-haspopup="true"
 						color="inherit"
 						onClick={this.handleOverflowOpen}
 						disabled={!this.props.conversations}>
-						<MoreVertRoundedIcon />
+						<MoreVertRounded />
 					</IconButton>
 					
 					<Menu
@@ -288,7 +286,7 @@ function SignOutDialog(props: {isOpen: boolean, onDismiss: () => void}) {
 function ConversationSkeleton() {
 	return (
 		<div className={styles.skeletonMain}>
-			<Skeleton variant="circle" width={40} height={40} animation={false} />
+			<Skeleton variant="circular" width={40} height={40} animation={false} />
 			<div className={styles.skeletonText}>
 				<Skeleton variant="text" animation={false} />
 				<Skeleton variant="text" animation={false} />

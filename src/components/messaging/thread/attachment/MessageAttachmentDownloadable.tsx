@@ -3,8 +3,8 @@ import styles from "../item/Message.module.css";
 import stylesAttachment from "./MessageAttachmentDownloadable.module.css";
 
 import {mimeTypeToPreview} from "../../../../util/conversationUtils";
-import {ButtonBase, CircularProgress} from "@material-ui/core";
-import GetAppRoundedIcon from "@material-ui/icons/GetAppRounded";
+import {ButtonBase, CircularProgress} from "@mui/material";
+import {GetAppRounded} from "@mui/icons-material";
 import {formatFileSize} from "../../../../util/fileUtils";
 import * as ConnectionManager from "../../../../connection/connectionManager";
 import {DecorativeMessageBubble, MessagePartProps} from "../item/Message";
@@ -78,7 +78,7 @@ export default function MessageAttachmentDownloadable(props: {
 				{
 					isDownloading ?
 						<CircularProgress size={24} variant={sizeDownloaded === undefined ? "indeterminate" : "determinate"} value={(sizeDownloaded ?? 0) / sizeAvailable * 100} style={{color: props.partProps.color}} /> :
-						<GetAppRoundedIcon />
+						<GetAppRounded />
 				}
 			</div>
 			<div className={stylesAttachment.description}>

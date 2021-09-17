@@ -1,9 +1,7 @@
-import React, {useCallback, useState} from "react";
+import React, {useState} from "react";
 import styles from "./Onboarding.module.css";
 
-import Typography from "@material-ui/core/Typography";
-import Button from "@material-ui/core/Button";
-
+import {Button, Typography} from "@mui/material";
 import iconAirMessage from "shared/resources/icons/tile-airmessage.svg";
 import iconMac from "shared/resources/icons/tile-mac.svg";
 

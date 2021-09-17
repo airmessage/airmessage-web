@@ -1,9 +1,9 @@
 import React from "react";
 import styles from "./QueuedAttachmentGeneric.module.css";
 
+import {useTheme} from "@mui/material/styles";
+import {InsertDriveFileRounded} from "@mui/icons-material";
 import QueuedAttachment, {QueuedAttachmentProps} from "./QueuedAttachment";
-import {useTheme} from "@material-ui/core";
-import InsertDriveFileRoundedIcon from "@material-ui/icons/InsertDriveFileRounded";
 
 export default function QueuedAttachmentGeneric(props: {queueData: QueuedAttachmentProps}) {
 	const theme = useTheme();
@@ -11,7 +11,7 @@ export default function QueuedAttachmentGeneric(props: {queueData: QueuedAttachm
 	return (
 		<QueuedAttachment queueData={props.queueData}>
 			<div className={styles.content} style={{backgroundColor: theme.palette.background.default}}>
-				<InsertDriveFileRoundedIcon />
+				<InsertDriveFileRounded />
 			</div>
 		</QueuedAttachment>
 	);
