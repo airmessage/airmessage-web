@@ -45,8 +45,8 @@
     "workbox-webpack-plugin": "^6.1.1"
   },
   "dependencies": {
-    "@mui/icons-material": "^5.0.0-rc.1",
-    "@mui/material": "^5.0.0-rc.1",
+    "@mui/icons-material": "^5.0.0",
+    "@mui/material": "^5.0.0",
     "@sentry/react": "^6.2.5",
     "bytebuffer": "^5.0.1",
     "firebase": "^9.0.1",
