@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import * as Sentry from "@sentry/react";
-import LoginGate from "platform-components/components/LoginGate";
+import SignInGate from "platform-components/components/SignInGate";
 import AppTheme from "./components/control/AppTheme";
 import {initializeApp} from "firebase/app";
 import * as secrets from "./secrets";
@@ -46,7 +46,7 @@ if(WPEnv.IS_WEB) {
 ReactDOM.render(
 	<React.StrictMode>
 		<AppTheme>
-			<LoginGate />
+			<SignInGate />
 		</AppTheme>
 	</React.StrictMode>,
 	document.getElementById("root")
