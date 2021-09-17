@@ -326,7 +326,9 @@ function AddressButton(props: {address: AddressData, selected: boolean, onClick:
 		className={styles.contactButton + (props.selected ? "" : " " + styles.buttonUnselected)}
 		startIcon={props.selected ? <MessageCheckIcon /> : <ChatBubbleOutline />}
 		size="small"
-		color={props.selected ? "primary" : undefined}
+		sx={{
+			color: props.selected ? "primary" : "text.primary"
+		}}
 		onClick={props.onClick}
 		onMouseDown={onMouseDown}>
 		{display}

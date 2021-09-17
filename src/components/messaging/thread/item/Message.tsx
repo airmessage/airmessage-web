@@ -29,7 +29,7 @@ import {Property} from "csstype";
 import {ErrorRounded} from "@mui/icons-material";
 
 const radiusLinked = "4px";
-const radiusUnlinked = "16px";
+const radiusUnlinked = "16.5px";
 
 const marginLinked = "2px";
 const marginUnlinked = "8px";
@@ -235,7 +235,7 @@ export default function Message(props: Props) {
 					{components}
 				</div>
 				{props.message.progress && !props.message.error && <CircularProgress className={styles.messageProgress} size={24} variant={props.message.progress === -1 ? "indeterminate" : "determinate"} value={props.message.progress} />}
-				{props.message.error && <IconButton className={styles.messageError} style={{color: theme.palette.error.main}} size="small" onClick={openDialogError}>
+				{props.message.error && <IconButton className={styles.messageError} style={{color: theme.palette.error.light}} size="small" onClick={openDialogError}>
 					<ErrorRounded />
 				</IconButton>}
 				<Dialog open={dialogOpen === "error"} onClose={closeDialog}>

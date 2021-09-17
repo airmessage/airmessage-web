@@ -121,14 +121,14 @@ export default class Sidebar extends React.Component<Props, State> {
 					<AirMessageLogo />
 					<div style={{flexGrow: 1}} />
 					<IconButton
-						color="inherit"
+						size="large"
 						onClick={this.props.onCreateSelected}
 						disabled={!this.props.conversations}>
 						<AddRounded />
 					</IconButton>
 					<IconButton
 						aria-haspopup="true"
-						color="inherit"
+						size="large"
 						onClick={this.handleOverflowOpen}
 						disabled={!this.props.conversations}>
 						<MoreVertRounded />
