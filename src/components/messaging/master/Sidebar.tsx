@@ -1,4 +1,4 @@
-import React, {useCallback, useContext} from "react";
+import React, {useCallback, useContext, useState} from "react";
 import styles from "./Sidebar.module.css";
 
 import AirMessageLogo from "../../logo/AirMessageLogo";
@@ -36,150 +36,97 @@ import changelog from "../../../resources/text/changelog.md";
 import LoginContext from "shared/components/LoginContext";
 import {getPlatformUtils} from "shared/util/platformUtils";
 import {AddRounded, MoreVertRounded} from "@mui/icons-material";
+import {useBoolean, useCancellableEffect} from "shared/util/hookHelper";
 
-interface Props {
+export default function Sidebar(props: {
 	conversations: Conversation[] | undefined;
 	selectedConversation?: string;
 	onConversationSelected: (guid: string) => void;
 	onCreateSelected: () => void;
 	errorBanner?: ConnectionErrorCode;
-}
-
-interface State {
-	overflowMenuElement: HTMLElement | null;
-	showChangelogDialog: boolean;
-	showFeedbackDialog: boolean;
-	showLogOutDialog: boolean;
-}
-
-export default class Sidebar extends React.Component<Props, State> {
-	state = {
-		overflowMenuElement: null,
-		showChangelogDialog: false,
-		showFeedbackDialog: false,
-		showLogOutDialog: false
-	};
+}) {
+	const [overflowMenu, setOverflowMenu] = useState<HTMLElement | null>(null);
+	const openOverflowMenu = useCallback((event: React.MouseEvent<HTMLElement>) => {
+		setOverflowMenu(event.currentTarget);
+	}, [setOverflowMenu]);
+	const closeOverflowMenu = useCallback(() => {
+		setOverflowMenu(null);
+	}, [setOverflowMenu]);
 	
-	intervalID: any;
+	const [isChangelogDialog, showChangelogDialog, hideChangelogDialog] = useSidebarDialog(closeOverflowMenu);
+	const [isFeedbackDialog, showFeedbackDialog, hideFeedbackDialog] = useSidebarDialog(closeOverflowMenu);
+	const [isSignOutDialog, showSignOutDialog, hideSignOutDialog] = useSidebarDialog(closeOverflowMenu);
 	
-	private readonly handleOverflowOpen = (event: React.MouseEvent<HTMLElement>) => {
-		this.setState({
-			overflowMenuElement: event.currentTarget
-		});
-	};
-	
-	private readonly handleOverflowClose = () => {
-		this.setState({
-			overflowMenuElement: null
-		});
-	};
-	
-	private readonly handleOverflowChangelog = () => {
-		//Closing the menu
-		this.handleOverflowClose();
-		
-		//Showing the changelog dialog
-		this.setState({showChangelogDialog: true});
-	};
-	
-	private readonly dismissOverflowChangelog = () => {
-		this.setState({showChangelogDialog: false});
-	};
-	
-	private readonly handleOverflowFeedback = () => {
-		//Closing the menu
-		this.handleOverflowClose();
-		
-		//Showing the feedback dialog
-		this.setState({showFeedbackDialog: true});
-	};
-	
-	private readonly dismissOverflowFeedback = () => {
-		this.setState({showFeedbackDialog: false});
-	};
-	
-	private readonly handleOverflowLogOut = () => {
-		//Closing the menu
-		this.handleOverflowClose();
-		
-		//Prompting the user to log out
-		this.setState({showLogOutDialog: true});
-	};
-	
-	private readonly dismissLogOut = () => {
-		this.setState({showLogOutDialog: false});
-	};
-	
-	render() {
-		return (
-			<div className={styles.sidebar}>
-				<ChangelogDialog isOpen={this.state.showChangelogDialog} onDismiss={this.dismissOverflowChangelog} />
-				<FeedbackDialog isOpen={this.state.showFeedbackDialog} onDismiss={this.dismissOverflowFeedback} />
-				<SignOutDialog isOpen={this.state.showLogOutDialog} onDismiss={this.dismissLogOut} />
+	return (
+		<div className={styles.sidebar}>
+			<ChangelogDialog isOpen={isChangelogDialog} onDismiss={hideChangelogDialog} />
+			<FeedbackDialog isOpen={isFeedbackDialog} onDismiss={hideFeedbackDialog} />
+			<SignOutDialog isOpen={isSignOutDialog} onDismiss={hideSignOutDialog} />
+			
+			<Toolbar className={styles.sidebarToolbar}>
+				<AirMessageLogo />
+				<div style={{flexGrow: 1}} />
+				<IconButton
+					size="large"
+					onClick={props.onCreateSelected}
+					disabled={props.conversations === undefined}>
+					<AddRounded />
+				</IconButton>
+				<IconButton
+					aria-haspopup="true"
+					size="large"
+					onClick={openOverflowMenu}
+					disabled={props.conversations === undefined}>
+					<MoreVertRounded />
+				</IconButton>
 				
-				<Toolbar className={styles.sidebarToolbar}>
-					<AirMessageLogo />
-					<div style={{flexGrow: 1}} />
-					<IconButton
-						size="large"
-						onClick={this.props.onCreateSelected}
-						disabled={!this.props.conversations}>
-						<AddRounded />
-					</IconButton>
-					<IconButton
-						aria-haspopup="true"
-						size="large"
-						onClick={this.handleOverflowOpen}
-						disabled={!this.props.conversations}>
-						<MoreVertRounded />
-					</IconButton>
-					
-					<Menu
-						anchorEl={this.state.overflowMenuElement}
-						anchorOrigin={{
-							vertical: "top",
-							horizontal: "right",
-						}}
-						keepMounted
-						transformOrigin={{
-							vertical: "top",
-							horizontal: "right",
-						}}
-						open={Boolean(this.state.overflowMenuElement)}
-						onClose={this.handleOverflowClose}>
-						{/*<MenuItem onClick={this.handleOverflowClose}>Settings</MenuItem>*/}
-						<MenuItem onClick={this.handleOverflowChangelog}>What&apos;s new</MenuItem>
-						<MenuItem onClick={this.handleOverflowFeedback}>Help and feedback</MenuItem>
-						<MenuItem onClick={this.handleOverflowLogOut}>Sign out</MenuItem>
-					</Menu>
-				</Toolbar>
-				
-				{this.props.errorBanner !== undefined && <ConnectionBanner error={this.props.errorBanner} /> }
-				
-				{
-					this.props.conversations ? <Flipper flipKey={this.props.conversations.map(conversation => conversation.guid).join(" ")} className={styles.sidebarList}>
-						<List>
-							{this.props.conversations.map((conversation) =>
-								<Flipped key={conversation.guid} flipId={conversation.guid}>
-									{flippedProps => <ListConversation conversation={conversation} selected={conversation.guid === this.props.selectedConversation} highlighted={conversation.unreadMessages} onSelected={() => this.props.onConversationSelected(conversation.guid)} flippedProps={flippedProps as Record<string, unknown>} />}
-								</Flipped>
-							)}
-						</List>
-					</Flipper> : <div className={styles.sidebarListLoading}>
-						{[...Array(16)].map((element, index) => <ConversationSkeleton key={`skeleton-${index}`} />)}
-					</div>
-				}
-			</div>
-		);
-	}
-	
-	componentDidMount() {
-		this.intervalID = setInterval(() => this.setState({}), 60 * 1000);
-	}
-	
-	componentWillUnmount() {
-		clearInterval(this.intervalID);
-	}
+				<Menu
+					anchorEl={overflowMenu}
+					anchorOrigin={{
+						vertical: "top",
+						horizontal: "right",
+					}}
+					keepMounted
+					transformOrigin={{
+						vertical: "top",
+						horizontal: "right",
+					}}
+					open={!!overflowMenu}
+					onClose={closeOverflowMenu}>
+					<MenuItem onClick={showChangelogDialog}>What&apos;s new</MenuItem>
+					<MenuItem onClick={showFeedbackDialog}>Help and feedback</MenuItem>
+					<MenuItem onClick={showSignOutDialog}>Sign out</MenuItem>
+				</Menu>
+			</Toolbar>
+			
+			{props.errorBanner !== undefined && <ConnectionBanner error={props.errorBanner} /> }
+			
+			{props.conversations !== undefined ? (
+				<Flipper
+					className={styles.sidebarList}
+					flipKey={props.conversations.map(conversation => conversation.guid).join(" ")}>
+					<List>
+						{props.conversations.map((conversation) =>
+							<Flipped key={conversation.guid} flipId={conversation.guid}>
+								{flippedProps => (
+									<ListConversation
+										conversation={conversation}
+										selected={conversation.guid === props.selectedConversation}
+										highlighted={conversation.unreadMessages}
+										onSelected={() => props.onConversationSelected(conversation.guid)}
+										flippedProps={flippedProps as Record<string, unknown>} />
+								)}
+							</Flipped>
+						)}
+					</List>
+				</Flipper>
+			) : (
+				<div className={styles.sidebarListLoading}>
+					{[...Array(16)].map((element, index) => <ConversationSkeleton key={`skeleton-${index}`} />)}
+				</div>
+			)}
+		</div>
+	);
 }
 
 function ChangelogDialog(props: {isOpen: boolean, onDismiss: () => void}) {
@@ -293,4 +240,22 @@ function ConversationSkeleton() {
 			</div>
 		</div>
 	);
+}
+
+/**
+ * Creates a toggleable state for a sidebar dialog,
+ * which also hides the menu on activation
+ */
+function useSidebarDialog(hideMenu: VoidFunction): [boolean, VoidFunction, VoidFunction] {
+	const [showDialog, setShowDialog] = useState(false);
+	
+	const openDialog = useCallback(() => {
+		hideMenu();
+		setShowDialog(true);
+	}, [hideMenu, setShowDialog]);
+	const closeDialog = useCallback(() => {
+		setShowDialog(false);
+	}, [setShowDialog]);
+	
+	return [showDialog, openDialog, closeDialog];
 }
