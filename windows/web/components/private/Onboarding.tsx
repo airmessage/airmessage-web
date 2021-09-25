@@ -47,7 +47,11 @@ export default function Onboarding(props: {onApplyConfig: VoidFunction}) {
 							<Typography variant="subtitle1" gutterBottom>Select a sign-in method:</Typography>
 							<Button
 								className={styles.buttonManual}
-								sx={{marginTop: 1}}
+								sx={{
+									marginTop: 1,
+									color: "text.primary",
+									borderColor: "text.secondary"
+								}}
 								variant="outlined"
 								startIcon={<EthernetIcon />}
 								onClick={() => setShowConfigDialog(true)}
