@@ -9,9 +9,9 @@
   IgnorableNamespaces="uap rescap com desktop">
 
   <Identity
-    Name="61e1770e-c81f-4b46-a7cc-2de3666d44de"
-    Publisher="CN=Cole Feuer"
-    Version="1.0.0.0" />
+    Name="18533Tagavari.AirMessage"
+    Publisher="CN=C06ECC69-1EF2-45E7-B44A-4FE91A90DFCA"
+    Version="1.3.1.0" />
 
   <Properties>
     <DisplayName>AirMessage</DisplayName>
