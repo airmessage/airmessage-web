@@ -1,7 +1,6 @@
 import React from "react";
 import styles from "./AirMessageLogo.module.css";
-
-import {useTheme} from "@material-ui/core/styles";
+import {useTheme} from "@mui/material/styles";
 
 export default function AirMessageLogo() {
 	const textColor = useTheme().palette.text.primary;

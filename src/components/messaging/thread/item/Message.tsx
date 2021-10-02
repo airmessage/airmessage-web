@@ -3,35 +3,33 @@ import styles from "./Message.module.css";
 
 import * as Blocks from "../../../../data/blocks";
 import {StickerItem, TapbackItem} from "../../../../data/blocks";
-import {useTheme} from "@material-ui/core/styles";
 import {
 	Avatar, Button,
 	CircularProgress,
 	Dialog, DialogActions, DialogContent,
 	DialogContentText,
 	DialogTitle,
-	IconButton,
-	Typography
-} from "@material-ui/core";
+	IconButton, PaletteColor,
+	Typography, useTheme
+} from "@mui/material";
 import {getDeliveryStatusTime, getTimeDivider} from "../../../../util/dateUtils";
 import {findPerson} from "../../../../util/peopleUtils";
 import {MessageErrorCode, MessageStatusCode} from "../../../../data/stateCodes";
 import MessageAttachmentDownloadable from "../attachment/MessageAttachmentDownloadable";
 import MessageAttachmentImage from "../attachment/MessageAttachmentImage";
 import {downloadArrayBuffer, downloadBlob} from "../../../../util/browserUtils";
-import {AlignSelfProperty, BorderRadiusProperty, ColorProperty, MarginTopProperty, OpacityProperty} from "csstype";
-import ErrorRoundedIcon from "@material-ui/icons/ErrorRounded";
 import MessageModifierTapbackRow from "../modifier/MessageModifierTapbackRow";
 import MessageModifierStickerStack from "../modifier/MessageModifierStickerStack";
 import {colorFromContact} from "../../../../util/avatarUtils";
 import {Anchorme} from "react-anchorme";
-import {PaletteColor} from "@material-ui/core/styles/createPalette";
 import {appleServiceAppleMessage} from "../../../../data/appleConstants";
 import FileDownloadResult, {FileDisplayResult} from "shared/data/fileDownloadResult";
 import {PersonData} from "../../../../../window";
+import {Property} from "csstype";
+import {ErrorRounded} from "@mui/icons-material";
 
 const radiusLinked = "4px";
-const radiusUnlinked = "16px";
+const radiusUnlinked = "16.5px";
 
 const marginLinked = "2px";
 const marginUnlinked = "8px";
@@ -47,13 +45,13 @@ export interface MessageFlow {
 }
 
 export interface MessagePartProps {
-	alignSelf: AlignSelfProperty; //Message alignment
-	color: ColorProperty; //Text and action button colors
-	backgroundColor: ColorProperty; //Message background color
-	opacity: OpacityProperty; //Content opacity
+	alignSelf: Property.AlignSelf; //Message alignment
+	color: Property.Color; //Text and action button colors
+	backgroundColor: Property.Color; //Message background color
+	opacity: Property.Opacity; //Content opacity
 	
-	borderRadius: BorderRadiusProperty<string | 0>; //Content border radius
-	marginTop: MarginTopProperty<string | 0>; //Message top margin
+	borderRadius: Property.BorderRadius; //Content border radius
+	marginTop: Property.MarginTop; //Message top margin
 }
 
 interface Props {
@@ -214,7 +212,7 @@ export default function Message(props: Props) {
 	}
 	
 	const messageStyle: CSSProperties = {
-		marginTop: props.flow.anchorTop ? marginLinked : marginUnlinked
+		marginTop: props.flow.anchorTop ? marginLinked : marginUnlinked,
 	};
 	
 	//Initializing state
@@ -237,8 +235,8 @@ export default function Message(props: Props) {
 					{components}
 				</div>
 				{props.message.progress && !props.message.error && <CircularProgress className={styles.messageProgress} size={24} variant={props.message.progress === -1 ? "indeterminate" : "determinate"} value={props.message.progress} />}
-				{props.message.error && <IconButton className={styles.messageError} style={{color: theme.palette.error.main}} size="small" onClick={openDialogError}>
-					<ErrorRoundedIcon />
+				{props.message.error && <IconButton className={styles.messageError} style={{color: theme.palette.error.light}} size="small" onClick={openDialogError}>
+					<ErrorRounded />
 				</IconButton>}
 				<Dialog open={dialogOpen === "error"} onClose={closeDialog}>
 					<DialogTitle>Your message could not be sent</DialogTitle>

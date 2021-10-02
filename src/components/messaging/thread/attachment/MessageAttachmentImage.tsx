@@ -2,13 +2,19 @@ import React, {useEffect, useState} from "react";
 import styles from "../item/Message.module.css";
 import stylesImage from "./MessageAttachmentImage.module.css";
 
-import {Backdrop, ButtonBase, createTheme, IconButton, Toolbar, Tooltip, Typography} from "@material-ui/core";
-import {ThemeProvider} from "@material-ui/core/styles";
-import ArrowBackIcon from "@material-ui/icons/ArrowBack";
-import SaveAltIcon from "@material-ui/icons/SaveAlt";
+import {
+	Backdrop,
+	ButtonBase,
+	IconButton,
+	Toolbar,
+	Tooltip,
+	Typography
+} from "@mui/material";
+import {createTheme, ThemeProvider} from "@mui/material/styles";
 import {downloadURL} from "../../../../util/browserUtils";
 import {DecorativeMessageBubble, MessagePartProps} from "../item/Message";
 import {StickerItem, TapbackItem} from "../../../../data/blocks";
+import {ArrowBack, SaveAlt} from "@mui/icons-material";
 
 export default function MessageAttachmentImage(props: {data: ArrayBuffer | Blob, name: string, type: string, partProps: MessagePartProps, tapbacks?: TapbackItem[], stickers?: StickerItem[]}) {
 	const [imageURL, setImageURL] = useState<string | undefined>(undefined);
@@ -16,7 +22,7 @@ export default function MessageAttachmentImage(props: {data: ArrayBuffer | Blob,
 	
 	const theme = createTheme({
 		palette: {
-			type: "dark",
+			mode: "dark",
 			messageIncoming: undefined,
 			messageOutgoing: undefined,
 			messageOutgoingTextMessage: undefined
@@ -52,12 +58,12 @@ export default function MessageAttachmentImage(props: {data: ArrayBuffer | Blob,
 				<Backdrop className={stylesImage.lightboxBackdrop} open={previewOpen} onClick={() => setPreviewOpen(false)}>
 					<Toolbar className={stylesImage.lightboxToolbar}>
 						<IconButton edge="start">
-							<ArrowBackIcon />
+							<ArrowBack />
 						</IconButton>
 						<Typography variant="h6" color="textPrimary" style={{flexGrow: 1}}>{props.name}</Typography>
 						<Tooltip title="Save">
 							<IconButton onClick={downloadFile}>
-								<SaveAltIcon />
+								<SaveAlt />
 							</IconButton>
 						</Tooltip>
 					</Toolbar>

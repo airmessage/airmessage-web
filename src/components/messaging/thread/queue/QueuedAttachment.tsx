@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./QueuedAttachment.module.css";
 import BorderedCloseIcon from "../../../icon/BorderedCloseIcon";
-import {IconButton, Tooltip} from "@material-ui/core";
+import {IconButton, Tooltip} from "@mui/material";
 
 export interface QueuedAttachmentProps {
 	file: File;

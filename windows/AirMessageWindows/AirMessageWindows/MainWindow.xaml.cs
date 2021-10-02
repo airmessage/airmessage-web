@@ -218,13 +218,13 @@ namespace AirMessageWindows
                 if (thumbnail != null)
                 {
                     using var thumbnailStream = await thumbnail.OpenReadAsync();
-                    var response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(thumbnailStream, (int) HttpStatusCode.OK, null, null);
+                    var response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(thumbnailStream, (int) HttpStatusCode.OK, "OK", null);
                     args.Response = response;
                     deferral.Complete();
                 }
                 else
                 {
-                    var response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(null, (int) HttpStatusCode.NotFound, null, null);
+                    var response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(null, (int) HttpStatusCode.NotFound, "Not Found", null);
                     args.Response = response;
                     deferral.Complete();
                 }
@@ -233,7 +233,7 @@ namespace AirMessageWindows
             {
                 Console.WriteLine(exception.Message);
                     
-                var response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(null, (int) HttpStatusCode.InternalServerError, null, null);
+                var response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(null, (int) HttpStatusCode.InternalServerError, "Internal Server Error", null);
                 args.Response = response;
                 deferral.Complete();
             }

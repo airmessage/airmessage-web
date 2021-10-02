@@ -1,11 +1,11 @@
 import React, {FormEvent, useCallback, useEffect, useState} from "react";
 import styles from "./ConnectionConfigDialog.module.css";
-import {Button, Card, Dialog, DialogContent, DialogTitle, TextField, Typography} from "@material-ui/core";
+import {Button, Card, Dialog, DialogContent, DialogTitle, TextField, Typography} from "@mui/material";
 import * as ConnectionManager from "shared/connection/connectionManager";
 import {ConnectionListener} from "shared/connection/connectionManager";
 import DataProxyTCP from "../../connection/dataProxy";
 import {ConnectionErrorCode} from "shared/data/stateCodes";
-import {CheckCircleOutline, CloudOff} from "@material-ui/icons";
+import {CheckCircleOutline, CloudOff} from "@mui/icons-material";
 import {errorCodeToShortDisplay} from "shared/util/languageUtils";
 import {setCryptoPassword} from "shared/util/encryptionUtils";
 import {SecureStorageKey, setSecureLS} from "shared/util/secureStorageUtils";

@@ -67,6 +67,7 @@
 .textBubble {
 	composes: bubble;
 	
+	font-size: 0.875rem;
 	max-width: 60%;
 	padding: 6px 12px !important;
 	

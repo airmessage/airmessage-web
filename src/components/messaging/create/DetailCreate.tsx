@@ -4,25 +4,25 @@ import styles from "./DetailCreate.module.css";
 import * as ConnectionManager from "../../../connection/connectionManager";
 import {DetailFrame} from "../master/DetailFrame";
 import {
+	alpha,
 	Avatar,
 	Button,
 	ButtonBase,
 	Chip,
-	CircularProgress, fade,
-	InputBase, Theme,
+	CircularProgress,
+	InputBase,
 	Tooltip,
-	Typography,
-	useTheme
-} from "@material-ui/core";
+	Typography
+} from "@mui/material";
+import {useTheme} from "@mui/material/styles";
 import {getPeople} from "../../../util/peopleUtils";
-import ChatBubbleOutlineIcon from "@material-ui/icons/ChatBubbleOutline";
 import MessageCheckIcon from "../../icon/MessageCheckIcon";
 import {ConversationPreviewType, CreateChatErrorCode} from "../../../data/stateCodes";
 import {Conversation} from "../../../data/blocks";
 import {parsePhoneNumberFromString} from "libphonenumber-js";
-import {makeStyles} from "@material-ui/core/styles";
 import {SnackbarContext} from "../../control/SnackbarProvider";
 import {AddressData, AddressType, PersonData} from "../../../../window";
+import {ChatBubbleOutline} from "@mui/icons-material";
 
 const messagingService = "iMessage";
 
@@ -205,7 +205,7 @@ export default function DetailCreate(props: {onConversationCreated: (conversatio
 	return (
 		<DetailFrame title="New conversation">
 			<div className={styles.content}>
-				<div className={`${isLoading ? styles.scrimShown : styles.scrimHidden} ${styles.progressContainer}`} style={{backgroundColor: theme.palette.type === "light" ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.7)"}}>
+				<div className={`${isLoading ? styles.scrimShown : styles.scrimHidden} ${styles.progressContainer}`} style={{backgroundColor: theme.palette.mode === "light" ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.7)"}}>
 					<CircularProgress />
 				</div>
 				
@@ -324,9 +324,11 @@ function AddressButton(props: {address: AddressData, selected: boolean, onClick:
 	
 	return <Button
 		className={styles.contactButton + (props.selected ? "" : " " + styles.buttonUnselected)}
-		startIcon={props.selected ? <MessageCheckIcon /> : <ChatBubbleOutlineIcon />}
+		startIcon={props.selected ? <MessageCheckIcon /> : <ChatBubbleOutline />}
 		size="small"
-		color={props.selected ? "primary" : "default"}
+		sx={{
+			color: props.selected ? "primary" : "text.primary"
+		}}
 		onClick={props.onClick}
 		onMouseDown={onMouseDown}>
 		{display}
@@ -380,34 +382,30 @@ interface SelectionData {
 	addressLabel?: string;
 }
 
-export const useDirectSendButtonStyles = makeStyles((theme: Theme) => ({
-	/* Styles applied to the root element. */
-	root: {
-		width: "100%",
-		padding: "8px 0",
-		transition: theme.transitions.create(["background-color", "box-shadow", "border"], {
-			duration: theme.transitions.duration.short,
-		}),
-		borderRadius: theme.shape.borderRadius,
-		display: "flex",
-		flexDirection: "row",
-		justifyContent: "flex-start",
-		"&:hover": {
-			backgroundColor: fade(theme.palette.text.primary, theme.palette.action.hoverOpacity),
-		}
-	},
-	avatar: {
-		backgroundColor: theme.palette.primary.main,
-		marginRight: "16px !important"
-	}
-}));
-
 function DirectSendButton(props: {address: string, onClick: () => void}) {
-	const classes = useDirectSendButtonStyles();
+	const theme = useTheme();
 	
 	return (
-		<ButtonBase className={classes.root} onClick={props.onClick}>
-			<Avatar className={classes.avatar} />
+		<ButtonBase
+			onClick={props.onClick}
+			sx={{
+				width: "100%",
+				padding: "8px 0",
+				transition: theme.transitions.create(["background-color", "box-shadow", "border"], {
+					duration: theme.transitions.duration.short,
+				}),
+				borderRadius: theme.shape.borderRadius,
+				display: "flex",
+				flexDirection: "row",
+				justifyContent: "flex-start",
+				"&:hover": {
+					backgroundColor: alpha(theme.palette.text.primary, theme.palette.action.hoverOpacity),
+				}
+			}}>
+			<Avatar sx={{
+				backgroundColor: theme.palette.primary.main,
+				marginRight: "16px !important"
+			}} />
 			<Typography>Send to <b>{props.address}</b></Typography>
 		</ButtonBase>
 	);

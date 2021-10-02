@@ -1,9 +1,7 @@
 import React from "react";
 import styles from "./Onboarding.module.css";
 
-import Typography from "@material-ui/core/Typography";
-import Button from "@material-ui/core/Button";
-
+import {Typography, Button} from "@mui/material";
 import iconAirMessage from "shared/resources/icons/tile-airmessage.svg";
 import iconMac from "shared/resources/icons/tile-mac.svg";
 import iconGoogle from "shared/resources/icons/logo-google.svg";
@@ -43,7 +41,13 @@ export default function Onboarding() {
 
 						<div className={styles.column} style={{marginLeft: 24, flexGrow: 1}}>
 							<Typography variant="subtitle1" gutterBottom>Select a sign-in method:</Typography>
-							<Button className={styles.buttonGoogle} variant="contained" startIcon={<img src={iconGoogle} alt="" />} style={{marginTop: 4}} onClick={signInGoogle} fullWidth>Sign in with Google</Button>
+							<Button
+								className={styles.buttonGoogle}
+								sx={{marginTop: 1, color: "black"}}
+								variant="contained"
+								startIcon={<img src={iconGoogle} alt="" />}
+								onClick={signInGoogle}
+								fullWidth>Sign in with Google</Button>
 						</div>
 					</div>
 				</div>

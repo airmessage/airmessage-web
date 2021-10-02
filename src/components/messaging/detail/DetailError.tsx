@@ -1,8 +1,7 @@
 import React, {useCallback, useState} from "react";
 import styles from "./DetailError.module.css";
-import {Button, TextField, Typography} from "@material-ui/core";
-import WifiOffRoundedIcon from "@material-ui/icons/WifiOffRounded";
-import LockRoundedIcon from "@material-ui/icons/LockRounded";
+import {Button, TextField, Typography} from "@mui/material";
+import {LockRounded, WifiOffRounded} from "@mui/icons-material";
 import {ConnectionErrorCode} from "../../../data/stateCodes";
 import {connect} from "../../../connection/connectionManager";
 import {setCryptoPassword} from "shared/util/encryptionUtils";
@@ -57,7 +56,7 @@ function DetailErrorMessage(props: {
 	const errorDisplay = errorCodeToDisplay(props.error);
 	
 	return (<>
-		<WifiOffRoundedIcon className={styles.icon} />
+		<WifiOffRounded className={styles.icon} />
 		<div className={styles.split}>
 			<Typography variant="h4" gutterBottom>{errorDisplay.title}</Typography>
 			<Typography color="textSecondary" gutterBottom dangerouslySetInnerHTML={{__html: errorDisplay.subtitle}} />
@@ -93,7 +92,7 @@ function DetailErrorAuth(props: {resetCallback?: VoidFunction | undefined}) {
 	}, [confirm]);
 	
 	return (<>
-		<LockRoundedIcon className={styles.icon} />
+		<LockRounded className={styles.icon} />
 		<div className={styles.split}>
 			<Typography variant="h4" gutterBottom>Server is password-protected</Typography>
 			<Typography color="textSecondary" gutterBottom>Please enter your server password</Typography>

@@ -1,9 +1,7 @@
-import React, {useCallback, useState} from "react";
+import React, {useState} from "react";
 import styles from "./Onboarding.module.css";
 
-import Typography from "@material-ui/core/Typography";
-import Button from "@material-ui/core/Button";
-
+import {Button, Typography} from "@mui/material";
 import iconAirMessage from "shared/resources/icons/tile-airmessage.svg";
 import iconMac from "shared/resources/icons/tile-mac.svg";
 
@@ -47,7 +45,19 @@ export default function Onboarding(props: {onApplyConfig: VoidFunction}) {
 						
 						<div className={styles.buttonColumn} style={{marginLeft: 24, flexGrow: 1}}>
 							<Typography variant="subtitle1" gutterBottom>Select a sign-in method:</Typography>
-							<Button className={styles.buttonManual} variant="outlined" startIcon={<EthernetIcon />} style={{marginTop: 8}} onClick={() => setShowConfigDialog(true)} fullWidth>Use manual configuration</Button>
+							<Button
+								className={styles.buttonManual}
+								sx={{
+									marginTop: 1,
+									color: "text.primary",
+									borderColor: "text.secondary"
+								}}
+								variant="outlined"
+								startIcon={<EthernetIcon />}
+								onClick={() => setShowConfigDialog(true)}
+								fullWidth>
+								Use manual configuration
+							</Button>
 						</div>
 					</div>
 				</div>

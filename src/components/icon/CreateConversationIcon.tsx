@@ -1,8 +1,8 @@
 import React from "react";
 
-import {SvgIcon} from "@material-ui/core";
+import {SvgIcon, SvgIconProps} from "@mui/material";
 
-export default function CreateConversationIcon(props: any) {
+export default function CreateConversationIcon(props: SvgIconProps) {
 	return (
 		<SvgIcon {...props}>
 			<g transform="translate(3.000000, 2.000000)">

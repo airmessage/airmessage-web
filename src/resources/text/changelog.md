@@ -1,3 +1,2 @@
-- Added support for protocol 5.4
-  - Files like `.heic` or `.caf` can now be properly converted and displayed in AirMessage for web with a server update 
+- Updated to MUI 5
 - Updated dependencies

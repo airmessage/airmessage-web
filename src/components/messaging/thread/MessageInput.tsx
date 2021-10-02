@@ -1,8 +1,8 @@
 import React, {ChangeEvent, useCallback} from "react";
 import styles from "./MessageInput.module.css";
 
-import {useTheme} from "@material-ui/core/styles";
-import {IconButton, InputBase} from "@material-ui/core";
+import {IconButton, InputBase} from "@mui/material";
+import {useTheme} from "@mui/material/styles";
 import PushIcon from "../../icon/PushIcon";
 import {QueuedFile} from "../../../data/blocks";
 import {Flipped, Flipper, spring} from "react-flip-toolkit";

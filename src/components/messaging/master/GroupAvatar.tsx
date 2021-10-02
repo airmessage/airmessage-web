@@ -1,11 +1,10 @@
 import React, {useEffect, useState} from "react";
 import styles from "./GroupAvatar.module.css";
 
-import {Avatar} from "@material-ui/core";
+import {Avatar} from "@mui/material";
 import {findPerson} from "../../../util/peopleUtils";
 import {colorFromContact} from "../../../util/avatarUtils";
 import {PersonData} from "../../../../window";
-
 
 export default function GroupAvatar(props: {members: string[]}) {
 	const [personArray, setPersonArray] = useState<(PersonData | undefined)[]>(new Array(props.members.length));

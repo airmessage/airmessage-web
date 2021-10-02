@@ -4,7 +4,7 @@ import styles from "./DetailThread.module.css";
 import * as ConnectionManager from "../../../connection/connectionManager";
 import {messageUpdateEmitter, modifierUpdateEmitter} from "../../../connection/connectionManager";
 
-import {Button, CircularProgress, Typography} from "@material-ui/core";
+import {Button, CircularProgress, Typography} from "@mui/material";
 import {Conversation, ConversationItem, MessageItem, MessageModifier, QueuedFile} from "../../../data/blocks";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";

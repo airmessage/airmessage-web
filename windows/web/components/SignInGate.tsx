@@ -6,7 +6,7 @@ import {getSecureLS, SecureStorageKey, setSecureLS} from "shared/util/secureStor
 import {setDisableAutomaticReconnections} from "shared/connection/connectionManager";
 import LoginContext from "shared/components/LoginContext";
 
-export default function LoginGate() {
+export default function SignInGate() {
 	const [hasConfig, setHasConfig] = useState<undefined | boolean>(undefined);
 	useEffect(() => {
 		//If all values are set, jump straight to messaging

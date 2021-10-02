@@ -1,7 +1,6 @@
 import React from "react";
-
-import {ThemeProvider} from "@material-ui/core/styles";
-import {createTheme, CssBaseline, useMediaQuery} from "@material-ui/core";
+import {createTheme, ThemeProvider} from "@mui/material/styles";
+import {CssBaseline, useMediaQuery} from "@mui/material";
 
 export default function AppTheme(props: {children: React.ReactNode}) {
 	const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
@@ -22,7 +21,7 @@ export default function AppTheme(props: {children: React.ReactNode}) {
 			].join(","),
 		},
 		palette: {
-			type: prefersDarkMode ? "dark" : "light",
+			mode: prefersDarkMode ? "dark" : "light",
 			primary: {
 				main: "#448AFF",
 				dark: "#366FCC",
@@ -49,11 +48,13 @@ export default function AppTheme(props: {children: React.ReactNode}) {
 				sidebar: prefersDarkMode ? "#272727" : "#FAFAFA"
 			}
 		},
-		overrides: {
+		components: {
 			MuiCssBaseline: {
-				"@global": {
-					html: {
-						scrollbarColor: prefersDarkMode ? "#303030 #424242" : undefined
+				styleOverrides: {
+					"@global": {
+						html: {
+							scrollbarColor: prefersDarkMode ? "#303030 #424242" : undefined
+						}
 					}
 				}
 			}
@@ -63,13 +64,12 @@ export default function AppTheme(props: {children: React.ReactNode}) {
 	return (
 		<ThemeProvider theme={theme}>
 			<CssBaseline />
-			
 			{props.children}
 		</ThemeProvider>
 	);
 }
 
-declare module "@material-ui/core/styles/createPalette" {
+declare module "@mui/material/styles/createPalette" {
 	interface Palette {
 		messageIncoming: Palette["primary"];
 		messageOutgoing: Palette["primary"];

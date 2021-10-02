@@ -1,7 +1,5 @@
 import React from "react";
 
-import {Theme, withTheme} from "@material-ui/core/styles";
-
 import styles from "./Messaging.module.css";
 import Sidebar from "../master/Sidebar";
 import DetailThread from "../thread/DetailThread";
@@ -28,9 +26,9 @@ import {playSoundMessageIn, playSoundNotification, playSoundTapback} from "../..
 import {getNotificationUtils} from "shared/util/notificationUtils";
 import {sortConversationItems} from "shared/util/sortUtils";
 import {getPlatformUtils} from "shared/util/platformUtils";
+import {Box} from "@mui/material";
 
 interface Props {
-	theme: Theme;
 	resetCallback?: VoidFunction | undefined;
 }
 
@@ -65,7 +63,7 @@ interface PendingConversationData {
 	notificationMessages: MessageItem[];
 }
 
-class Messaging extends React.Component<Props, State> {
+export default class Messaging extends React.Component<Props, State> {
 	private readonly connectionListener: ConnectionListener = {
 		onConnecting: () => {
 			//Checking if conversations have never been loaded
@@ -132,8 +130,6 @@ class Messaging extends React.Component<Props, State> {
 	};
 	
 	render() {
-		const sidebarBG = this.props.theme.palette.background.sidebar;
-		
 		const detailPane = this.state.detailPane;
 		
 		let masterNode: React.ReactNode;
@@ -160,14 +156,14 @@ class Messaging extends React.Component<Props, State> {
 		return (
 			<SnackbarProvider>
 				<div className={styles.split}>
-					<div className={styles.splitDetail} style={{backgroundColor: sidebarBG}}>
+					<Box className={styles.splitDetail} sx={{backgroundColor: "background.sidebar"}}>
 						<Sidebar
 							conversations={this.state.conversationsAvailable ? this.state.conversations : undefined}
 							selectedConversation={detailPane.type === DetailType.Thread ? detailPane.conversationGUID : undefined}
 							onConversationSelected={this.onConversationSelected}
 							onCreateSelected={this.onCreateSelected}
 							errorBanner={(typeof this.state.sidebarBanner === "number") ? this.state.sidebarBanner : undefined} />
-					</div>
+					</Box>
 					
 					<SoftDivider vertical />
 					
@@ -521,5 +517,3 @@ class Messaging extends React.Component<Props, State> {
 		}
 	};
 }
-
-export default withTheme(Messaging);

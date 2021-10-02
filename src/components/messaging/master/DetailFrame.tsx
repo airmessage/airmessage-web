@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./DetailFrame.module.css";
 
-import {Toolbar, Typography} from "@material-ui/core";
+import {Toolbar, Typography} from "@mui/material";
 import SoftDivider from "../../SoftDivider";
 
 interface Props {

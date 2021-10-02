@@ -2,16 +2,15 @@ import React, {useEffect, useState} from "react";
 import styles from "./ListConversation.module.css";
 
 import * as ConversationUtils from "../../../util/conversationUtils";
+import {isConversationPreviewMessage} from "../../../util/conversationUtils";
 
-import {ListItem, ListItemAvatar, ListItemText, Typography} from "@material-ui/core";
+import {ListItemAvatar, ListItemButton, ListItemText, Typography, TypographyProps} from "@mui/material";
 
 import {Conversation, ConversationPreview} from "../../../data/blocks";
 import {appleSendStyleBubbleInvisibleInk} from "../../../data/appleConstants";
 import {getLastUpdateStatusTime} from "../../../util/dateUtils";
 import GroupAvatar from "./GroupAvatar";
-import {TypographyProps} from "@material-ui/core/Typography";
 import {ConversationPreviewType} from "../../../data/stateCodes";
-import {isConversationPreviewMessage} from "../../../util/conversationUtils";
 
 export default function ListConversation(props: {conversation: Conversation, selected?: boolean, highlighted?: boolean, onSelected: () => void, flippedProps?: Record<string, unknown>}) {
 	//Getting the conversation title
@@ -29,36 +28,45 @@ export default function ListConversation(props: {conversation: Conversation, sel
 	
 	const primaryStyle: TypographyProps = props.highlighted ? {
 		color: "primary",
-		style: {
+		sx: {
+			fontSize: "1rem",
 			fontWeight: "bold"
 		}
 	} : {
-		style: {
+		sx: {
+			fontSize: "1rem",
 			fontWeight: 500
 		}
 	};
 	
 	const secondaryStyle: TypographyProps = props.highlighted ? {
 		color: "textPrimary",
-		style: {
+		sx: {
 			fontWeight: "bold"
 		}
 	} : {};
 	
 	return (
 		<div className={styles.containerOuter} {...props.flippedProps}>
-			<ListItem
+			<ListItemButton
 				className={styles.containerInner}
 				key={props.conversation.guid}
-				button
 				onClick={props.onSelected}
-				selected={props.selected}>
+				selected={props.selected}
+				sx={{
+					"&&.Mui-selected, &&.Mui-selected:hover": {
+						backgroundColor: "action.selected"
+					},
+					"&&:hover": {
+						backgroundColor: "action.hover"
+					}
+				}}>
 				<ListItemAvatar>
 					<GroupAvatar members={props.conversation.members} />
 				</ListItemAvatar>
 				<ListItemText className={styles.textPreview} primary={title} primaryTypographyProps={primaryStyle} secondary={previewString(props.conversation.preview)} secondaryTypographyProps={secondaryStyle} />
 				<Typography className={styles.textTime} variant="body2" color="textSecondary">{getLastUpdateStatusTime(props.conversation.preview.date)}</Typography>
-			</ListItem>
+			</ListItemButton>
 		</div>
 	);
 }

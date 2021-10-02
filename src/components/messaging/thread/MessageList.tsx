@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "./MessageList.module.css";
 
+import {CircularProgress} from "@mui/material";
 import Message from "./item/Message";
 import * as ConversationUtils from "../../../util/conversationUtils";
 import {Conversation, ConversationItem} from "../../../data/blocks";
@@ -9,7 +10,6 @@ import {MessageStatusCode} from "../../../data/stateCodes";
 import EventEmitter from "../../../util/eventEmitter";
 import ConversationActionParticipant from "./item/ConversationActionParticipant";
 import ConversationActionRename from "./item/ConversationActionRename";
-import {CircularProgress} from "@material-ui/core";
 
 interface Props {
 	conversation: Conversation;

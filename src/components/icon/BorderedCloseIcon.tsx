@@ -1,12 +1,12 @@
 import React from "react";
+import {SvgIcon, SvgIconProps} from "@mui/material";
+import {useTheme} from "@mui/material/styles";
 
-import {SvgIcon, useTheme} from "@material-ui/core";
-
-export default function BorderedCloseIcon(props: any) {
+export default function BorderedCloseIcon(props: SvgIconProps) {
 	const theme = useTheme();
 	
-	const colorBackground = theme.palette.type === "light" ? theme.palette.grey["700"] : theme.palette.grey["300"];
-	const colorSymbol = theme.palette.type === "light" ? theme.palette.grey["200"] : theme.palette.grey["700"];
+	const colorBackground = theme.palette.mode === "light" ? theme.palette.grey["700"] : theme.palette.grey["300"];
+	const colorSymbol = theme.palette.mode === "light" ? theme.palette.grey["200"] : theme.palette.grey["700"];
 	
 	return (
 		<SvgIcon {...props}>
