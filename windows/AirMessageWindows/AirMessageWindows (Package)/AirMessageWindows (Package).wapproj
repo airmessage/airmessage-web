@@ -125,6 +125,9 @@
     <Content Include="Images\Wide310x150Logo.scale-200.png" />
     <Content Include="Images\Wide310x150Logo.scale-400.png" />
     <None Include="Package.StoreAssociation.xml" />
+    <Content Include="secrets.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\AirMessageWindows\webassets\**\*.*" CopyToPublishDirectory="Always" Link="AirMessageWindows\webassets\%(RecursiveDir)%(Filename)%(Extension)" />
@@ -144,6 +147,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications" Version="7.1.0" />
     <PackageReference Include="PInvoke.User32" Version="0.7.104" />
+    <PackageReference Include="Sentry" Version="3.9.4" />
   </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
 </Project>
