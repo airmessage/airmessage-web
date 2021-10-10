@@ -5,10 +5,10 @@ using Microsoft.UI.Xaml;
 using Sentry;
 using System.Runtime.ExceptionServices;
 using System.Security;
+using System.Threading.Tasks;
 using System.Xml;
 using Windows.ApplicationModel;
 using Windows.Storage;
-using Sentry.Protocol;
 using Package = Windows.ApplicationModel.Package;
 using UnhandledExceptionEventArgs = Microsoft.UI.Xaml.UnhandledExceptionEventArgs;
 
@@ -30,9 +30,9 @@ namespace AirMessageWindows
         /// </summary>
         public App()
         {
-            InitializeComponent();
+            InitializeSentry().Wait();
 
-            InitializeSentry();
+            InitializeComponent();
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace AirMessageWindows
             ToastNotificationManagerCompat.OnActivated += ActivationHelper.ToastNotificationManagerCompatOnOnActivated;
         }
 
-        private static async void InitializeSentry()
+        private static async Task InitializeSentry()
         {
 #if !DEBUG
             //Load secrets file
@@ -77,8 +77,8 @@ namespace AirMessageWindows
             if (exception == null) return;
             
             // Tells Sentry this was an Unhandled Exception
-            exception.Data[Mechanism.HandledKey] = false;
-            exception.Data[Mechanism.MechanismKey] = "Application.UnhandledException";
+            exception.Data[Sentry.Protocol.Mechanism.HandledKey] = false;
+            exception.Data[Sentry.Protocol.Mechanism.MechanismKey] = "Application.UnhandledException";
             SentrySdk.CaptureException(exception);
             // Make sure the event is flushed to disk or to Sentry
             SentrySdk.FlushAsync(TimeSpan.FromSeconds(3)).Wait();
