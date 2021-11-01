@@ -21,7 +21,7 @@ import {downloadArrayBuffer, downloadBlob} from "../../../../util/browserUtils";
 import MessageModifierTapbackRow from "../modifier/MessageModifierTapbackRow";
 import MessageModifierStickerStack from "../modifier/MessageModifierStickerStack";
 import {colorFromContact} from "../../../../util/avatarUtils";
-import {Anchorme} from "react-anchorme";
+import Linkify from "linkify-react";
 import {appleServiceAppleMessage} from "../../../../data/appleConstants";
 import FileDownloadResult, {FileDisplayResult} from "shared/data/fileDownloadResult";
 import {PersonData} from "../../../../../window";
@@ -280,7 +280,7 @@ export default function Message(props: Props) {
 function MessageBubble(props: {text: string, index: number, partProps: MessagePartProps, tapbacks?: TapbackItem[], stickers?: StickerItem[]}) {
 	return (
 		<DecorativeMessageBubble element="div" className={styles.textBubble} style={props.partProps} tapbacks={props.tapbacks} stickers={props.stickers}>
-			<Anchorme target="_blank">{props.text}</Anchorme>
+			<Linkify options={{target: "_blank"}}>{props.text}</Linkify>
 		</DecorativeMessageBubble>
 	);
 	
