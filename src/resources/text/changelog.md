@@ -1,2 +1,1 @@
-- Updated to MUI 5
-- Updated dependencies
+This update improves the security of AirMessage for web
