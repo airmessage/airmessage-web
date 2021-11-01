@@ -30,9 +30,7 @@ namespace AirMessageWindows
         /// </summary>
         public App()
         {
-            InitializeSentry().Wait();
-
-            InitializeComponent();
+            _ = InitializeSentry();
         }
 
         /// <summary>
@@ -50,7 +48,7 @@ namespace AirMessageWindows
             ToastNotificationManagerCompat.OnActivated += ActivationHelper.ToastNotificationManagerCompatOnOnActivated;
         }
 
-        private static async Task InitializeSentry()
+        private async Task InitializeSentry()
         {
 #if !DEBUG
             //Load secrets file
@@ -60,13 +58,16 @@ namespace AirMessageWindows
             secretsXml.Load(secretsFileStream);
 
             //Initialize Sentry
-            SentrySdk.Init(new SentryOptions {
+            SentrySdk.Init(new SentryOptions
+            {
                 Dsn = secretsXml.SelectSingleNode("/xml/sentryDSN")!.InnerText,
                 Release = "airmessage-windows@" + GetAppVersion()
             });
-            
+
             Current.UnhandledException += ExceptionHandler;
 #endif
+
+            InitializeComponent();
         }
         
         [HandleProcessCorruptedStateExceptions, SecurityCritical]
