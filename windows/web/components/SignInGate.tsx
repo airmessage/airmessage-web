@@ -3,7 +3,7 @@ import React, {useCallback, useEffect, useState} from "react";
 import Onboarding from "./private/Onboarding";
 import Messaging from "shared/components/messaging/master/Messaging";
 import {getSecureLS, SecureStorageKey, setSecureLS} from "shared/util/secureStorageUtils";
-import {setDisableAutomaticReconnections} from "shared/connection/connectionManager";
+import {disconnect, setDisableAutomaticReconnections} from "shared/connection/connectionManager";
 import LoginContext from "shared/components/LoginContext";
 
 export default function SignInGate() {
@@ -52,6 +52,9 @@ export default function SignInGate() {
 				setSecureLS(SecureStorageKey.ServerAddress, undefined);
 				setSecureLS(SecureStorageKey.ServerAddressFallback, undefined);
 				setSecureLS(SecureStorageKey.ServerPassword, undefined);
+				
+				//Disconnect
+				disconnect();
 			}, [])
 		}}>
 			{main}
