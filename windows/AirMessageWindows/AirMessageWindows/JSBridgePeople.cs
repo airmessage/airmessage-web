@@ -12,6 +12,7 @@ namespace AirMessageWindows
         public static async Task<List<JSPersonData>> GetPeople()
         {
             var store = await ContactManager.RequestStoreAsync();
+            if(store == null) return new List<JSPersonData>();
             var contacts = await store.FindContactsAsync();
             return contacts.Select(MapContact).ToList();
         }
@@ -20,6 +21,8 @@ namespace AirMessageWindows
         {
             //Search for contact
             var store = await ContactManager.RequestStoreAsync();
+            if (store == null) return null;
+
             var contacts = await store.FindContactsAsync(address);
             
             //Return null if no contact was found

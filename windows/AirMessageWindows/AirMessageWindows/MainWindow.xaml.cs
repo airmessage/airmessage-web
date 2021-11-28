@@ -213,6 +213,15 @@ namespace AirMessageWindows
             try
             {
                 var store = await ContactManager.RequestStoreAsync();
+                if (store == null)
+				{
+                    var response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(null, (int) HttpStatusCode.NotFound, "Not Found", null);
+                    args.Response = response;
+                    deferral.Complete();
+
+                    return;
+				}
+
                 var contact = await store.GetContactAsync(contactId);
                 var thumbnail = contact.Thumbnail;
                 if (thumbnail != null)

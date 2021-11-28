@@ -47,6 +47,8 @@ namespace AirMessageWindows
                 
             //Read contact data
             var store = await ContactManager.RequestStoreAsync();
+            if (store == null) return null;
+
             var contact = await store.GetContactAsync(personId);
             using var thumbnail = await contact.Thumbnail.OpenReadAsync();
                 
