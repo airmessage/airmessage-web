@@ -19,7 +19,7 @@ import {isCryptoPasswordSet, setCryptoPassword} from "shared/util/encryptionUtil
 import {getSecureLS, SecureStorageKey} from "shared/util/secureStorageUtils";
 import FileDownloadResult from "shared/data/fileDownloadResult";
 
-export const targetCommVer = "5.4";
+export const targetCommVer = "5.5";
 
 //How often to try reconnecting when disconnected
 const reconnectInterval = 8 * 1000;

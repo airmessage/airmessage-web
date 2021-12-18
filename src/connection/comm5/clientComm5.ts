@@ -6,6 +6,7 @@ import {ConnectionErrorCode, MessageError, MessageErrorCode} from "../../data/st
 import ClientProtocol2 from "./clientProtocol2";
 import ClientProtocol3 from "shared/connection/comm5/clientProtocol3";
 import ClientProtocol4 from "shared/connection/comm5/clientProtocol4";
+import ClientProtocol5 from "shared/connection/comm5/clientProtocol5";
 
 const targetCommVer = 5;
 
@@ -104,6 +105,8 @@ export default class ClientComm5 extends CommunicationsManager {
 				return new ClientProtocol3(this, this.dataProxy);
 			case 4:
 				return new ClientProtocol4(this, this.dataProxy);
+			case 5:
+				return new ClientProtocol5(this, this.dataProxy);
 			default:
 				return null;
 		}
