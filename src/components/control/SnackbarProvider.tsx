@@ -1,5 +1,6 @@
 import React from "react";
 import {Snackbar} from "@mui/material";
+import {SnackbarCloseReason} from "@mui/material/Snackbar/Snackbar";
 
 interface SnackbarData {
 	message: string;
@@ -21,7 +22,7 @@ export default function SnackbarProvider(props: {children: React.ReactNode}) {
 		setData(data);
 	}
 	
-	function handleClose(event: React.SyntheticEvent | React.MouseEvent, reason?: string) {
+	function handleClose(event: React.SyntheticEvent<any> | Event, reason: SnackbarCloseReason) {
 		if(reason === "clickaway") return;
 		setOpen(false);
 	}
