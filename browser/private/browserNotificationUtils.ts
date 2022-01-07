@@ -1,6 +1,6 @@
 import {getConversationTitle, getMessageDescription, NotificationUtils} from "shared/util/notificationUtils";
 import EventEmitter from "shared/util/eventEmitter";
-import {Conversation, MessageItem} from "shared/data/blocks";
+import {Conversation, LinkedConversation, MessageItem} from "shared/data/blocks";
 import {playSoundNotification} from "shared/util/soundUtils";
 
 export default class BrowserNotificationUtils extends NotificationUtils {
@@ -15,7 +15,7 @@ export default class BrowserNotificationUtils extends NotificationUtils {
 	}
 	
 	private notificationSoundPlayed = false;
-	async showNotifications(conversation: Conversation, messages: MessageItem[]) {
+	async showNotifications(conversation: LinkedConversation, messages: MessageItem[]) {
 		//Ignoring if the app isn't allowed to send notifications,
 		//or if there aren't any messages to notify
 		if(Notification.permission !== "granted" || messages.length === 0) return;

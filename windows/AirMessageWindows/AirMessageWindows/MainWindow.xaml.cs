@@ -10,6 +10,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.Web.WebView2.Core;
 using PInvoke;
 using WinRT.Interop;
+using System.Text.Json.Serialization;
+using Sentry;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -23,7 +25,7 @@ namespace AirMessageWindows
     {
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
         {
-            IgnoreNullValues = true
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
         private static bool IsWebView2Installed()
@@ -106,100 +108,112 @@ namespace AirMessageWindows
 
         private void CoreWebView2OnNavigationStarting(CoreWebView2 sender, CoreWebView2NavigationStartingEventArgs args)
         {
-            //Disconnect from server
-            ConnectionManager.Disconnect();
+            try
+			{
+                //Disconnect from server
+                ConnectionManager.Disconnect();
+            } catch(Exception exception)
+			{
+                Console.WriteLine(exception.ToString());
+                SentrySdk.CaptureException(exception);
+            }
         }
 
         private async void CoreWebView2OnWebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs args)
         {
-            Debug.WriteLine("Received socket message " + args.WebMessageAsJson);
-            using var doc = JsonDocument.Parse(args.WebMessageAsJson);
+            try
+			{
+                Debug.WriteLine("Received socket message " + args.WebMessageAsJson);
+                using var doc = JsonDocument.Parse(args.WebMessageAsJson);
 
-            switch (doc.RootElement.GetProperty("type").GetString()!)
-            {
-                //Platform
-                case "registerActivations":
+                switch (doc.RootElement.GetProperty("type").GetString()!)
                 {
-                    //Post pending activations
-                    if (ActivationHelper.PendingChatId != null)
-                    {
-                        MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageActivateChat("activateChat", ActivationHelper.PendingChatId)));
-                        ActivationHelper.PendingChatId = null;
-                    }
+                    //Platform
+                    case "registerActivations":
+                        {
+                            //Post pending activations
+                            if (ActivationHelper.PendingChatId != null)
+                            {
+                                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageActivateChat("activateChat", ActivationHelper.PendingChatId)));
+                                ActivationHelper.PendingChatId = null;
+                            }
 
-                    //Register for activation events
-                    ActivationHelper.ChatActivated += (_, chatId) =>
-                        MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageActivateChat("activateChat", chatId)));
+                            //Register for activation events
+                            ActivationHelper.ChatActivated += (_, chatId) =>
+                                MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageActivateChat("activateChat", chatId)));
 
-                    break;
-                }
-                case "hasFocus":
-                {
-                    bool hasFocus = ApplicationIsActivated();
-                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageHasFocus("hasFocus", hasFocus), JsonOptions));
-                    break;
-                }
-                case "getSystemVersion":
-                {
-                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageSystemVersion("getSystemVersion", Environment.OSVersion.VersionString), JsonOptions));
-                    break;
-                }
-                //People
-                case "getPeople":
-                {
-                    List<JSPersonData> people = await JSBridgePeople.GetPeople();
-                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageGetPeople("getPeople", people), JsonOptions));
-                    break;
-                }
-                case "findPerson":
-                {
-                    string address = doc.RootElement.GetProperty("address").GetString()!;
-                    JSPersonData? person = await JSBridgePeople.FindPerson(address);
-                    MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageFindPerson("findPerson", address, person), JsonOptions));
-                    
-                    break;
-                }
-                
-                //Notifications
-                case "showNotification":
-                {
-                    string chatId = doc.RootElement.GetProperty("chatID").GetString()!;
-                    string? personId = doc.RootElement.GetProperty("personID").GetString();
-                    string messageId = doc.RootElement.GetProperty("messageID").GetString()!;
-                    string chatName = doc.RootElement.GetProperty("chatName").GetString()!;
-                    string contactName = doc.RootElement.GetProperty("contactName").GetString()!;
-                    string message = doc.RootElement.GetProperty("message").GetString()!;
+                            break;
+                        }
+                    case "hasFocus":
+                        {
+                            bool hasFocus = ApplicationIsActivated();
+                            MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageHasFocus("hasFocus", hasFocus), JsonOptions));
+                            break;
+                        }
+                    case "getSystemVersion":
+                        {
+                            MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageSystemVersion("getSystemVersion", Environment.OSVersion.VersionString), JsonOptions));
+                            break;
+                        }
+                    //People
+                    case "getPeople":
+                        {
+                            List<JSPersonData> people = await JSBridgePeople.GetPeople();
+                            MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageGetPeople("getPeople", people), JsonOptions));
+                            break;
+                        }
+                    case "findPerson":
+                        {
+                            string address = doc.RootElement.GetProperty("address").GetString()!;
+                            JSPersonData? person = await JSBridgePeople.FindPerson(address);
+                            MainWebView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new JSMessageFindPerson("findPerson", address, person), JsonOptions));
 
-                    User32.GetForegroundWindow();
-                    Debug.WriteLine("Activation state: " + ApplicationIsActivated());
-                    await JSBridgeNotifications.SendNotification(chatId, personId, messageId, chatName, contactName, message);
-                    
-                    break;
-                }
-                case "dismissNotifications":
-                {
-                    string chatId = doc.RootElement.GetProperty("chatID").GetString()!;
-                    JSBridgeNotifications.DismissNotifications(chatId);
+                            break;
+                        }
 
-                    break;
+                    //Notifications
+                    case "showNotification":
+                        {
+                            string chatId = doc.RootElement.GetProperty("chatID").GetString()!;
+                            string? personId = doc.RootElement.GetProperty("personID").GetString();
+                            string messageId = doc.RootElement.GetProperty("messageID").GetString()!;
+                            string chatName = doc.RootElement.GetProperty("chatName").GetString()!;
+                            string contactName = doc.RootElement.GetProperty("contactName").GetString()!;
+                            string message = doc.RootElement.GetProperty("message").GetString()!;
+
+                            await JSBridgeNotifications.SendNotification(chatId, personId, messageId, chatName, contactName, message);
+
+                            break;
+                        }
+                    case "dismissNotifications":
+                        {
+                            string chatId = doc.RootElement.GetProperty("chatID").GetString()!;
+                            JSBridgeNotifications.DismissNotifications(chatId);
+
+                            break;
+                        }
+                    //Connection
+                    case "connect":
+                        {
+                            string hostname = doc.RootElement.GetProperty("hostname").GetString()!;
+                            int port = doc.RootElement.GetProperty("port").GetInt32();
+                            await ConnectionManager.Connect(hostname, port);
+                            break;
+                        }
+                    case "send":
+                        {
+                            byte[] data = doc.RootElement.GetProperty("data").GetBytesFromBase64();
+                            await ConnectionManager.Send(data);
+                            break;
+                        }
+                    case "disconnect":
+                        ConnectionManager.Disconnect();
+                        break;
                 }
-                //Connection
-                case "connect":
-                {
-                    string hostname = doc.RootElement.GetProperty("hostname").GetString()!;
-                    int port = doc.RootElement.GetProperty("port").GetInt32();
-                    await ConnectionManager.Connect(hostname, port);
-                    break;
-                }
-                case "send":
-                {
-                    byte[] data = doc.RootElement.GetProperty("data").GetBytesFromBase64();
-                    await ConnectionManager.Send(data);
-                    break;
-                }
-                case "disconnect":
-                    ConnectionManager.Disconnect();
-                    break;
+            } catch(Exception exception)
+			{
+                Console.WriteLine(exception.ToString());
+                SentrySdk.CaptureException(exception);
             }
         }
 
@@ -240,8 +254,9 @@ namespace AirMessageWindows
             }
             catch (Exception exception)
             {
-                Console.WriteLine(exception.Message);
-                    
+                Console.WriteLine(exception.ToString());
+                SentrySdk.CaptureException(exception);
+
                 var response = MainWebView.CoreWebView2.Environment.CreateWebResourceResponse(null, (int) HttpStatusCode.InternalServerError, "Internal Server Error", null);
                 args.Response = response;
                 deferral.Complete();

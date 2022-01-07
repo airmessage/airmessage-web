@@ -1,50 +1,38 @@
-import React, {useCallback, useContext, useState} from "react";
+import React, {useCallback, useContext, useEffect, useState} from "react";
 import styles from "./Sidebar.module.css";
 
 import AirMessageLogo from "../../logo/AirMessageLogo";
-import {
-	Button,
-	Dialog,
-	DialogActions,
-	DialogContent,
-	DialogContentText,
-	DialogTitle,
-	IconButton,
-	Menu,
-	MenuItem,
-	Toolbar,
-	Typography,
-	Skeleton, List
-} from "@mui/material";
+import {IconButton, List, Menu, MenuItem, Skeleton, Toolbar} from "@mui/material";
 
 import ListConversation from "./ListConversation";
 import {Conversation} from "../../../data/blocks";
 import {Flipped, Flipper} from "react-flip-toolkit";
 import ConnectionBanner from "./ConnectionBanner";
-import {ConnectionErrorCode} from "../../../data/stateCodes";
-import {communityPage, supportEmail} from "../../../data/linkConstants";
-import {appVersion, getFormattedBuildDate, releaseHash} from "../../../data/releaseInfo";
-import {
-	getActiveCommVer,
-	getActiveProxyType,
-	getServerSoftwareVersion,
-	getServerSystemVersion,
-	targetCommVer
-} from "../../../connection/connectionManager";
-import Markdown from "../../Markdown";
-import changelog from "../../../resources/text/changelog.md";
-import LoginContext from "shared/components/LoginContext";
-import {getPlatformUtils} from "shared/util/platformUtils";
-import {AddRounded, MoreVertRounded} from "@mui/icons-material";
-import {useBoolean, useCancellableEffect} from "shared/util/hookHelper";
+import {ConnectionErrorCode, FaceTimeLinkErrorCode} from "../../../data/stateCodes";
+import {AddRounded, MoreVertRounded, Update, SyncProblem, VideoCallOutlined} from "@mui/icons-material";
+import ChangelogDialog from "../dialog/ChangelogDialog";
+import FeedbackDialog from "shared/components/messaging/dialog/FeedbackDialog";
+import SignOutDialog from "shared/components/messaging/dialog/SignOutDialog";
+import RemoteUpdateDialog from "shared/components/messaging/dialog/RemoteUpdateDialog";
+import ServerUpdateData from "shared/data/serverUpdateData";
+import * as ConnectionManager from "../../../connection/connectionManager";
+import {RemoteUpdateListener} from "../../../connection/connectionManager";
+import SidebarBanner from "shared/components/messaging/master/SidebarBanner";
+import {SnackbarContext} from "shared/components/control/SnackbarProvider";
+import FaceTimeLinkDialog from "shared/components/messaging/dialog/FaceTimeLinkDialog";
+import {useIsFaceTimeSupported} from "shared/util/hookUtils";
+import UpdateRequiredDialog from "../dialog/UpdateRequiredDialog";
 
 export default function Sidebar(props: {
 	conversations: Conversation[] | undefined;
-	selectedConversation?: string;
-	onConversationSelected: (guid: string) => void;
+	selectedConversation?: number;
+	onConversationSelected: (id: number) => void;
 	onCreateSelected: () => void;
 	errorBanner?: ConnectionErrorCode;
+	needsServerUpdate?: boolean;
 }) {
+	const displaySnackbar = useContext(SnackbarContext);
+	
 	const [overflowMenu, setOverflowMenu] = useState<HTMLElement | null>(null);
 	const openOverflowMenu = useCallback((event: React.MouseEvent<HTMLElement>) => {
 		setOverflowMenu(event.currentTarget);
@@ -56,22 +44,81 @@ export default function Sidebar(props: {
 	const [isChangelogDialog, showChangelogDialog, hideChangelogDialog] = useSidebarDialog(closeOverflowMenu);
 	const [isFeedbackDialog, showFeedbackDialog, hideFeedbackDialog] = useSidebarDialog(closeOverflowMenu);
 	const [isSignOutDialog, showSignOutDialog, hideSignOutDialog] = useSidebarDialog(closeOverflowMenu);
+	const [isRemoteUpdateDialog, showRemoteUpdateDialog, hideRemoteUpdateDialog] = useSidebarDialog();
+	const [isUpdateRequiredDialog, showUpdateRequiredDialog, hideUpdateRequiredDialog] = useSidebarDialog();
+	const [faceTimeLinkDialog, setFaceTimeLinkDialog] = useState<string | undefined>(undefined);
+	
+	//Keep track of remote updates
+	const [remoteUpdate, setRemoteUpdate] = useState<ServerUpdateData | undefined>(undefined);
+	useEffect(() => {
+		const listener: RemoteUpdateListener = {onUpdate: setRemoteUpdate};
+		ConnectionManager.addRemoteUpdateListener(listener);
+		return () => ConnectionManager.removeRemoteUpdateListener(listener);
+	}, [setRemoteUpdate]);
+	const [remoteUpdateCache, setRemoteUpdateCache] = useState<ServerUpdateData>({
+		id: 0, notes: "", protocolRequirement: [], remoteInstallable: false, version: ""
+	});
+	useEffect(() => {
+		if(remoteUpdate !== undefined) {
+			setRemoteUpdateCache(remoteUpdate);
+		}
+	}, [remoteUpdate, setRemoteUpdateCache]);
+	
+	//Keep track of whether FaceTime is supported
+	const isFaceTimeSupported = useIsFaceTimeSupported();
+	
+	const [isFaceTimeLinkLoading, setFaceTimeLinkLoading] = useState(false);
+	const createFaceTimeLink = useCallback(async () => {
+		setFaceTimeLinkLoading(true);
+		
+		try {
+			const link = await ConnectionManager.requestFaceTimeLink();
+			
+			//Prefer web share, fall back to displaying a dialog
+			if(navigator.share) {
+				await navigator.share({text: link});
+			} else {
+				setFaceTimeLinkDialog(link);
+			}
+		} catch(error) {
+			if(error === FaceTimeLinkErrorCode.Network) {
+				displaySnackbar({message: "Failed to get FaceTime link: no connection to server"});
+			} else if(error === FaceTimeLinkErrorCode.External) {
+				displaySnackbar({message: "Failed to get FaceTime link: an external error occurred"});
+			}
+		} finally {
+			setFaceTimeLinkLoading(false);
+		}
+	}, [setFaceTimeLinkLoading, displaySnackbar]);
 	
 	return (
 		<div className={styles.sidebar}>
 			<ChangelogDialog isOpen={isChangelogDialog} onDismiss={hideChangelogDialog} />
 			<FeedbackDialog isOpen={isFeedbackDialog} onDismiss={hideFeedbackDialog} />
 			<SignOutDialog isOpen={isSignOutDialog} onDismiss={hideSignOutDialog} />
+			<RemoteUpdateDialog isOpen={isRemoteUpdateDialog} onDismiss={hideRemoteUpdateDialog} update={remoteUpdateCache} />
+			<UpdateRequiredDialog isOpen={isUpdateRequiredDialog} onDismiss={hideUpdateRequiredDialog} />
+			<FaceTimeLinkDialog isOpen={faceTimeLinkDialog !== undefined} onDismiss={() => setFaceTimeLinkDialog(undefined)} link={faceTimeLinkDialog ?? ""} />
 			
 			<Toolbar className={styles.sidebarToolbar}>
 				<AirMessageLogo />
 				<div style={{flexGrow: 1}} />
+				{isFaceTimeSupported && (
+					<IconButton
+						size="large"
+						onClick={createFaceTimeLink}
+						disabled={isFaceTimeLinkLoading}>
+						<VideoCallOutlined />
+					</IconButton>
+				)}
+				
 				<IconButton
 					size="large"
 					onClick={props.onCreateSelected}
 					disabled={props.conversations === undefined}>
 					<AddRounded />
 				</IconButton>
+				
 				<IconButton
 					aria-haspopup="true"
 					size="large"
@@ -101,19 +148,35 @@ export default function Sidebar(props: {
 			
 			{props.errorBanner !== undefined && <ConnectionBanner error={props.errorBanner} /> }
 			
+			{remoteUpdate !== undefined && (
+				<SidebarBanner
+					icon={<Update />}
+					message="A server update is available"
+					button="Details"
+					onClickButton={showRemoteUpdateDialog} />
+			)}
+			
+			{props.needsServerUpdate && (
+				<SidebarBanner
+					icon={<SyncProblem />}
+					message="Your server needs to be updated"
+					button="Details"
+					onClickButton={showUpdateRequiredDialog} />
+			)}
+			
 			{props.conversations !== undefined ? (
 				<Flipper
 					className={styles.sidebarList}
-					flipKey={props.conversations.map(conversation => conversation.guid).join(" ")}>
+					flipKey={props.conversations.map(conversation => conversation.localID).join(" ")}>
 					<List>
 						{props.conversations.map((conversation) =>
-							<Flipped key={conversation.guid} flipId={conversation.guid}>
+							<Flipped key={conversation.localID} flipId={conversation.localID}>
 								{flippedProps => (
 									<ListConversation
 										conversation={conversation}
-										selected={conversation.guid === props.selectedConversation}
+										selected={conversation.localID === props.selectedConversation}
 										highlighted={conversation.unreadMessages}
-										onSelected={() => props.onConversationSelected(conversation.guid)}
+										onSelected={() => props.onConversationSelected(conversation.localID)}
 										flippedProps={flippedProps as Record<string, unknown>} />
 								)}
 							</Flipped>
@@ -126,107 +189,6 @@ export default function Sidebar(props: {
 				</div>
 			)}
 		</div>
-	);
-}
-
-function ChangelogDialog(props: {isOpen: boolean, onDismiss: () => void}) {
-	//Generating the build details
-	const buildDate = getFormattedBuildDate();
-	const buildVersion = `AirMessage for web ${appVersion}`;
-	const detailedBuildVersion = buildVersion + ` (${releaseHash ?? "unlinked"})`;
-	const buildTitle = buildVersion + (buildDate ? (`, ${WPEnv.ENVIRONMENT === "production" ? "released" : "built"} ${buildDate}`) : "");
-	
-	return (
-		<Dialog
-			open={props.isOpen}
-			onClose={props.onDismiss}
-			fullWidth>
-			<DialogTitle>Release notes</DialogTitle>
-			<DialogContent dividers>
-				<Typography variant="overline" color="textSecondary" gutterBottom title={detailedBuildVersion}>{buildTitle}</Typography>
-				<Markdown markdown={changelog} />
-			</DialogContent>
-		</Dialog>
-	);
-}
-
-function FeedbackDialog(props: {isOpen: boolean, onDismiss: () => void}) {
-	const propsOnDismiss = props.onDismiss;
-	
-	const onClickEmail = useCallback(async () => {
-		const body =
-			`\n\n---------- DEVICE INFORMATION ----------` +
-			Object.entries(await getPlatformUtils().getExtraEmailDetails())
-				.map(([key, value]) => `\n${key}: ${value}`)
-				.join("") +
-			`\nUser agent: ${navigator.userAgent}` +
-			`\nClient version: ${appVersion}` +
-			`\nCommunications version: ${getActiveCommVer()} (target ${targetCommVer})` +
-			`\nProxy type: ${getActiveProxyType()}` +
-			`\nServer system version: ${getServerSystemVersion()}` +
-			`\nServer software version: ${getServerSoftwareVersion()}`;
-		const url = `mailto:${supportEmail}?subject=${encodeURIComponent("AirMessage feedback")}&body=${encodeURIComponent(body)}`;
-		window.open(url, "_blank");
-		propsOnDismiss();
-	}, [propsOnDismiss]);
-	
-	const onClickCommunity = useCallback(() => {
-		window.open(communityPage, "_blank");
-		propsOnDismiss();
-	}, [propsOnDismiss]);
-	
-	return (
-		<Dialog
-			open={props.isOpen}
-			onClose={props.onDismiss}>
-			<DialogTitle>Help and feedback</DialogTitle>
-			<DialogContent>
-				<DialogContentText>
-					Have a bug to report, a feature to suggest, or anything else to say? Contact us or discuss with others using the links below.
-				</DialogContentText>
-			</DialogContent>
-			<DialogActions>
-				<Button onClick={onClickEmail} color="primary">
-					Send E-Mail
-				</Button>
-				<Button onClick={onClickCommunity} color="primary" autoFocus>
-					Open community subreddit
-				</Button>
-			</DialogActions>
-		</Dialog>
-	);
-}
-
-function SignOutDialog(props: {isOpen: boolean, onDismiss: () => void}) {
-	const onDismiss = props.onDismiss;
-	const signOut = useContext(LoginContext).signOut;
-	const onConfirm = useCallback(() => {
-		//Dismissing the dialog
-		onDismiss();
-		
-		//Signing out
-		signOut();
-	}, [onDismiss, signOut]);
-	
-	return (
-		<Dialog
-			open={props.isOpen}
-			onClose={props.onDismiss}>
-			<DialogTitle>Sign out of AirMessage?</DialogTitle>
-			<DialogContent>
-				<DialogContentText>
-					You won&apos;t be able to send or receive any messages from this computer
-				</DialogContentText>
-			</DialogContent>
-			<DialogActions>
-				<Button onClick={props.onDismiss} color="primary">
-					Cancel
-				</Button>
-				<Button onClick={onConfirm} color="primary" autoFocus>
-					Sign out
-				</Button>
-			</DialogActions>
-		</Dialog>
 	);
 }
 
@@ -246,11 +208,11 @@ function ConversationSkeleton() {
  * Creates a toggleable state for a sidebar dialog,
  * which also hides the menu on activation
  */
-function useSidebarDialog(hideMenu: VoidFunction): [boolean, VoidFunction, VoidFunction] {
+function useSidebarDialog(hideMenu?: VoidFunction): [boolean, VoidFunction, VoidFunction] {
 	const [showDialog, setShowDialog] = useState(false);
 	
 	const openDialog = useCallback(() => {
-		hideMenu();
+		hideMenu?.();
 		setShowDialog(true);
 	}, [hideMenu, setShowDialog]);
 	const closeDialog = useCallback(() => {

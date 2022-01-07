@@ -1,4 +1,4 @@
-import {Conversation, MessageItem} from "shared/data/blocks";
+import {Conversation, LinkedConversation, MessageItem} from "shared/data/blocks";
 import {getMemberTitle, mimeTypeToPreview} from "shared/util/conversationUtils";
 import {appleSendStyleBubbleInvisibleInk} from "shared/data/appleConstants";
 import EventEmitter from "shared/util/eventEmitter";
@@ -17,7 +17,7 @@ export abstract class NotificationUtils {
 	 * @param conversation The conversation of the messages
 	 * @param messages An array of message items to notify, sorted oldest to newest
 	 */
-	abstract showNotifications(conversation: Conversation, messages: MessageItem[]): void;
+	abstract showNotifications(conversation: LinkedConversation, messages: MessageItem[]): void;
 	
 	/**
 	 * Dismisses notifications for a certain chat

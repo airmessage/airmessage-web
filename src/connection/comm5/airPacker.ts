@@ -56,6 +56,11 @@ export default class AirPacker {
 		}
 	}
 	
+	packStringArray(value: string[]) {
+		this.packArrayHeader(value.length);
+		for(const entry of value) this.packString(entry);
+	}
+	
 	packPayload(value: Payload) {
 		this.packInt(value.byteLength);
 		this.buffer.append(value);

@@ -7,6 +7,7 @@ import ClientProtocol2 from "./clientProtocol2";
 import ClientProtocol3 from "shared/connection/comm5/clientProtocol3";
 import ClientProtocol4 from "shared/connection/comm5/clientProtocol4";
 import ClientProtocol5 from "shared/connection/comm5/clientProtocol5";
+import ConversationTarget from "shared/data/conversationTarget";
 
 const targetCommVer = 5;
 
@@ -128,12 +129,12 @@ export default class ClientComm5 extends CommunicationsManager {
 		return this.protocolManager?.requestRetrievalID(idLower, timeLower, timeUpper) ?? false;
 	}
 	
-	sendMessage(requestID: number, chatGUID: string, message: string): boolean {
-		return this.protocolManager?.sendMessage(requestID, chatGUID, message) ?? false;
+	sendMessage(requestID: number, conversation: ConversationTarget, message: string): boolean {
+		return this.protocolManager?.sendMessage(requestID, conversation, message) ?? false;
 	}
 	
-	sendFile(requestID: number, chatGUID: string, file: File, progressCallback: (bytesUploaded: number) => void): Promise<string> {
-		return this.protocolManager?.sendFile(requestID, chatGUID, file, progressCallback) ?? Promise.reject({code: MessageErrorCode.LocalNetwork} as MessageError);
+	sendFile(requestID: number, conversation: ConversationTarget, file: File, progressCallback: (bytesUploaded: number) => void): Promise<string> {
+		return this.protocolManager?.sendFile(requestID, conversation, file, progressCallback) ?? Promise.reject({code: MessageErrorCode.LocalNetwork} as MessageError);
 	}
 	
 	sendPing(): boolean {
@@ -153,6 +154,26 @@ export default class ClientComm5 extends CommunicationsManager {
 		return this.protocolManager?.requestLiteThread(chatGUID, firstMessageID) || false;
 	}
 	
+	requestInstallRemoteUpdate(updateID: number): boolean {
+		return this.protocolManager?.requestInstallRemoteUpdate(updateID) || false;
+	}
+	
+	requestFaceTimeLink(): boolean {
+		return this.protocolManager?.requestFaceTimeLink() || false;
+	}
+	
+	initiateFaceTimeCall(addresses: string[]): boolean {
+		return this.protocolManager?.initiateFaceTimeCall(addresses) || false;
+	}
+	
+	handleIncomingFaceTimeCall(caller: string, accept: boolean): boolean {
+		return this.protocolManager?.handleIncomingFaceTimeCall(caller, accept) || false;
+	}
+	
+	dropFaceTimeCallServer(): boolean {
+		return this.protocolManager?.dropFaceTimeCallServer() || false;
+	}
+	
 	private handleHandshakeTimeout(): void {
 		//Clearing the timeout reference
 		this.handshakeTimeout = undefined;
@@ -161,7 +182,11 @@ export default class ClientComm5 extends CommunicationsManager {
 		this.disconnect(ConnectionErrorCode.Internet);
 	}
 	
-	get communicationsVersion(): string | undefined {
-		return targetCommVer + "." + (this.protocolManagerVer ?? "X");
+	get communicationsVersion(): number[] {
+		if(this.protocolManagerVer !== undefined) {
+			return [targetCommVer, this.protocolManagerVer];
+		} else {
+			return [targetCommVer];
+		}
 	}
 }

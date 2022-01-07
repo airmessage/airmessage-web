@@ -50,7 +50,7 @@ export default function ListConversation(props: {conversation: Conversation, sel
 		<div className={styles.containerOuter} {...props.flippedProps}>
 			<ListItemButton
 				className={styles.containerInner}
-				key={props.conversation.guid}
+				key={props.conversation.localID}
 				onClick={props.onSelected}
 				selected={props.selected}
 				sx={{

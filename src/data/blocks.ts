@@ -6,36 +6,58 @@ import {
 	ConversationPreviewType, MessageModifierType, TapbackType
 } from "./stateCodes";
 
-export interface Conversation {
-	readonly guid: string;
-	readonly service: string;
+interface BaseConversation {
+	localID: number;
+	service: string;
 	name?: string;
 	members: string[];
 	preview: ConversationPreview;
-	unreadMessages?: boolean;
+	unreadMessages: boolean;
+	//Whether this conversation was created locally,
+	//and needs to be matched with a conversation on the server
+	localOnly: boolean;
 }
 
-export interface ConversationPreview {
+export interface LinkedConversation extends BaseConversation {
+	guid: string;
+	localOnly: false;
+}
+
+export interface LocalConversation extends BaseConversation {
+	localOnly: true;
+}
+
+export type Conversation = LinkedConversation | LocalConversation;
+
+interface ConversationPreviewBase {
 	readonly type: ConversationPreviewType;
 	readonly date: Date;
 }
 
-export interface ConversationPreviewMessage extends ConversationPreview {
+export interface ConversationPreviewMessage extends ConversationPreviewBase {
+	readonly type: ConversationPreviewType.Message;
 	readonly text?: string;
 	readonly sendStyle?: string;
 	readonly attachments: string[];
 }
 
-export interface ConversationItem {
+export interface ConversationPreviewChatCreation extends ConversationPreviewBase {
+	readonly type: ConversationPreviewType.ChatCreation;
+}
+
+export type ConversationPreview = ConversationPreviewMessage | ConversationPreviewChatCreation;
+
+export interface ConversationItemBase {
 	readonly itemType: ConversationItemType;
 	readonly localID?: number;
 	readonly serverID?: number;
 	readonly guid?: string;
-	readonly chatGuid: string;
+	readonly chatGuid?: string;
+	readonly chatLocalID?: number;
 	readonly date: Date;
 }
 
-export interface MessageItem extends ConversationItem {
+export interface MessageItem extends ConversationItemBase {
 	readonly itemType: ConversationItemType.Message;
 	readonly text?: string;
 	readonly subject?: string;
@@ -87,18 +109,20 @@ export interface TapbackItem extends MessageModifier {
 	readonly tapbackType: TapbackType;
 }
 
-export interface ParticipantAction extends ConversationItem {
+export interface ParticipantAction extends ConversationItemBase {
 	readonly itemType: ConversationItemType.ParticipantAction;
 	readonly type: ParticipantActionType;
 	readonly user?: string;
 	readonly target?: string;
 }
 
-export interface ChatRenameAction extends ConversationItem {
+export interface ChatRenameAction extends ConversationItemBase {
 	readonly itemType: ConversationItemType.ChatRenameAction;
 	readonly user: string;
 	readonly chatName: string;
 }
+
+export type ConversationItem = MessageItem | ParticipantAction | ChatRenameAction;
 
 export interface QueuedFile {
 	id: number;

@@ -37,7 +37,7 @@ export default function SignInGate() {
 			main = <Onboarding onApplyConfig={applyConfig} />;
 			break;
 		case true:
-			main = <Messaging resetCallback={reset} />;
+			main = <Messaging onReset={reset} />;
 			break;
 	}
 	

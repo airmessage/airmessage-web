@@ -1,4 +1,4 @@
-import {ConnectionErrorCode} from "shared/data/stateCodes";
+import {ConnectionErrorCode, RemoteUpdateErrorCode} from "shared/data/stateCodes";
 import {connect as connectToServer} from "shared/connection/connectionManager";
 import {getAuth, signOut} from "firebase/auth";
 
@@ -101,4 +101,35 @@ export function errorCodeToShortDisplay(error: ConnectionErrorCode, isDirect?: b
 				}
 			};
 	}
+}
+
+/**
+ * Maps a remote update error code to a human-readable string
+ */
+export function remoteUpdateErrorCodeToDisplay(error: RemoteUpdateErrorCode): string {
+	switch(error) {
+		case RemoteUpdateErrorCode.Unknown:
+		default:
+			return "An unknown error occurred";
+		case RemoteUpdateErrorCode.Mismatch:
+			return "This update is no longer applicable";
+		case RemoteUpdateErrorCode.Download:
+			return "An error occurred while downloading the update";
+		case RemoteUpdateErrorCode.BadPackage:
+			return "An error occurred while processing the update";
+		case RemoteUpdateErrorCode.Internal:
+			return "An internal error occurred";
+		case RemoteUpdateErrorCode.Timeout:
+			return "Request timed out";
+	}
+}
+
+/**
+ * Combines an array of strings to a human-readable list
+ */
+export function buildListString(parts: string[]): string {
+	if(parts.length === 0) return "";
+	else if(parts.length === 1) return parts[0];
+	else if(parts.length === 2) return `${parts[0]} and ${parts[1]}`;
+	else return parts.slice(0, parts.length - 1).join(", ") + ", and " + parts[parts.length - 1];
 }

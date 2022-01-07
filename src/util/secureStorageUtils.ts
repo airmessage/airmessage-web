@@ -1,7 +1,6 @@
 import * as secrets from "../secrets";
 import {decodeBase64, encodeBase64} from "shared/util/dataHelper";
 
-const keyServerPassword = "serverPassword";
 const ivLen = 12;
 
 export enum SecureStorageKey {

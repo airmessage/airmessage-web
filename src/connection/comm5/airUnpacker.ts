@@ -50,6 +50,13 @@ export default class AirUnpacker {
 		}
 	}
 	
+	unpackStringArray(): string[] {
+		const length = this.unpackArrayHeader();
+		const value: string[] = [];
+		for(let i = 0; i < length; i++) value[i] = this.unpackString();
+		return value;
+	}
+	
 	unpackPayload(): ArrayBuffer {
 		const length = this.unpackInt();
 		return this.buffer.readBytes(length).toArrayBuffer();
