@@ -18,3 +18,24 @@ export default class EventEmitter<T> {
 		for(const listener of this.listeners) listener(event);
 	}
 }
+
+export class CachedEventEmitter<T> extends EventEmitter<T> {
+	private lastEvent: T | null = null;
+	
+	constructor(lastEvent: T | null = null) {
+		super();
+		this.lastEvent = lastEvent;
+	}
+	
+	public override registerListener(listener: Listener<T>) {
+		super.registerListener(listener);
+		if(this.lastEvent !== null) {
+			listener(this.lastEvent);
+		}
+	}
+	
+	public override notify(event: T) {
+		super.notify(event);
+		this.lastEvent = event;
+	}
+}

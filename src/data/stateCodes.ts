@@ -101,5 +101,28 @@ export enum CreateChatErrorCode {
 	ScriptError, //Some unknown AppleScript error
 	BadRequest, //Invalid data received
 	Unauthorized, //System rejected request
+	NotSupported, //Operation not supported by the server
 	UnknownExternal //Unknown error code received
+}
+
+export enum RemoteUpdateErrorCode {
+	Unknown, //Unknown error
+	Mismatch, //Client and server update information mismatch
+	Download, //Server failed to download update
+	BadPackage, //Server update validation failed
+	Internal, //Internal error
+	Timeout //Request timed out
+}
+
+export enum FaceTimeLinkErrorCode {
+	Network, //Network error
+	External //External error
+}
+
+export enum FaceTimeInitiateCode {
+	OK,
+	Network, //Network error
+	Timeout, //Request timeout
+	BadMembers, //Members are not available on FaceTime
+	External //External error
 }

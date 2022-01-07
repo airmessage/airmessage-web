@@ -1,6 +1,6 @@
 import {getConversationTitle, getMessageDescription, NotificationUtils} from "shared/util/notificationUtils";
 import EventEmitter from "shared/util/eventEmitter";
-import {Conversation, MessageItem} from "shared/data/blocks";
+import {LinkedConversation, MessageItem} from "shared/data/blocks";
 import {windowsDismissNotifications, windowsShowNotification} from "./interopUtils";
 import {findPerson} from "shared/util/peopleUtils";
 import {PersonData} from "../../../window";
@@ -11,7 +11,7 @@ export default class WindowsNotificationUtils extends NotificationUtils {
 	initialize(): void {
 	}
 	
-	async showNotifications(conversation: Conversation, messages: MessageItem[]) {
+	async showNotifications(conversation: LinkedConversation, messages: MessageItem[]) {
 		for(const message of messages) {
 			if(message.sender === undefined) {
 				console.warn("Failed to notify message with no sender", message);

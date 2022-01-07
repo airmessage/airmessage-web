@@ -11,6 +11,7 @@ import {ConversationItemType, ConversationPreviewType, MessageModifierType} from
 import {MessageFlow} from "../components/messaging/thread/item/Message";
 import {findPerson} from "./peopleUtils";
 import {parsePhoneNumberFromString} from "libphonenumber-js";
+import {buildListString} from "shared/util/languageUtils";
 
 //Message burst - Sending single messages one after the other
 //Used to decide if adjacent messages should be "attached" together
@@ -145,9 +146,17 @@ export function formatAddress(address: string): string {
 	return address;
 }
 
-function buildListString(parts: string[]): string {
-	if(parts.length === 0) return "";
-	else if(parts.length === 1) return parts[0];
-	else if(parts.length === 2) return `${parts[0]} and ${parts[1]}`;
-	else return parts.slice(0, parts.length - 1).join(", ") + ", and " + parts[parts.length - 1];
+let nextConversationLocalID = 0;
+export function generateConversationLocalID(): number {
+	return nextConversationLocalID++;
+}
+
+let nextMessageLocalID = 0;
+export function generateMessageLocalID(): number {
+	return nextMessageLocalID++;
+}
+
+let nextAttachmentLocalID = 0;
+export function generateAttachmentLocalID(): number {
+	return nextAttachmentLocalID++;
 }

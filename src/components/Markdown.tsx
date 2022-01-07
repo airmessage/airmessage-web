@@ -23,7 +23,7 @@ const options: MarkdownToJSX.Options = {
 		},
 		span: { component: Typography },
 		p: { component: Typography, props: { paragraph: true } },
-		a: { component: Link },
+		a: { component: Link, props: { target: "_blank", rel: "noopener"} },
 		li: { component: SpacedListItem },
 	},
 };

@@ -23,6 +23,7 @@ import {parsePhoneNumberFromString} from "libphonenumber-js";
 import {SnackbarContext} from "../../control/SnackbarProvider";
 import {AddressData, AddressType, PersonData} from "../../../../window";
 import {ChatBubbleOutline} from "@mui/icons-material";
+import {generateConversationLocalID} from "shared/util/conversationUtils";
 
 const messagingService = "iMessage";
 
@@ -162,15 +163,37 @@ export default function DetailCreate(props: {onConversationCreated: (conversatio
 			.then((chatGUID) => {
 				//Adding the chat
 				props.onConversationCreated({
+					localID: generateConversationLocalID(),
 					guid: chatGUID,
 					service: messagingService,
 					members: chatMembers,
 					preview: {
 						type: ConversationPreviewType.ChatCreation,
 						date: new Date()
-					}
+					},
+					localOnly: false,
+					unreadMessages: false
 				});
 			}).catch(([errorCode, errorDesc]: [CreateChatErrorCode, string | undefined]) => {
+				if(errorCode === CreateChatErrorCode.NotSupported) {
+					//If the server doesn't support creating chats,
+					//create this chat locally and defer its creation
+					//until the user sends a message
+					props.onConversationCreated({
+						localID: generateConversationLocalID(),
+						service: messagingService,
+						members: chatMembers,
+						preview: {
+							type: ConversationPreviewType.ChatCreation,
+							date: new Date()
+						},
+						localOnly: true,
+						unreadMessages: false
+					});
+					
+					return;
+				}
+				
 				//Cancelling loading
 				setLoading(false);
 				

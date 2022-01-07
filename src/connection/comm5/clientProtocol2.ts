@@ -9,7 +9,7 @@ import {
 	ChatRenameAction,
 	Conversation,
 	ConversationItem,
-	ConversationPreviewMessage,
+	ConversationPreviewMessage, LinkedConversation,
 	MessageItem,
 	MessageModifier,
 	ParticipantAction,
@@ -34,6 +34,8 @@ import {arrayBufferToHex} from "../../util/fileUtils";
 import SparkMD5 from "spark-md5";
 import {InflatorAccumulator} from "../transferAccumulator";
 import {encryptData} from "shared/util/encryptionUtils";
+import {generateConversationLocalID} from "shared/util/conversationUtils";
+import ConversationTarget from "shared/data/conversationTarget";
 
 
 const attachmentChunkSize = 2 * 1024 * 1024; //2 MiB
@@ -408,12 +410,17 @@ export default class ClientProtocol2 extends ProtocolManager {
 		return true;
 	}
 	
-	sendMessage(requestID: number, chatGUID: string, message: string): boolean {
+	sendMessage(requestID: number, conversation: ConversationTarget, message: string): boolean {
 		const packer = AirPacker.get();
 		try {
-			packer.packInt(nhtSendTextExisting);
+			if(conversation.type === "linked") packer.packInt(nhtSendTextExisting);
+			else packer.packInt(nhtSendTextNew);
 			packer.packShort(requestID);
-			packer.packString(chatGUID);
+			if(conversation.type === "linked") packer.packString(conversation.guid);
+			else {
+				packer.packStringArray(conversation.members);
+				packer.packString(conversation.service);
+			}
 			packer.packString(message);
 			
 			this.dataProxy.send(packer.toArrayBuffer(), true);
@@ -424,7 +431,7 @@ export default class ClientProtocol2 extends ProtocolManager {
 		return true;
 	}
 	
-	async sendFile(requestID: number, chatGUID: string, file: File, progressCallback: (bytesUploaded: number) => void): Promise<string> {
+	async sendFile(requestID: number, conversation: ConversationTarget, file: File, progressCallback: (bytesUploaded: number) => void): Promise<string> {
 		//TODO find some way to stream deflate
 		const fileData = await file.arrayBuffer();
 		const hash = SparkMD5.ArrayBuffer.hash(fileData);
@@ -441,15 +448,20 @@ export default class ClientProtocol2 extends ProtocolManager {
 				//Uploading the data
 				const packer = AirPacker.get();
 				try {
-					packer.packInt(nhtSendFileExisting);
+					if(conversation.type === "linked") packer.packInt(nhtSendFileExisting);
+					else packer.packInt(nhtSendFileNew);
 					
 					packer.packShort(requestID);
 					packer.packInt(chunkIndex);
 					packer.packBoolean(newOffset >= file.size); //Is this the last part?
 					
-					packer.packString(chatGUID);
+					if(conversation.type === "linked") packer.packString(conversation.guid);
+					else packer.packStringArray(conversation.members);
 					packer.packPayload(chunkData);
-					if(chunkIndex === 0) packer.packString(file.name);
+					if(chunkIndex === 0) {
+						packer.packString(file.name);
+						if(conversation.type === "unlinked") packer.packString(conversation.service);
+					}
 					
 					this.dataProxy.send(packer.toArrayBuffer(), true);
 				} finally {
@@ -583,6 +595,31 @@ export default class ClientProtocol2 extends ProtocolManager {
 		
 		return true;
 	}
+	
+	requestInstallRemoteUpdate(updateID: number): boolean {
+		//Not supported
+		return false;
+	}
+	
+	requestFaceTimeLink(): boolean {
+		//Not supported
+		return false;
+	}
+	
+	initiateFaceTimeCall(addresses: string[]): boolean {
+		//Not supported
+		return false;
+	}
+	
+	handleIncomingFaceTimeCall(caller: string, accept: boolean): boolean {
+		//Not supported
+		return false;
+	}
+	
+	dropFaceTimeCallServer(): boolean {
+		//Not supported
+		return false;
+	}
 }
 
 function mapBrowserAM(browser: string): AMBrowser {
@@ -602,7 +639,7 @@ function mapBrowserAM(browser: string): AMBrowser {
 	}
 }
 
-function unpackPreviewConversation(unpacker: AirUnpacker): Conversation {
+function unpackPreviewConversation(unpacker: AirUnpacker): LinkedConversation {
 	const guid = unpacker.unpackString();
 	const service = unpacker.unpackString();
 	const name = unpacker.unpackNullableString();
@@ -620,6 +657,7 @@ function unpackPreviewConversation(unpacker: AirUnpacker): Conversation {
 	for(let i = 0; i < previewAttachmentsLength; i++) previewAttachments[i] = unpacker.unpackString();
 	
 	return {
+		localID: generateConversationLocalID(),
 		guid: guid,
 		service: service,
 		name: name,
@@ -630,11 +668,13 @@ function unpackPreviewConversation(unpacker: AirUnpacker): Conversation {
 			text: previewText,
 			sendStyle: previewSendStyle,
 			attachments: previewAttachments
-		} as ConversationPreviewMessage
+		},
+		unreadMessages: false,
+		localOnly: false
 	};
 }
 
-function unpackRequestedConversation(unpacker: AirUnpacker): [string, Conversation | undefined] {
+function unpackRequestedConversation(unpacker: AirUnpacker): [string, LinkedConversation | undefined] {
 	const guid = unpacker.unpackString();
 	const available = unpacker.unpackBoolean();
 	
@@ -648,6 +688,7 @@ function unpackRequestedConversation(unpacker: AirUnpacker): [string, Conversati
 		for(let i = 0; i < membersLength; i++) members[i] = unpacker.unpackString();
 		
 		return [guid, {
+			localID: generateConversationLocalID(),
 			guid: guid,
 			service: service,
 			name: name,
@@ -656,7 +697,9 @@ function unpackRequestedConversation(unpacker: AirUnpacker): [string, Conversati
 			preview: {
 				type: ConversationPreviewType.ChatCreation,
 				date: new Date()
-			}
+			},
+			unreadMessages: false,
+			localOnly: false
 		}];
 	} else {
 		//Conversation not available

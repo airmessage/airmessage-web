@@ -2,13 +2,21 @@ import React from "react";
 import styles from "./DetailThread.module.css";
 
 import * as ConnectionManager from "../../../connection/connectionManager";
-import {messageUpdateEmitter, modifierUpdateEmitter} from "../../../connection/connectionManager";
 
 import {Button, CircularProgress, Typography} from "@mui/material";
-import {Conversation, ConversationItem, MessageItem, MessageModifier, QueuedFile} from "../../../data/blocks";
+import {
+	Conversation,
+	ConversationItem,
+	LinkedConversation,
+	MessageItem,
+	MessageModifier,
+	QueuedFile
+} from "../../../data/blocks";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
 import {
+	generateAttachmentLocalID,
+	generateMessageLocalID,
 	getFallbackTitle,
 	getMemberTitle,
 	isConversationItemMessage,
@@ -22,6 +30,8 @@ import EventEmitter from "../../../util/eventEmitter";
 import {playSoundMessageOut} from "../../../util/soundUtils";
 import {appleServiceAppleMessage} from "../../../data/appleConstants";
 import {getNotificationUtils} from "shared/util/notificationUtils";
+import localMessageCache from "shared/util/localMessageCacheUtils";
+import ConversationTarget from "shared/data/conversationTarget";
 
 type HistoryLoadState = "idle" | "loading" | "complete";
 
@@ -36,6 +46,7 @@ interface State {
 	message: string;
 	attachments: QueuedFile[];
 	historyLoadState: HistoryLoadState;
+	isFaceTimeSupported: boolean;
 }
 
 enum DisplayType {
@@ -62,29 +73,9 @@ export default class DetailThread extends React.Component<Props, State> {
 		title: getFallbackTitle(this.props.conversation),
 		message: "",
 		attachments: [],
-		historyLoadState: "idle"
+		historyLoadState: "idle",
+		isFaceTimeSupported: false
 	};
-	private _nextMessageID: number = 0;
-	private _nextAttachmentID: number = 0;
-	//private dragCounter: number = 0;
-	
-	private get nextMessageID(): number {
-		//Increasing the next message ID
-		if(this._nextMessageID === Number.MAX_VALUE) this._nextMessageID = Number.MIN_VALUE;
-		else this._nextMessageID++;
-		
-		//Returning the next message ID
-		return this._nextMessageID;
-	}
-	
-	private get nextAttachmentID(): number {
-		//Increasing the next attachment ID
-		if(this._nextAttachmentID === Number.MAX_VALUE) this._nextAttachmentID = Number.MIN_VALUE;
-		else this._nextAttachmentID++;
-		
-		//Returning the next attachment ID
-		return this._nextAttachmentID;
-	}
 	
 	private handleMessageChange(messageText: string) {
 		//Updating the message input
@@ -114,6 +105,15 @@ export default class DetailThread extends React.Component<Props, State> {
 		//Ignoring if there are no messages
 		if(this.state.display.type !== DisplayType.Messages) return;
 		
+		const conversationTarget: ConversationTarget =
+			!this.props.conversation.localOnly ? {
+				type: "linked",
+				guid: this.props.conversation.guid
+			} : {
+				type: "unlinked",
+				members: this.props.conversation.members,
+				service: this.props.conversation.service
+			};
 		const addedItems: MessageItem[] = [];
 		
 		//Handling the text message
@@ -125,10 +125,11 @@ export default class DetailThread extends React.Component<Props, State> {
 			//Creating the message and adding it to the chat
 			const message: MessageItem = {
 				itemType: ConversationItemType.Message,
-				localID: this.nextMessageID,
+				localID: generateMessageLocalID(),
 				serverID: undefined,
 				guid: undefined,
-				chatGuid: this.props.conversation.guid,
+				chatGuid: !this.props.conversation.localOnly ? this.props.conversation.guid : undefined,
+				chatLocalID: this.props.conversation.localID,
 				date: new Date(),
 				
 				text: messageText,
@@ -144,7 +145,7 @@ export default class DetailThread extends React.Component<Props, State> {
 			};
 			
 			//Sending the message
-			ConnectionManager.sendMessage(this.props.conversation.guid, messageText)
+			ConnectionManager.sendMessage(conversationTarget, messageText)
 				.catch((error: MessageError) => this.applyMessageError(error, message.localID!));
 			
 			//Adding the item to the added items list
@@ -158,10 +159,11 @@ export default class DetailThread extends React.Component<Props, State> {
 			const messages = queuedFiles.map((file) => {
 				return {
 					itemType: ConversationItemType.Message,
-					localID: this.nextMessageID,
+					localID: generateMessageLocalID(),
 					serverID: undefined,
 					guid: undefined,
-					chatGuid: this.props.conversation.guid,
+					chatGuid: !this.props.conversation.localOnly ? this.props.conversation.guid : undefined,
+					chatLocalID: this.props.conversation.localID,
 					date: new Date(),
 					
 					text: undefined,
@@ -186,7 +188,7 @@ export default class DetailThread extends React.Component<Props, State> {
 			
 			//Sending the messages
 			for(const message of messages) {
-				ConnectionManager.sendFile(this.props.conversation.guid, message.attachments[0].data!)
+				ConnectionManager.sendFile(conversationTarget, message.attachments[0].data!)
 					.progress((progressData) => {
 						this.setState((prevState) => {
 							//Ignoring if there are no messages
@@ -249,7 +251,7 @@ export default class DetailThread extends React.Component<Props, State> {
 		
 		if(addedItems.length > 0) {
 			//Notifying message listeners
-			messageUpdateEmitter.notify(addedItems);
+			ConnectionManager.messageUpdateEmitter.notify(addedItems);
 			this.messageSubmitEmitter.notify(undefined);
 			
 			//Playing a sound
@@ -270,7 +272,7 @@ export default class DetailThread extends React.Component<Props, State> {
 	
 	private handleAttachmentAdd(files: File[]) {
 		const queuedFiles: QueuedFile[] = files.map((file) => {
-			return {id: this.nextAttachmentID, file: file};
+			return {id: generateAttachmentLocalID(), file: file};
 		});
 		
 		this.setState(state => {
@@ -313,7 +315,7 @@ export default class DetailThread extends React.Component<Props, State> {
 		//Adding the files
 		if(event.dataTransfer) {
 			const files: QueuedFile[] = [...event.dataTransfer.files].map((file) => {
-				return {id: this.nextAttachmentID, file: file};
+				return {id: generateAttachmentLocalID(), file: file};
 			});
 			
 			this.setState(state => {
@@ -323,8 +325,8 @@ export default class DetailThread extends React.Component<Props, State> {
 	};
 	
 	private readonly handleRequestHistory = () => {
-		//Returning if the state is already loading or is complete
-		if(this.state.historyLoadState !== "idle") return;
+		//Returning if this is a local conversation, or if the state is already loading or is complete
+		if(this.props.conversation.localOnly || this.state.historyLoadState !== "idle") return;
 		
 		//Fetching history
 		const items = (this.state.display as DisplayMessages).data;
@@ -353,12 +355,25 @@ export default class DetailThread extends React.Component<Props, State> {
 	};
 	
 	private readonly requestMessages = () => {
-		//Fetching thread messages
-		ConnectionManager.fetchThread(this.props.conversation.guid).then(data => {
-			this.setState({display: {type: DisplayType.Messages, data: data}});
-		}).catch(() => {
-			this.setState({display: {type: DisplayType.Error}});
-		});
+		if(!this.props.conversation.localOnly) {
+			//Fetching messages from the server
+			ConnectionManager.fetchThread(this.props.conversation.guid).then(data => {
+				this.setState({display: {type: DisplayType.Messages, data: data}});
+			}).catch(() => {
+				this.setState({display: {type: DisplayType.Error}});
+			});
+		} else {
+			//Fetching messages from the cache
+			this.setState({display: {type: DisplayType.Messages, data: localMessageCache.get(this.props.conversation.localID) ?? []}});
+		}
+	};
+	
+	private readonly updateFaceTimeSupported = (isFaceTimeSupported: boolean) => {
+		this.setState({isFaceTimeSupported});
+	};
+	
+	private readonly startCall = () => {
+		ConnectionManager.initiateFaceTimeCall(this.props.conversation.members);
 	};
 	
 	render() {
@@ -390,7 +405,11 @@ export default class DetailThread extends React.Component<Props, State> {
 		
 		//Returning the element
 		return (
-			<DetailFrame title={this.state.title ?? ""} ref={this.dragDropRef}>
+			<DetailFrame
+				title={this.state.title ?? ""}
+				ref={this.dragDropRef}
+				showCall={this.state.isFaceTimeSupported}
+				onClickCall={this.startCall}>
 				<div className={styles.body}>{body}</div>
 				<div className={styles.input}>
 					<MessageInput placeholder={inputPlaceholder} message={this.state.message} attachments={this.state.attachments}
@@ -403,7 +422,9 @@ export default class DetailThread extends React.Component<Props, State> {
 	
 	componentDidMount() {
 		//Clearing notifications
-		getNotificationUtils().dismissNotifications(this.props.conversation.guid);
+		if(!this.props.conversation.localOnly) {
+			getNotificationUtils().dismissNotifications(this.props.conversation.guid);
+		}
 		
 		//Fetching messages
 		this.requestMessages();
@@ -416,8 +437,11 @@ export default class DetailThread extends React.Component<Props, State> {
 		}
 		
 		//Subscribing to message updates
-		messageUpdateEmitter.registerListener(this.onMessageUpdate);
-		modifierUpdateEmitter.registerListener(this.onModifierUpdate);
+		ConnectionManager.messageUpdateEmitter.registerListener(this.onMessageUpdate);
+		ConnectionManager.modifierUpdateEmitter.registerListener(this.onModifierUpdate);
+		
+		//Subscribing to FaceTime updates
+		ConnectionManager.faceTimeSupportedEmitter.registerListener(this.updateFaceTimeSupported);
 		
 		//Subscribing to drag-and-drop updates
 		{
@@ -446,16 +470,24 @@ export default class DetailThread extends React.Component<Props, State> {
 	
 	componentWillUnmount() {
 		//Unsubscribing from message updates
-		messageUpdateEmitter.unregisterListener(this.onMessageUpdate);
-		modifierUpdateEmitter.unregisterListener(this.onModifierUpdate);
+		ConnectionManager.messageUpdateEmitter.unregisterListener(this.onMessageUpdate);
+		ConnectionManager.modifierUpdateEmitter.unregisterListener(this.onModifierUpdate);
 		
-		//Unsubscribing to drag-and-drop updates
+		//Unsubscribing from FaceTime updates
+		ConnectionManager.faceTimeSupportedEmitter.unregisterListener(this.updateFaceTimeSupported);
+		
+		//Unsubscribing from drag-and-drop updates
 		{
 			const element = this.dragDropRef.current!;
 			element.removeEventListener("dragenter", this.handleDragIn);
 			element.removeEventListener("dragleave", this.handleDragOut);
 			element.removeEventListener("dragover", this.handleDragOver);
 			element.removeEventListener("drop", this.handleDrop);
+		}
+		
+		//Storing messages in the cache
+		if(this.props.conversation.localOnly && this.state.display.type === DisplayType.Messages) {
+			localMessageCache.set(this.props.conversation.localID, this.state.display.data);
 		}
 	}
 	
@@ -468,7 +500,17 @@ export default class DetailThread extends React.Component<Props, State> {
 			if(prevState.display.type !== DisplayType.Messages) return null;
 			
 			//Filtering out items that aren't part of this conversation
-			const newItemArray = itemArray.filter((item) => item.chatGuid === props.conversation.guid);
+			const newItemArray = itemArray.filter((item) => {
+				if(item.chatGuid !== undefined) {
+					if(!props.conversation.localOnly) {
+						return item.chatGuid === props.conversation.guid;
+					}
+				} else if(item.chatLocalID !== undefined) {
+					return item.chatLocalID === props.conversation.localID;
+				}
+				
+				return false;
+			});
 			
 			//Cloning the item array
 			const pendingItemArray: ConversationItem[] = [...prevState.display.data];

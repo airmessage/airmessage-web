@@ -2,24 +2,32 @@ import DataProxyImpl from "platform-components/connection/dataProxy";
 import CommunicationsManager, {CommunicationsManagerListener} from "./communicationsManager";
 import ClientComm5 from "./comm5/clientComm5";
 import DataProxy from "./dataProxy";
-import * as Blocks from "../data/blocks";
-import {Conversation, ConversationItem, MessageModifier} from "../data/blocks";
+import {Conversation, ConversationItem, LinkedConversation, MessageModifier} from "../data/blocks";
 import {
 	AttachmentRequestErrorCode,
 	ConnectionErrorCode,
 	CreateChatErrorCode,
+	FaceTimeInitiateCode,
+	FaceTimeLinkErrorCode,
 	MessageError,
-	MessageErrorCode
+	MessageErrorCode,
+	RemoteUpdateErrorCode
 } from "../data/stateCodes";
-import EventEmitter from "../util/eventEmitter";
+import EventEmitter, {CachedEventEmitter} from "../util/eventEmitter";
 import ProgressPromise from "../util/progressPromise";
 import promiseTimeout from "../util/promiseTimeout";
 import {TransferAccumulator} from "./transferAccumulator";
 import {isCryptoPasswordSet, setCryptoPassword} from "shared/util/encryptionUtils";
 import {getSecureLS, SecureStorageKey} from "shared/util/secureStorageUtils";
 import FileDownloadResult from "shared/data/fileDownloadResult";
+import ServerUpdateData from "shared/data/serverUpdateData";
+import ResolveablePromiseTimeout from "shared/util/resolveablePromiseTimeout";
+import CallEvent from "shared/data/callEvent";
+import ConversationTarget from "shared/data/conversationTarget";
 
-export const targetCommVer = "5.5";
+export const warnCommVer: number[] = [5, 4]; //Warn users on a communications version older than this to update
+export const targetCommVer: number[] = [5, 5];
+export const targetCommVerString = targetCommVer.join(".");
 
 //How often to try reconnecting when disconnected
 const reconnectInterval = 8 * 1000;
@@ -35,6 +43,10 @@ export function getServerSystemVersion(): string | undefined {
 let _serverSoftwareVersion: string | undefined;
 export function getServerSoftwareVersion(): string | undefined {
 	return _serverSoftwareVersion;
+}
+let _serverComputerName: string | undefined;
+export function getServerComputerName(): string | undefined {
+	return _serverComputerName;
 }
 
 //Communications manager constructor shape
@@ -66,6 +78,13 @@ export interface ConnectionListener {
 }
 const connectionListenerArray: ConnectionListener[] = [];
 
+export interface RemoteUpdateListener {
+	onUpdate?: (update: ServerUpdateData | undefined) => void;
+	onInitiate?: () => void;
+	onError?: (code: RemoteUpdateErrorCode, details?: string) => void;
+}
+const remoteUpdateListenerArray: RemoteUpdateListener[] = [];
+
 //Promise response values
 interface PromiseExecutor<T> {
 	resolve: (value: T | PromiseLike<T>) => void;
@@ -77,13 +96,15 @@ interface ProgressPromiseExecutor<T, P> {
 	progress: (progress: P) => void;
 }
 
-const liteConversationPromiseArray: PromiseExecutor<Blocks.Conversation[]>[] = []; //Retrieval of all lite conversations
+const liteConversationPromiseArray: PromiseExecutor<LinkedConversation[]>[] = []; //Retrieval of all lite conversations
 interface ThreadKey {
 	chatGUID: string;
 	firstMessageID?: number;
 }
 const conversationDetailsPromiseMap: Map<string, PromiseExecutor<[string, Conversation | undefined][]>[]> = new Map(); //Retrieval of a specific conversation's details
-const threadPromiseMap: Map<string, PromiseExecutor<Blocks.ConversationItem[]>[]> = new Map(); //Retrieval of messages from a thread
+const threadPromiseMap: Map<string, PromiseExecutor<ConversationItem[]>[]> = new Map(); //Retrieval of messages from a thread
+let faceTimeLinkPromise: ResolveablePromiseTimeout<string> | undefined = undefined; //Creating a FaceTime link
+let faceTimeInitiatePromise: ResolveablePromiseTimeout<void> | undefined = undefined; //Initiating a FaceTime call
 
 class FileDownloadState {
 	private accumulator?: TransferAccumulator;
@@ -138,8 +159,12 @@ const fileDownloadStateMap: Map<number, FileDownloadState> = new Map(); //Attach
 const messageSendPromiseMap: Map<number, PromiseExecutor<any>> = new Map(); //Response from sending a message
 const chatCreatePromiseMap: Map<number, PromiseExecutor<string>> = new Map(); //Response from creating a chat
 
-export const messageUpdateEmitter: EventEmitter<ConversationItem[]> = new EventEmitter();
-export const modifierUpdateEmitter: EventEmitter<MessageModifier[]> = new EventEmitter();
+export const messageUpdateEmitter = new EventEmitter<ConversationItem[]>(); //Message updates
+export const modifierUpdateEmitter = new EventEmitter<MessageModifier[]>(); //Modifier updates
+export const faceTimeSupportedEmitter = new CachedEventEmitter<boolean>(false); //Whether the connected server supports FaceTime
+export const incomingCallerEmitter = new CachedEventEmitter<string | undefined>(); //The current incoming caller
+export const outgoingCalleeEmitter = new CachedEventEmitter<string[] | undefined>(); //The current outgoing callee
+export const callEventEmitter = new EventEmitter<CallEvent>(); //Standard call events
 
 //Common promise responses
 const messageErrorNetwork: MessageError = {code: MessageErrorCode.LocalNetwork};
@@ -162,13 +187,15 @@ function onOffline() {
 }
 
 const communicationsManagerListener: CommunicationsManagerListener = {
-	onOpen(systemVersion: string, softwareVersion: string): void {
+	onOpen(computerName: string, systemVersion: string, softwareVersion: string, supportsFaceTime: boolean): void {
 		//Updating the state
 		updateStateConnected();
 		
 		//Recording the server information
+		_serverComputerName = computerName;
 		_serverSystemVersion = systemVersion;
 		_serverSoftwareVersion = softwareVersion;
+		faceTimeSupportedEmitter.notify(supportsFaceTime);
 		
 		//Listening for network events
 		window.addEventListener("online", onOnline);
@@ -178,6 +205,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		rejectAndClear(liteConversationPromiseArray, messageErrorNetwork);
 		rejectAndClear(conversationDetailsPromiseMap, messageErrorNetwork);
 		rejectAndClear(threadPromiseMap, messageErrorNetwork);
+		
 		for(const state of fileDownloadStateMap.values()) state.promise.reject(AttachmentRequestErrorCode.Timeout);
 		fileDownloadStateMap.clear();
 		for(const promise of messageSendPromiseMap.values()) promise.reject(messageErrorNetwork);
@@ -185,8 +213,16 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		for(const promise of chatCreatePromiseMap.values()) promise.reject([CreateChatErrorCode.Network, undefined]);
 		chatCreatePromiseMap.clear();
 		
+		faceTimeLinkPromise?.reject(FaceTimeLinkErrorCode.Network);
+		faceTimeLinkPromise = undefined;
+		faceTimeInitiatePromise?.reject(FaceTimeInitiateCode.Network);
+		faceTimeInitiatePromise = undefined;
+		
 		//Updating the state
 		updateStateDisconnected(reason);
+		incomingCallerEmitter.notify(undefined);
+		outgoingCalleeEmitter.notify(undefined);
+		for(const listener of remoteUpdateListenerArray) listener.onUpdate?.(undefined);
 		
 		//Checking if the error is automatically recoverable
 		if((reason === ConnectionErrorCode.Connection || reason === ConnectionErrorCode.Internet) && !disableAutomaticReconnections) {
@@ -272,7 +308,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 	}, onIDUpdate(messageID: number): void {
 		//Recording the last message ID
 		lastServerMessageID = messageID;
-	}, onMessageConversations(data: Conversation[]): void {
+	}, onMessageConversations(data: LinkedConversation[]): void {
 		//Resolving pending promises
 		for(const promise of liteConversationPromiseArray) promise.resolve(data);
 		
@@ -311,6 +347,55 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		}
 		
 		chatCreatePromiseMap.delete(requestID);
+	}, onSoftwareUpdateListing(updateData: ServerUpdateData | undefined): void {
+		for(const listener of remoteUpdateListenerArray) listener.onUpdate?.(updateData);
+	}, onSoftwareUpdateInstall(installing: boolean): void {
+		if(installing) {
+			for(const listener of remoteUpdateListenerArray) listener.onInitiate?.();
+		} else {
+			for(const listener of remoteUpdateListenerArray) listener.onError?.(RemoteUpdateErrorCode.Mismatch);
+		}
+	}, onSoftwareUpdateError(error: RemoteUpdateErrorCode, details: string | undefined): void {
+		for(const listener of remoteUpdateListenerArray) listener.onError?.(error, details);
+	}, onFaceTimeNewLink(faceTimeLink: string | undefined): void {
+		//Ignoring if there is no pending request
+		if(faceTimeLinkPromise === undefined) return;
+		
+		//Resolving the completable
+		if(faceTimeLink === undefined) {
+			faceTimeLinkPromise.reject(FaceTimeLinkErrorCode.External);
+		} else {
+			faceTimeLinkPromise.resolve(faceTimeLink);
+		}
+		
+		faceTimeLinkPromise = undefined;
+	}, onFaceTimeOutgoingCallInitiated(resultCode: FaceTimeInitiateCode, errorDetails: string | undefined): void {
+		//Ignoring if there is no pending request
+		if(faceTimeInitiatePromise === undefined) return;
+		
+		//Resolving the completable
+		if(resultCode === FaceTimeInitiateCode.OK) {
+			faceTimeInitiatePromise.resolve();
+		} else {
+			faceTimeInitiatePromise.reject([resultCode, errorDetails]);
+		}
+		
+		faceTimeInitiatePromise = undefined;
+	}, onFaceTimeOutgoingCallAccepted(faceTimeLink: string): void {
+		callEventEmitter.notify({type: "outgoingAccepted", faceTimeLink});
+		outgoingCalleeEmitter.notify(undefined);
+	}, onFaceTimeOutgoingCallRejected(): void {
+		callEventEmitter.notify({type: "outgoingRejected"});
+		outgoingCalleeEmitter.notify(undefined);
+	}, onFaceTimeOutgoingCallError(errorDetails: string | undefined): void {
+		callEventEmitter.notify({type: "outgoingError", errorDetails});
+		outgoingCalleeEmitter.notify(undefined);
+	}, onFaceTimeIncomingCall(caller: string | undefined): void {
+		incomingCallerEmitter.notify(caller);
+	}, onFaceTimeIncomingCallHandled(faceTimeLink: string): void {
+		callEventEmitter.notify({type: "incomingHandled", faceTimeLink});
+	}, onFaceTimeIncomingCallError(errorDetails: string | undefined): void {
+		callEventEmitter.notify({type: "incomingHandleError", errorDetails});
 	}
 };
 
@@ -414,7 +499,7 @@ function requestTimeoutArray<T, K>(array: K[], timeoutReason: any | undefined = 
 	return timedPromise;
 }
 
-export function sendMessage(chatGUID: string, message: string): Promise<any> {
+export function sendMessage(target: ConversationTarget, message: string): Promise<any> {
 	//Failing immediately if there is no network connection
 	if(!isConnected()) return Promise.reject(messageErrorNetwork);
 	
@@ -422,14 +507,14 @@ export function sendMessage(chatGUID: string, message: string): Promise<any> {
 	const requestID = generateRequestID();
 	return requestTimeoutMap(requestID, messageSendPromiseMap, undefined, new Promise<any>((resolve, reject) => {
 		//Sending the request
-		communicationsManager!.sendMessage(requestID, chatGUID, message);
+		communicationsManager!.sendMessage(requestID, target, message);
 		
 		//Recording the promise
 		messageSendPromiseMap.set(requestID, {resolve: resolve, reject: reject});
 	}));
 }
 
-export function sendFile(chatGUID: string, file: File): ProgressPromise<any, string | number> {
+export function sendFile(chatGUID: ConversationTarget, file: File): ProgressPromise<any, string | number> {
 	//Failing immediately if there is no network connection
 	if(!isConnected()) return Promise.reject(messageErrorNetwork) as ProgressPromise<any, string | number>;
 	
@@ -459,12 +544,12 @@ export function sendFile(chatGUID: string, file: File): ProgressPromise<any, str
 	});
 }
 
-export function fetchConversations(): Promise<Blocks.Conversation[]> {
+export function fetchConversations(): Promise<LinkedConversation[]> {
 	//Failing immediately if there is no network connection
 	if(!isConnected()) return Promise.reject(messageErrorNetwork);
 	
 	//Starting a new promise
-	return requestTimeoutArray(liteConversationPromiseArray, undefined, new Promise<Blocks.Conversation[]>((resolve, reject) => {
+	return requestTimeoutArray(liteConversationPromiseArray, undefined, new Promise<LinkedConversation[]>((resolve, reject) => {
 		//Sending the request
 		communicationsManager!.requestLiteConversations();
 		
@@ -473,13 +558,13 @@ export function fetchConversations(): Promise<Blocks.Conversation[]> {
 	}));
 }
 
-export function fetchConversationInfo(chatGUIDs: string[]): Promise<[string, Conversation | undefined][]> {
+export function fetchConversationInfo(chatGUIDs: string[]): Promise<[string, LinkedConversation | undefined][]> {
 	//Failing immediately if there is no network connection
 	if(!isConnected()) return Promise.reject(messageErrorNetwork);
 	
 	//Starting a new promise
 	const key = chatGUIDs.join(" ");
-	return requestTimeoutMap(key, conversationDetailsPromiseMap, undefined, new Promise<[string, Conversation | undefined][]>((resolve, reject) => {
+	return requestTimeoutMap(key, conversationDetailsPromiseMap, undefined, new Promise<[string, LinkedConversation | undefined][]>((resolve, reject) => {
 		//Sending the request
 		communicationsManager!.requestConversationInfo(chatGUIDs);
 		
@@ -488,13 +573,13 @@ export function fetchConversationInfo(chatGUIDs: string[]): Promise<[string, Con
 	}));
 }
 
-export function fetchThread(chatGUID: string, firstMessageID?: number): Promise<Blocks.ConversationItem[]> {
+export function fetchThread(chatGUID: string, firstMessageID?: number): Promise<ConversationItem[]> {
 	//Failing immediately if there is no network connection
 	if(!isConnected()) return Promise.reject(messageErrorNetwork);
 	
 	//Starting a new promise
 	const key = JSON.stringify({chatGUID: chatGUID, firstMessageID: firstMessageID} as ThreadKey);
-	return requestTimeoutMap(key, threadPromiseMap, undefined, new Promise<Blocks.ConversationItem[]>((resolve, reject) => {
+	return requestTimeoutMap(key, threadPromiseMap, undefined, new Promise<ConversationItem[]>((resolve, reject) => {
 		//Sending the request
 		communicationsManager!.requestLiteThread(chatGUID, firstMessageID);
 		
@@ -548,6 +633,102 @@ export function requestMissedMessages() {
 	}
 }
 
+export function installRemoteUpdate(updateID: number): void {
+	//Failing immediately if there is no network connection
+	if(!isConnected()) return;
+	
+	//Sending the request
+	communicationsManager!.requestInstallRemoteUpdate(updateID);
+}
+
+/**
+ * Requests a FaceTime link from the server
+ * @return A promise that resolves with the fetched FaceTime link
+ */
+export function requestFaceTimeLink(): Promise<string> {
+	//If there is already an active request, return it
+	if(faceTimeLinkPromise !== undefined) {
+		return faceTimeLinkPromise.promise;
+	}
+	
+	//Failing immediately if there is no network connection
+	if(!isConnected()) {
+		return Promise.reject(FaceTimeLinkErrorCode.Network);
+	}
+	
+	//Creating the promise
+	faceTimeLinkPromise = new ResolveablePromiseTimeout();
+	
+	//Setting a timeout
+	faceTimeLinkPromise.timeout(requestTimeoutMillis, FaceTimeLinkErrorCode.Network);
+	
+	//Starting the request
+	communicationsManager!.requestFaceTimeLink();
+	
+	//Returning the promise
+	return faceTimeLinkPromise.promise;
+}
+
+/**
+ * Initiates a new outgoing FaceTime call with the specified addresses
+ * @param addresses The list of addresses to initiate the call with
+ * @return A promise that resolves when the call is initiated
+ */
+export function initiateFaceTimeCall(addresses: string[]): Promise<void> {
+	//If there is already an active request, return it
+	if(faceTimeInitiatePromise !== undefined) {
+		return faceTimeInitiatePromise.promise;
+	}
+	
+	//Failing immediately if there is no network connection
+	if(!isConnected()) {
+		return Promise.reject([FaceTimeInitiateCode.Network, undefined]);
+	}
+	
+	//Creating the promise
+	faceTimeInitiatePromise = new ResolveablePromiseTimeout();
+	
+	//Setting a timeout
+	faceTimeInitiatePromise.timeout(requestTimeoutMillis, [FaceTimeInitiateCode.Network, undefined]);
+	
+	//Starting the request
+	communicationsManager!.initiateFaceTimeCall(addresses);
+	
+	//Emitting an update
+	outgoingCalleeEmitter.notify(addresses);
+	faceTimeInitiatePromise.promise.catch(() => {
+		outgoingCalleeEmitter.notify(undefined);
+	});
+	
+	//Returning the promise
+	return faceTimeInitiatePromise.promise;
+}
+
+/**
+ * Accepts or rejects a pending incoming FaceTime call
+ * @param caller The name of the caller to accept or reject the call of
+ * @param accept True to accept the call, or false to reject
+ * @return Whether the request was successfully sent
+ */
+export function handleIncomingFaceTimeCall(caller: string, accept: boolean): void {
+	//Failing immediately if there is no network connection
+	if(!isConnected()) return;
+	
+	//Sending the request
+	communicationsManager!.handleIncomingFaceTimeCall(caller, accept);
+}
+
+/**
+ * Tells the server to leave the current FaceTime call
+ */
+export function dropFaceTimeCallServer(): void {
+//Failing immediately if there is no network connection
+	if(!isConnected()) return;
+	
+	//Sending the request
+	communicationsManager!.dropFaceTimeCallServer();
+}
+
 export function addConnectionListener(listener: ConnectionListener) {
 	connectionListenerArray.push(listener);
 }
@@ -557,7 +738,16 @@ export function removeConnectionListener(listener: ConnectionListener) {
 	if(index > -1) connectionListenerArray.splice(index, 1);
 }
 
-export function getActiveCommVer(): string | undefined {
+export function addRemoteUpdateListener(listener: RemoteUpdateListener) {
+	remoteUpdateListenerArray.push(listener);
+}
+
+export function removeRemoteUpdateListener(listener: RemoteUpdateListener) {
+	const index = remoteUpdateListenerArray.indexOf(listener, 0);
+	if(index > -1) remoteUpdateListenerArray.splice(index, 1);
+}
+
+export function getActiveCommVer(): number[] | undefined {
 	return communicationsManager?.communicationsVersion;
 }
 

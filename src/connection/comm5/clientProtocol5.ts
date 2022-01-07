@@ -9,7 +9,7 @@ import {
 	ChatRenameAction,
 	Conversation,
 	ConversationItem,
-	ConversationPreviewMessage,
+	LinkedConversation,
 	MessageItem,
 	MessageModifier,
 	ParticipantAction,
@@ -23,17 +23,22 @@ import {
 	ConversationItemType,
 	ConversationPreviewType,
 	CreateChatErrorCode,
+	FaceTimeInitiateCode,
 	MessageError,
 	MessageErrorCode,
 	MessageModifierType,
 	MessageStatusCode,
 	ParticipantActionType,
+	RemoteUpdateErrorCode,
 	TapbackType
 } from "../../data/stateCodes";
 import {arrayBufferToHex} from "../../util/fileUtils";
 import SparkMD5 from "spark-md5";
 import {InflatorAccumulator} from "../transferAccumulator";
 import {encryptData, isCryptoPasswordAvailable} from "shared/util/encryptionUtils";
+import ServerUpdateData from "shared/data/serverUpdateData";
+import {generateConversationLocalID} from "shared/util/conversationUtils";
+import ConversationTarget from "shared/data/conversationTarget";
 
 const attachmentChunkSize = 2 * 1024 * 1024; //2 MiB
 
@@ -113,14 +118,34 @@ enum NRCSendResult {
 	BadRequest = 2, //Invalid data received
 	Unauthorized = 3, //System rejected request to send message
 	NoConversation = 4, //A valid conversation wasn't found
-	RequestTimeout = 5 //File data blocks stopped being received
+	RequestTimeout = 5, //File data blocks stopped being received
+	InternalError = 6 //Internal server error
 }
 
 enum NRCCreateChatResult {
 	OK = 0,
 	ScriptError = 1, //Some unknown AppleScript error
 	BadRequest = 2, //Invalid data received
-	Unauthorized = 3 //System rejected request to send message
+	Unauthorized = 3, //System rejected request to send message
+	NotSupported = 4 //Operation not supported by the server
+}
+
+enum NRCUpdateError {
+	Download = 0, //Failed to download update
+	BadPackage = 1, //Failed to validate update package
+	Internal = 2 //Internal update error
+}
+
+enum NRCFaceTimeCallInitiate {
+	OK = 0, //Call initiated
+	BadMembers = 1, //Members are not available on FaceTime
+	AppleScriptError = 2 //AppleScript error
+}
+
+enum NRCFaceTimeCallHandled {
+	Accepted = 0, //Call accepted
+	Rejected = 1, //Call rejected
+	Error = 2 //An error occurred
 }
 
 //Item types
@@ -224,6 +249,30 @@ export default class ClientProtocol5 extends ProtocolManager {
 			case nhtCreateChat:
 				this.handleMessageCreateChat(unpacker);
 				break;
+			case nhtSoftwareUpdateListing:
+				this.handleMessageSoftwareUpdateListing(unpacker);
+				break;
+			case nhtSoftwareUpdateInstall:
+				this.handleMessageSoftwareUpdateInstall(unpacker);
+				break;
+			case nhtSoftwareUpdateError:
+				this.handleMessageSoftwareUpdateError(unpacker);
+				break;
+			case nhtFaceTimeCreateLink:
+				this.handleMessageFaceTimeCreateLink(unpacker);
+				break;
+			case nhtFaceTimeOutgoingInitiate:
+				this.handleMessageFaceTimeOutgoingInitiate(unpacker);
+				break;
+			case nhtFaceTimeOutgoingHandled:
+				this.handleMessageFaceTimeOutgoingHandled(unpacker);
+				break;
+			case nhtFaceTimeIncomingCallerUpdate:
+				this.handleMessageFaceTimeIncomingCallerUpdate(unpacker);
+				break;
+			case nhtFaceTimeIncomingHandle:
+				this.handleMessageFaceTimeIncomingHandle(unpacker);
+				break;
 			default:
 				this.processDataInsecure(messageType, unpacker);
 				break;
@@ -259,11 +308,11 @@ export default class ClientProtocol5 extends ProtocolManager {
 		const deviceName = unpacker.unpackString();
 		const systemVersion = unpacker.unpackString();
 		const softwareVersion = unpacker.unpackString();
-		const userName = unpacker.unpackString();
+		/*const userName = */unpacker.unpackString(); //Can't use, discard
 		const supportsFaceTime = unpacker.unpackBoolean();
 		
 		//Notifying the communications manager
-		this.communicationsManager.onHandshake(installationID, deviceName, systemVersion, softwareVersion);
+		this.communicationsManager.onHandshake(installationID, deviceName, systemVersion, softwareVersion, supportsFaceTime);
 	}
 	
 	private handleMessageUpdate(unpacker: AirUnpacker) {
@@ -356,6 +405,98 @@ export default class ClientProtocol5 extends ProtocolManager {
 		this.communicationsManager.listener?.onCreateChatResponse(requestID, errorCode, details);
 	}
 	
+	private handleMessageSoftwareUpdateListing(unpacker: AirUnpacker) {
+		let updateData: ServerUpdateData | undefined = undefined;
+		
+		//Read the update data
+		const updateExists = unpacker.unpackBoolean();
+		if(updateExists) {
+			const updateID = unpacker.unpackInt();
+			const protocolRequirementCount = unpacker.unpackInt();
+			const protocolRequirement: number[] = [];
+			for(let i = 0; i < protocolRequirementCount; i++) protocolRequirement.push(unpacker.unpackInt());
+			
+			const versionName = unpacker.unpackString();
+			const versionNotes = unpacker.unpackString();
+			const remoteInstallable = unpacker.unpackBoolean();
+			
+			updateData = {
+				id: updateID,
+				protocolRequirement: protocolRequirement,
+				version: versionName,
+				notes: versionNotes,
+				remoteInstallable: remoteInstallable
+			};
+		}
+		
+		this.communicationsManager.listener?.onSoftwareUpdateListing(updateData);
+	}
+	
+	private handleMessageSoftwareUpdateInstall(unpacker: AirUnpacker) {
+		const updateInstalling = unpacker.unpackBoolean();
+		
+		this.communicationsManager.listener?.onSoftwareUpdateInstall(updateInstalling);
+	}
+	
+	private handleMessageSoftwareUpdateError(unpacker: AirUnpacker) {
+		//Reading the message
+		const errorCode = mapUpdateErrorCode(unpacker.unpackInt());
+		const errorDetails = unpacker.unpackString();
+		
+		this.communicationsManager.listener?.onSoftwareUpdateError(errorCode, errorDetails);
+	}
+	private handleMessageFaceTimeCreateLink(unpacker: AirUnpacker) {
+		//Reading the message
+		let link: string | undefined = undefined;
+		const linkOK = unpacker.unpackBoolean();
+		if(linkOK) link = unpacker.unpackString();
+		
+		this.communicationsManager.listener?.onFaceTimeNewLink(link);
+	}
+	
+	private handleMessageFaceTimeOutgoingInitiate(unpacker: AirUnpacker) {
+		//Reading the message
+		const resultCode = mapFaceTimeInitiateCode(unpacker.unpackInt());
+		const errorDetails = unpacker.unpackNullableString();
+		
+		//Mapping the result code to a local error code
+		this.communicationsManager.listener?.onFaceTimeOutgoingCallInitiated(resultCode, errorDetails);
+	}
+	
+	private handleMessageFaceTimeOutgoingHandled(unpacker: AirUnpacker) {
+		//Reading the message
+		const resultCode = unpacker.unpackInt();
+		
+		if(resultCode === NRCFaceTimeCallHandled.Accepted) {
+			//Our call was accepted :)
+			const faceTimeLink = unpacker.unpackString();
+			this.communicationsManager.listener?.onFaceTimeOutgoingCallAccepted(faceTimeLink);
+		} else if(resultCode === NRCFaceTimeCallHandled.Rejected) {
+			//Our call was rejected
+			this.communicationsManager.listener?.onFaceTimeOutgoingCallRejected();
+		} else if(resultCode === NRCFaceTimeCallHandled.Error) {
+			//Something went wrong
+			const errorDetails = unpacker.unpackNullableString();
+			this.communicationsManager.listener?.onFaceTimeOutgoingCallError(errorDetails);
+		}
+	}
+	
+	private handleMessageFaceTimeIncomingCallerUpdate(unpacker: AirUnpacker) {
+		const caller = unpacker.unpackNullableString();
+		this.communicationsManager.listener?.onFaceTimeIncomingCall(caller);
+	}
+	
+	private handleMessageFaceTimeIncomingHandle(unpacker: AirUnpacker) {
+		const ok = unpacker.unpackBoolean();
+		if(ok) {
+			const faceTimeLink = unpacker.unpackString();
+			this.communicationsManager.listener?.onFaceTimeIncomingCallHandled(faceTimeLink);
+		} else {
+			const errorDetails = unpacker.unpackNullableString();
+			this.communicationsManager.listener?.onFaceTimeIncomingCallError(errorDetails);
+		}
+	}
+	
 	sendPing(): boolean {
 		const packer = AirPacker.get();
 		try {
@@ -437,12 +578,17 @@ export default class ClientProtocol5 extends ProtocolManager {
 		return true;
 	}
 	
-	sendMessage(requestID: number, chatGUID: string, message: string): boolean {
+	sendMessage(requestID: number, conversation: ConversationTarget, message: string): boolean {
 		const packer = AirPacker.get();
 		try {
-			packer.packInt(nhtSendTextExisting);
+			if(conversation.type === "linked") packer.packInt(nhtSendTextExisting);
+			else packer.packInt(nhtSendTextNew);
 			packer.packShort(requestID);
-			packer.packString(chatGUID);
+			if(conversation.type === "linked") packer.packString(conversation.guid);
+			else {
+				packer.packStringArray(conversation.members);
+				packer.packString(conversation.service);
+			}
 			packer.packString(message);
 			
 			this.dataProxy.send(packer.toArrayBuffer(), true);
@@ -453,7 +599,7 @@ export default class ClientProtocol5 extends ProtocolManager {
 		return true;
 	}
 	
-	async sendFile(requestID: number, chatGUID: string, file: File, progressCallback: (bytesUploaded: number) => void): Promise<string> {
+	async sendFile(requestID: number, conversation: ConversationTarget, file: File, progressCallback: (bytesUploaded: number) => void): Promise<string> {
 		//TODO find some way to stream deflate
 		const fileData = await file.arrayBuffer();
 		const hash = SparkMD5.ArrayBuffer.hash(fileData);
@@ -470,15 +616,22 @@ export default class ClientProtocol5 extends ProtocolManager {
 				//Uploading the data
 				const packer = AirPacker.get();
 				try {
-					packer.packInt(nhtSendFileExisting);
+					if(conversation.type === "linked") packer.packInt(nhtSendFileExisting);
+					else packer.packInt(nhtSendFileNew);
 					
 					packer.packShort(requestID);
 					packer.packInt(chunkIndex);
 					packer.packBoolean(newOffset >= file.size); //Is this the last part?
 					
-					packer.packString(chatGUID);
 					packer.packPayload(chunkData);
-					if(chunkIndex === 0) packer.packString(file.name);
+					if(chunkIndex === 0) {
+						packer.packString(file.name);
+						if(conversation.type === "linked") packer.packString(conversation.guid);
+						else {
+							packer.packStringArray(conversation.members);
+							packer.packString(conversation.service);
+						}
+					}
 					
 					this.dataProxy.send(packer.toArrayBuffer(), true);
 				} finally {
@@ -614,6 +767,78 @@ export default class ClientProtocol5 extends ProtocolManager {
 		
 		return true;
 	}
+	
+	requestInstallRemoteUpdate(updateID: number): boolean {
+		const packer = AirPacker.get();
+		try {
+			packer.packInt(nhtSoftwareUpdateInstall);
+			packer.packInt(updateID);
+			
+			this.dataProxy.send(packer.toArrayBuffer(), true);
+		} finally {
+			packer.reset();
+		}
+		
+		return true;
+	}
+	
+	requestFaceTimeLink(): boolean {
+		const packer = AirPacker.get();
+		try {
+			packer.packInt(nhtFaceTimeCreateLink);
+			
+			this.dataProxy.send(packer.toArrayBuffer(), true);
+		} finally {
+			packer.reset();
+		}
+		
+		return true;
+	}
+	
+	initiateFaceTimeCall(addresses: string[]): boolean {
+		const packer = AirPacker.get();
+		try {
+			packer.packInt(nhtFaceTimeOutgoingInitiate);
+			packer.packArrayHeader(addresses.length);
+			for(const address of addresses) {
+				packer.packString(address);
+			}
+			
+			this.dataProxy.send(packer.toArrayBuffer(), true);
+		} finally {
+			packer.reset();
+		}
+		
+		return true;
+	}
+	
+	handleIncomingFaceTimeCall(caller: string, accept: boolean): boolean {
+		const packer = AirPacker.get();
+		try {
+			packer.packInt(nhtFaceTimeIncomingHandle);
+			packer.packString(caller);
+			packer.packBoolean(accept);
+			
+			this.dataProxy.send(packer.toArrayBuffer(), true);
+		} finally {
+			packer.reset();
+		}
+		
+		return true;
+	}
+	
+	dropFaceTimeCallServer(): boolean {
+		const packer = AirPacker.get();
+		try {
+			packer.packInt(nhtFaceTimeDisconnect);
+			
+			this.dataProxy.send(packer.toArrayBuffer(), true);
+		} finally {
+			packer.reset();
+		}
+		
+		return true;
+	}
 }
 
 function mapBrowserAM(browser: string): AMBrowser {
@@ -633,7 +858,7 @@ function mapBrowserAM(browser: string): AMBrowser {
 	}
 }
 
-function unpackPreviewConversation(unpacker: AirUnpacker): Conversation {
+function unpackPreviewConversation(unpacker: AirUnpacker): LinkedConversation {
 	const guid = unpacker.unpackString();
 	const service = unpacker.unpackString();
 	const name = unpacker.unpackNullableString();
@@ -651,6 +876,7 @@ function unpackPreviewConversation(unpacker: AirUnpacker): Conversation {
 	for(let i = 0; i < previewAttachmentsLength; i++) previewAttachments[i] = unpacker.unpackString();
 	
 	return {
+		localID: generateConversationLocalID(),
 		guid: guid,
 		service: service,
 		name: name,
@@ -661,7 +887,9 @@ function unpackPreviewConversation(unpacker: AirUnpacker): Conversation {
 			text: previewText,
 			sendStyle: previewSendStyle,
 			attachments: previewAttachments
-		} as ConversationPreviewMessage
+		},
+		unreadMessages: false,
+		localOnly: false
 	};
 }
 
@@ -679,6 +907,7 @@ function unpackRequestedConversation(unpacker: AirUnpacker): [string, Conversati
 		for(let i = 0; i < membersLength; i++) members[i] = unpacker.unpackString();
 		
 		return [guid, {
+			localID: generateConversationLocalID(),
 			guid: guid,
 			service: service,
 			name: name,
@@ -687,7 +916,9 @@ function unpackRequestedConversation(unpacker: AirUnpacker): [string, Conversati
 			preview: {
 				type: ConversationPreviewType.ChatCreation,
 				date: new Date()
-			}
+			},
+			unreadMessages: false,
+			localOnly: false
 		}];
 	} else {
 		//Conversation not available
@@ -941,6 +1172,7 @@ function mapMessageErrorCode(code: number): MessageErrorCode | undefined {
 		case NRCSendResult.OK:
 			return undefined;
 		case NRCSendResult.ScriptError:
+		case NRCSendResult.InternalError:
 			return MessageErrorCode.ServerExternal;
 		case NRCSendResult.BadRequest:
 			return MessageErrorCode.ServerBadRequest;
@@ -965,6 +1197,8 @@ function mapCreateChatCode(code: number): CreateChatErrorCode | undefined {
 			return CreateChatErrorCode.BadRequest;
 		case NRCCreateChatResult.Unauthorized:
 			return CreateChatErrorCode.Unauthorized;
+		case NRCCreateChatResult.NotSupported:
+			return CreateChatErrorCode.NotSupported;
 		default:
 			return CreateChatErrorCode.UnknownExternal;
 	}
@@ -986,5 +1220,30 @@ function mapTapbackType(code: number): TapbackType | undefined {
 			return TapbackType.Question;
 		default:
 			return undefined;
+	}
+}
+
+function mapUpdateErrorCode(code: number): RemoteUpdateErrorCode {
+	switch(code) {
+		case NRCUpdateError.Download:
+			return RemoteUpdateErrorCode.Download;
+		case NRCUpdateError.BadPackage:
+			return RemoteUpdateErrorCode.BadPackage;
+		case NRCUpdateError.Internal:
+			return RemoteUpdateErrorCode.Internal;
+		default:
+			return RemoteUpdateErrorCode.Unknown;
+	}
+}
+
+function mapFaceTimeInitiateCode(code: number): FaceTimeInitiateCode {
+	switch(code) {
+		case NRCFaceTimeCallInitiate.OK:
+			return FaceTimeInitiateCode.OK;
+		case NRCFaceTimeCallInitiate.BadMembers:
+			return FaceTimeInitiateCode.BadMembers;
+		case NRCFaceTimeCallInitiate.AppleScriptError:
+		default:
+			return FaceTimeInitiateCode.External;
 	}
 }
