@@ -17,19 +17,32 @@ export abstract class NotificationUtils {
 	 * @param conversation The conversation of the messages
 	 * @param messages An array of message items to notify, sorted oldest to newest
 	 */
-	abstract showNotifications(conversation: LinkedConversation, messages: MessageItem[]): void;
+	abstract showMessageNotifications(conversation: LinkedConversation, messages: MessageItem[]): void;
 	
 	/**
 	 * Dismisses notifications for a certain chat
 	 * @param chatID The ID of the chat to remove notifications for
 	 */
-	abstract dismissNotifications(chatID: string): void;
+	abstract dismissMessageNotifications(chatID: string): void;
 	
 	/**
-	 * Gets an emitter that the conversation GUID for selected notifications
+	 * Gets an emitter that emits the conversation GUID for selected notifications
 	 */
-	abstract getActionEmitter(): EventEmitter<string>;
+	abstract getMessageActionEmitter(): EventEmitter<string>;
+	
+	/**
+	 * Shows a notification for the current caller, or dismisses the notification if there is no caller
+	 * @param caller The caller to display, or undefined to hide the notification
+	 */
+	abstract updateCallerNotification(caller: string | undefined): void;
+	
+	/**
+	 * Gets emitter that emits user actions for call notifications
+	 */
+	abstract getCallerActionEmitter(): EventEmitter<CallerNotificationAction>;
 }
+
+export type CallerNotificationAction = {caller: string, action: "accept" | "decline"};
 
 let notificationUtils: NotificationUtils;
 export function setNotificationUtils(value: NotificationUtils) {

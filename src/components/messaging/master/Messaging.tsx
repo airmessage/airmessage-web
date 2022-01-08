@@ -92,9 +92,9 @@ export default function Messaging(props: {
 	
 	//Register for notification response events
 	useEffect(() => {
-		getNotificationUtils().getActionEmitter().registerListener(navigateConversation);
+		getNotificationUtils().getMessageActionEmitter().registerListener(navigateConversation);
 		return () => {
-			getNotificationUtils().getActionEmitter().unregisterListener(navigateConversation);
+			getNotificationUtils().getMessageActionEmitter().unregisterListener(navigateConversation);
 			getPlatformUtils().getChatActivationEmitter()?.unregisterListener(navigateConversation);
 		};
 	}, [navigateConversation]);

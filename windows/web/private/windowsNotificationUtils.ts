@@ -1,4 +1,9 @@
-import {getConversationTitle, getMessageDescription, NotificationUtils} from "shared/util/notificationUtils";
+import {
+	CallerNotificationAction,
+	getConversationTitle,
+	getMessageDescription,
+	NotificationUtils
+} from "shared/util/notificationUtils";
 import EventEmitter from "shared/util/eventEmitter";
 import {LinkedConversation, MessageItem} from "shared/data/blocks";
 import {windowsDismissNotifications, windowsShowNotification} from "./interopUtils";
@@ -7,11 +12,12 @@ import {PersonData} from "../../../window";
 
 export default class WindowsNotificationUtils extends NotificationUtils {
 	private readonly notificationClickEmitter = new EventEmitter<string>();
+	private readonly callerNotificationActionEmitter = new EventEmitter<CallerNotificationAction>();
 	
 	initialize(): void {
 	}
 	
-	async showNotifications(conversation: LinkedConversation, messages: MessageItem[]) {
+	async showMessageNotifications(conversation: LinkedConversation, messages: MessageItem[]) {
 		for(const message of messages) {
 			if(message.sender === undefined) {
 				console.warn("Failed to notify message with no sender", message);
@@ -34,11 +40,19 @@ export default class WindowsNotificationUtils extends NotificationUtils {
 		}
 	}
 	
-	dismissNotifications(chatID: string) {
+	dismissMessageNotifications(chatID: string) {
 		windowsDismissNotifications(chatID);
 	}
 	
-	getActionEmitter() {
+	getMessageActionEmitter() {
 		return this.notificationClickEmitter;
+	}
+	
+	getCallerActionEmitter(): EventEmitter<CallerNotificationAction> {
+		return this.callerNotificationActionEmitter;
+	}
+	
+	updateCallerNotification(caller: string | undefined): void {
+		//TODO implement
 	}
 }
