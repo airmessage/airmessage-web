@@ -1,6 +1,7 @@
 import React, {useCallback, useContext, useEffect, useMemo, useState} from "react";
 import {
-	Button, Dialog,
+	Button,
+	Dialog,
 	DialogActions,
 	DialogContent,
 	DialogContentText,
@@ -12,10 +13,11 @@ import {createTheme, useTheme} from "@mui/material/styles";
 import CallNotificationIncoming from "shared/components/calling/CallNotificationIncoming";
 import CallNotificationOutgoing from "shared/components/calling/CallNotificationOutgoing";
 import * as ConnectionManager from "shared/connection/connectionManager";
-import {getFallbackTitle, getMemberTitle} from "shared/util/conversationUtils";
+import {getMemberTitle} from "shared/util/conversationUtils";
 import {buildListString} from "shared/util/languageUtils";
 import CallEvent from "shared/data/callEvent";
 import {SnackbarContext} from "shared/components/control/SnackbarProvider";
+import {getNotificationUtils} from "shared/util/notificationUtils";
 
 export default function CallOverlay() {
 	const displaySnackbar = useContext(SnackbarContext);
@@ -37,7 +39,13 @@ export default function CallOverlay() {
 	//Subscribe to incoming caller updates
 	const [incomingCaller, setIncomingCaller] = useState<string | undefined>(undefined);
 	useEffect(() => {
-		ConnectionManager.incomingCallerEmitter.registerListener(setIncomingCaller);
+		ConnectionManager.incomingCallerEmitter.registerListener((caller) => {
+			//Update the caller state
+			setIncomingCaller(caller);
+			
+			//Display a notification
+			getNotificationUtils().updateCallerNotification(caller);
+		});
 		return () => ConnectionManager.incomingCallerEmitter.unregisterListener(setIncomingCaller);
 	}, [setIncomingCaller]);
 	

@@ -535,6 +535,9 @@ export default class ClientProtocol5 extends ProtocolManager {
 				return false;
 			}
 			
+			//Telling the data proxy that encrypted messages should be used
+			this.dataProxy.serverRequestsEncryption = true;
+			
 			//Reading the transmission check
 			const transmissionCheck = unpacker.unpackPayload();
 			
@@ -561,6 +564,9 @@ export default class ClientProtocol5 extends ProtocolManager {
 				packer.reset();
 			}
 		} else {
+			//Telling the data proxy that encrypted messages should not be used
+			this.dataProxy.serverRequestsEncryption = false;
+			
 			//Sending a response
 			const packer = AirPacker.get();
 			try {

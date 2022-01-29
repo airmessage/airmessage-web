@@ -280,7 +280,7 @@ export default function useConversationState(activeConversationID: number | unde
 						if(conversation === undefined) continue;
 						
 						//Sending a notification
-						getNotificationUtils().showNotifications(conversation, messages);
+						getNotificationUtils().showMessageNotifications(conversation, messages);
 					}
 				}
 			} else {

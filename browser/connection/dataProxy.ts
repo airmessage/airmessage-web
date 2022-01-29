@@ -7,15 +7,19 @@ import {getAuth, getIdToken} from "firebase/auth";
 import {getInstallationID} from "shared/util/installationUtils";
 import {ConnectionErrorCode} from "shared/data/stateCodes";
 import {connectHostname} from "shared/secrets";
-import {decryptData, isCryptoPasswordAvailable} from "shared/util/encryptionUtils";
+import {decryptData, encryptData, isCryptoPasswordAvailable} from "shared/util/encryptionUtils";
+import TaskQueue from "shared/util/taskQueue";
 
 const handshakeTimeoutTime = 8 * 1000;
 
 export default class DataProxyConnect extends DataProxy {
 	proxyType = "Connect";
 	
+	private readonly taskQueueEncrypt = new TaskQueue();
+	private readonly taskQueueDecrypt = new TaskQueue();
+	
 	private socket?: WebSocket;
-	private handshakeTimeout? : NodeJS.Timeout;
+	private handshakeTimeout?: NodeJS.Timeout;
 	
 	start(): void {
 		//Getting the user's ID token
@@ -53,13 +57,32 @@ export default class DataProxyConnect extends DataProxy {
 		this.socket.close();
 	}
 	
-	send(data: ArrayBuffer) {
-		const byteBuffer = ByteBuffer.allocate(4 + data.byteLength)
-			.writeInt(NHT.nhtClientProxy)
-			.append(data);
-		
-		if(!this.socket) return false;
-		this.socket.send(byteBuffer.flip().toArrayBuffer());
+	send(data: ArrayBuffer, encrypt: boolean) {
+		this.taskQueueEncrypt.enqueue(async () => {
+			//Check for encryption support
+			const supportsEncryption = this.serverRequestsEncryption;
+			if(supportsEncryption && !isCryptoPasswordAvailable()) {
+				throw new Error("The server requests encryption, but no password is set");
+			}
+			
+			//Get whether we should encrypt this packet
+			const isEncrypted = encrypt && supportsEncryption;
+			if(isEncrypted) {
+				data = await encryptData(data);
+			}
+			
+			const byteBuffer = ByteBuffer.allocate(1 + 4 + data.byteLength);
+			byteBuffer.writeInt(NHT.nhtClientProxy);
+			
+			if(isEncrypted) byteBuffer.writeByte(-100); //The content is encrypted
+			else if(supportsEncryption) byteBuffer.writeByte(-101); //We support encryption, but this packet should not be encrypted
+			else byteBuffer.writeByte(-102); //We don't support encryption
+			
+			byteBuffer.append(data);
+			
+			if(!this.socket) return;
+			this.socket.send(byteBuffer.flip().toArrayBuffer());
+		});
 	}
 	
 	sendTokenAdd(token: string) {
@@ -115,19 +138,19 @@ export default class DataProxyConnect extends DataProxy {
 				const encryptionValue = byteBuffer.readByte();
 				if(encryptionValue === -100) isSecure = isEncrypted = true;
 				else if(encryptionValue === -101) isSecure = isEncrypted = false;
-				else {
+				else if(encryptionValue === -102) {
 					isSecure = true;
 					isEncrypted = false;
-					if(encryptionValue !== -102) {
-						byteBuffer.offset -= 1;
-					}
+				} else {
+					throw new Error("Received unknown encryption value: " + encryptionValue);
 				}
 				
 				//Reading the data
-				const data = byteBuffer.compact().toArrayBuffer();
+				let data = byteBuffer.compact().toArrayBuffer();
 				
-				if(isEncrypted && isCryptoPasswordAvailable()) {
-					decryptData(data).then((data) => {
+				if(isCryptoPasswordAvailable()) {
+					this.taskQueueDecrypt.enqueue(async () => {
+						if(isEncrypted) data = await decryptData(data);
 						this.notifyMessage(data, isSecure);
 					});
 				} else {

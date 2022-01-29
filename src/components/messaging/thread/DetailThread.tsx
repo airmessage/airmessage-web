@@ -423,7 +423,7 @@ export default class DetailThread extends React.Component<Props, State> {
 	componentDidMount() {
 		//Clearing notifications
 		if(!this.props.conversation.localOnly) {
-			getNotificationUtils().dismissNotifications(this.props.conversation.guid);
+			getNotificationUtils().dismissMessageNotifications(this.props.conversation.guid);
 		}
 		
 		//Fetching messages

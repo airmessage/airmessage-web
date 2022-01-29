@@ -6,6 +6,7 @@ import {getSecureLS, SecureStorageKey} from "shared/util/secureStorageUtils";
 import {decodeBase64, encodeBase64} from "shared/util/dataHelper";
 import {windowsServerConnect, windowsServerDisconnect, windowsServerSend} from "../private/interopUtils";
 import {ChromeEventListener} from "../../../window";
+import TaskQueue from "shared/util/taskQueue";
 
 interface AddressData {
 	host: string;
@@ -36,6 +37,8 @@ export default class DataProxyTCP extends DataProxy {
 	proxyType = "Direct";
 	private readonly override: AddressOverride | undefined;
 	private isStopping = false;
+	private readonly taskQueueEncrypt = new TaskQueue();
+	private readonly taskQueueDecrypt = new TaskQueue();
 	
 	constructor(override?: AddressOverride) {
 		super();
@@ -43,26 +46,14 @@ export default class DataProxyTCP extends DataProxy {
 		this.override = override;
 	}
 	
-	//previousEncrypt ensures that all sent messages are sent in parallel
-	private previousEncrypt: Promise<any> | undefined;
 	async send(data: ArrayBuffer, encrypt: boolean) {
-		if(this.previousEncrypt) {
-			this.previousEncrypt = this.previousEncrypt.then(async () => {
-				//Encrypting the data if necessary
-				if(encrypt) {
-					this.writeSync(await encryptData(data), true);
-				} else {
-					this.writeSync(data, false);
-				}
-			});
-		} else {
-			//Encrypting the data if necessary
+		this.taskQueueEncrypt.enqueue(async () => {
 			if(encrypt) {
-				this.writeSync(await (this.previousEncrypt = encryptData(data)), true);
-			} else {
-				this.writeSync(data, false);
+				data = await encryptData(data);
 			}
-		}
+			
+			this.writeSync(data, encrypt);
+		});
 	}
 	
 	//Writes data to the socket without any sort of processing
@@ -76,7 +67,6 @@ export default class DataProxyTCP extends DataProxy {
 	}
 	
 	//previousDecrypt ensures that all read messages are decrypted in parallel
-	private previousDecrypt: Promise<any> | undefined;
 	async start(): Promise<void> {
 		//Resetting the isStopping flag
 		this.isStopping = true;
@@ -126,28 +116,14 @@ export default class DataProxyTCP extends DataProxy {
 					break;
 				}
 				case "message": {
-					const data = decodeBase64(message.data);
+					let data = decodeBase64(message.data);
 					const isEncrypted = message.isEncrypted;
 					
 					//Submitting the message
-					if(this.previousDecrypt) {
-						this.previousDecrypt = this.previousDecrypt.then((): [ArrayBuffer, boolean] | PromiseLike<[ArrayBuffer, boolean]> => {
-							//Decrypting the data if necessary
-							if(isEncrypted) return decryptData(data).then((data) => [data, true]);
-							else return [data, false];
-						}).then(([data, isEncrypted]) => {
-							this.notifyMessage(data, isEncrypted);
-						}).catch((error) => console.warn("Error reading network message", error));
-					} else {
-						//Decrypting the data if necessary
-						if(isEncrypted) {
-							this.previousDecrypt = decryptData(data)
-								.then((data) => this.notifyMessage(data, true))
-								.catch((error) => console.warn("Error reading network message", error));
-						} else {
-							this.notifyMessage(data, false);
-						}
-					}
+					this.taskQueueDecrypt.enqueue(async () => {
+						if(isEncrypted) data = await decryptData(data);
+						this.notifyMessage(data, isEncrypted);
+					});
 					
 					break;
 				}

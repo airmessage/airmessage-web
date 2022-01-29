@@ -10,7 +10,6 @@ import {promiseGAPI} from "shared/index";
 import {googleScope} from "shared/constants";
 import LoginContext from "shared/components/LoginContext";
 import {getAuth, onAuthStateChanged, signInWithCredential, signOut, GoogleAuthProvider, User} from "firebase/auth";
-import GoogleAuth = gapi.auth2.GoogleAuth;
 import {useCancellableEffect} from "shared/util/hookUtils";
 
 enum SignInState {
@@ -21,7 +20,7 @@ enum SignInState {
 
 export default function SignInGate() {
 	const [state, setState] = useState(SignInState.waiting);
-	const googleAuth = useRef<GoogleAuth | undefined>(undefined);
+	const googleAuth = useRef<gapi.auth2.GoogleAuthBase | undefined>(undefined);
 	
 	//Updates whether the current user is signed in
 	const updateGoogleSignIn = useCallback((signedIn: boolean) => {
