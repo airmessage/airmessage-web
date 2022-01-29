@@ -1,10 +1,7 @@
 import CommunicationsManager from "../communicationsManager";
 import ProtocolManager from "./protocolManager";
 import AirUnpacker from "./airUnpacker";
-import ClientProtocol1 from "./clientProtocol1";
 import {ConnectionErrorCode, MessageError, MessageErrorCode} from "../../data/stateCodes";
-import ClientProtocol2 from "./clientProtocol2";
-import ClientProtocol3 from "shared/connection/comm5/clientProtocol3";
 import ClientProtocol4 from "shared/connection/comm5/clientProtocol4";
 import ClientProtocol5 from "shared/connection/comm5/clientProtocol5";
 import ConversationTarget from "shared/data/conversationTarget";
@@ -82,34 +79,29 @@ export default class ClientComm5 extends CommunicationsManager {
 		}
 
 		//Finding a matching protocol manager
-		const protocolManager = this.findProtocolManager(commSubVer);
-		if(!protocolManager) {
-			this.disconnect(ConnectionErrorCode.ClientOutdated);
+		const protocolManagerOrError = this.findProtocolManager(commSubVer);
+		if(typeof protocolManagerOrError === "number") {
+			this.disconnect(protocolManagerOrError);
 			return;
 		}
 		
 		//Sending the handshake data
-		protocolManager.sendAuthenticationRequest(unpacker);
+		protocolManagerOrError.sendAuthenticationRequest(unpacker);
 		
 		//Setting the protocol manager
-		this.protocolManager = protocolManager;
+		this.protocolManager = protocolManagerOrError;
 		this.protocolManagerVer = commSubVer;
 	}
 
-	findProtocolManager(subVersion: number): ProtocolManager | null {
+	findProtocolManager(subVersion: number): ProtocolManager | ConnectionErrorCode.ClientOutdated | ConnectionErrorCode.ServerOutdated {
 		switch(subVersion) {
-			case 1:
-				return new ClientProtocol1(this, this.dataProxy);
-			case 2:
-				return new ClientProtocol2(this, this.dataProxy);
-			case 3:
-				return new ClientProtocol3(this, this.dataProxy);
 			case 4:
 				return new ClientProtocol4(this, this.dataProxy);
 			case 5:
 				return new ClientProtocol5(this, this.dataProxy);
 			default:
-				return null;
+				if(subVersion < 4) return ConnectionErrorCode.ServerOutdated;
+				else return ConnectionErrorCode.ClientOutdated;
 		}
 	}
 	

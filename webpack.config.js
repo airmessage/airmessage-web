@@ -1,4 +1,4 @@
-/*eslint-env node */
+/* eslint-env node */
 const webpack = require("webpack");
 const path = require("path");
 const fs = require("fs");
@@ -96,11 +96,7 @@ module.exports = (env) => ({
 		},
 	},
 	plugins: [
-		new ForkTsCheckerWebpackPlugin({
-			eslint: {
-				files: `./{src,browser}/**/*.{ts,tsx,js,jsx}`,
-			}
-		}),
+		new ForkTsCheckerWebpackPlugin(),
 		/* new ESLintPlugin({
 			files: ["src", "browser", "electron-main", "electron-renderer"],
 			extensions: ["js", "jsx", "ts", "tsx"]

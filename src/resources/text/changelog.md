@@ -4,4 +4,7 @@ With AirMessage Server 4.0.0:
 - Check for and install AirMessage Server updates remotely
 - Create new conversations, even on newer versions of macOS
 
-AirMessage for web will also display a warning if you're running a version of AirMessage Server that will soon become unsupported.
+AirMessage for web 1.4.1 also introduces these changes:
+- Notifications for incoming FaceTime calls
+- Fixed a bug that would cause large attachment file downloads to fail
+- Security improvements

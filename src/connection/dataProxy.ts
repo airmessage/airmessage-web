@@ -10,6 +10,7 @@ export default abstract class DataProxy {
 	abstract readonly proxyType: string;
 	public listener?: DataProxyListener;
 	private pendingErrorCode: ConnectionErrorCode | undefined = undefined;
+	public serverRequestsEncryption: boolean = false;
 	
 	/**
 	 * Start this proxy's connection to the server

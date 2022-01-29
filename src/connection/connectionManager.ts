@@ -107,12 +107,12 @@ let faceTimeLinkPromise: ResolveablePromiseTimeout<string> | undefined = undefin
 let faceTimeInitiatePromise: ResolveablePromiseTimeout<void> | undefined = undefined; //Initiating a FaceTime call
 
 class FileDownloadState {
-	private accumulator?: TransferAccumulator;
+	private accumulator!: TransferAccumulator;
 	public get accumulatedData() {
-		return this.accumulator!.data;
+		return this.accumulator.data;
 	}
 	public get accumulatedDataOffset() {
-		return this.accumulator!.offset;
+		return this.accumulator.offset;
 	}
 	promise: ProgressPromiseExecutor<FileDownloadResult, FileDownloadProgress>;
 	private readonly timeoutCallback: () => void;
@@ -136,7 +136,7 @@ class FileDownloadState {
 	
 	public appendData(data: ArrayBuffer) {
 		//Adding the data to the array
-		this.accumulator!.push(data);
+		this.accumulator.push(data);
 		
 		this.refreshTimeout();
 	}
