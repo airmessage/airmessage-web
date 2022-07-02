@@ -1,12 +1,10 @@
 import * as secrets from "../secrets";
-import {decodeBase64, encodeBase64} from "shared/util/dataHelper";
+import {decodeBase64, encodeBase64} from "shared/util/encodingUtils";
 
 const ivLen = 12;
 
 export enum SecureStorageKey {
-	ServerPassword = "serverPassword",
-	ServerAddress = "serverAddress",
-	ServerAddressFallback = "serverAddressFallback"
+	ServerPassword = "serverPassword"
 }
 
 const cryptoKey: Promise<CryptoKey> = crypto.subtle.importKey(
@@ -58,6 +56,11 @@ async function decryptString(value: string, useIV: boolean): Promise<string> {
 	return new TextDecoder().decode(await decrypt(decodeBase64(value), useIV));
 }
 
+/**
+ * Stores a value in secure storage
+ * @param key The storage key to use
+ * @param value The value to use, or undefined to remove
+ */
 export async function setSecureLS(key: SecureStorageKey, value: string | undefined) {
 	const encryptedKey = await encryptString(key, false);
 	
@@ -69,6 +72,10 @@ export async function setSecureLS(key: SecureStorageKey, value: string | undefin
 	}
 }
 
+/**
+ * Reads a value from secure storage
+ * @param key The storage key to read from
+ */
 export async function getSecureLS(key: SecureStorageKey): Promise<string | undefined> {
 	const value = localStorage.getItem(await encryptString(key, false));
 	if(value === null) {

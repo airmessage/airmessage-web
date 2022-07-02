@@ -1,3 +1,5 @@
+import {hashString} from "shared/util/hashUtils";
+
 const colors = [
 	"#FF1744", //Red
 	"#F50057", //Pink
@@ -17,17 +19,9 @@ const colors = [
 	"#FF3D00", //Deep orange
 ];
 
+/**
+ * Gets a pseudorandom color to use for a certain contact address
+ */
 export function colorFromContact(contact: string): string {
 	return colors[Math.abs(hashString(contact)) % colors.length];
-}
-
-//https://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
-function hashString(input: string): number {
-	let hash = 0, i, chr;
-	for(i = 0; i < input.length; i++) {
-		chr = input.charCodeAt(i);
-		hash = ((hash << 5) - hash) + chr;
-		hash |= 0; // Convert to 32bit integer
-	}
-	return hash;
 }

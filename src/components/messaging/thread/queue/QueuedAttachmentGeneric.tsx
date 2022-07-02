@@ -1,18 +1,24 @@
 import React from "react";
-import styles from "./QueuedAttachmentGeneric.module.css";
-
-import {useTheme} from "@mui/material/styles";
 import {InsertDriveFileRounded} from "@mui/icons-material";
 import QueuedAttachment, {QueuedAttachmentProps} from "./QueuedAttachment";
+import {Box} from "@mui/material";
 
 export default function QueuedAttachmentGeneric(props: {queueData: QueuedAttachmentProps}) {
-	const theme = useTheme();
-	
 	return (
 		<QueuedAttachment queueData={props.queueData}>
-			<div className={styles.content} style={{backgroundColor: theme.palette.background.default}}>
+			<Box sx={{
+				width: "100%",
+				height: "100%",
+				borderRadius: 1,
+				
+				backgroundColor: "background.default",
+				
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center"
+			}}>
 				<InsertDriveFileRounded />
-			</div>
+			</Box>
 		</QueuedAttachment>
 	);
 }

@@ -24,20 +24,6 @@ The app will not build without a valid configuration, so to get started quickly,
 
 To launch a development server, run `npm start`. To build a production-optimized bundle, run `npm run build`.
 
-## File structure outline
-
-- `/public` holds static files that are copied in at build time. It also holds the app's entry point, `index.html`.
-- `/src` holds shared source files - where most of the UI logic resides.
-- `/browser` holds all browser-specific code. This includes logic for authenticating with Firebase and using AirMessage's WebSocket proxy.
-- `/windows/web` holds all web-side Windows-specific code.
-- `/windows/AirMessageWindows` is a Visual Studio project that builds to AirMessage's Windows client.
-- Builds are located in `/build` for web builds.
-
-`/browser` and `/windows/web` are aliased to the import prefix `/platform-components` at build time, depending on the build target.
-As such, components that are imported from `/src` must be available in both directories. If you're adding or modifying any files in these build-specific directories, please ensure that they are imported properly with the `/platform-components` alias.
-
-Any extra files under build-specific directories (`/browser` or `/windows/web`) that aren't used by `/src` should be under a `private` subdirectory.
-
 ## Building and running for AirMessage Connect
 
 In order to help developers get started quickly, we host a separate open-source version of AirMessage Connect at `connect-open.airmessage.org`.
@@ -45,26 +31,6 @@ The default configuration is pre-configured to authenticate and connect to this 
 Since this version of AirMessage Connect is hosted in a separate environment from official servers, you will have to be running a version of AirMessage Server that also connects to the same AirMessage Connect server.
 
 We kindly ask that you do not use AirMessage's official Connect servers with any unofficial builds of AirMessage-compatible software.
-
-## Developing and running Windows builds
-
-![AirMessage running on Windows](README/windows-app.png)
-
-AirMessage is also able to run on Windows machines, with support for direct connections like the Android app.
-
-Builds for web browsers and Windows will be kept in sync, so any changes made to files under the `/src` directory will make their way into the web app as well.
-
-On top of the dependencies for AirMessage for web, AirMessage for Windows uses
-[Visual Studio](https://visualstudio.microsoft.com/),
-the [Windows App SDK](https://docs.microsoft.com/en-us/windows/apps/windows-app-sdk/),
-and [Microsoft Edge WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/).
-
-To build and run, please make sure you have installed
-[Visual Studio](https://visualstudio.microsoft.com/downloads/),
-[prepared your PC for Windows app development](https://docs.microsoft.com/en-us/windows/apps/windows-app-sdk/set-up-your-development-environment),
-and installed [Microsoft Edge WebView2](https://go.microsoft.com/fwlink/p/?LinkId=2124703).
-
-Then, open the project in Visual Studio at `/windows/AirMessageWindows/AirMessageWindows.sln`, and run **AirMessageWindows (Package)**.
 
 ---
 

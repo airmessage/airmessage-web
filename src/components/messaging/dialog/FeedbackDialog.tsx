@@ -1,5 +1,5 @@
 import React, {useCallback} from "react";
-import {getPlatformUtils} from "shared/util/platformUtils";
+import {getPlatformUtils} from "shared/interface/platform/platformUtils";
 import {appVersion} from "shared/data/releaseInfo";
 import {
 	getActiveCommVer,

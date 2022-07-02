@@ -7,7 +7,7 @@ import {
 } from "./stateCodes";
 
 interface BaseConversation {
-	localID: number;
+	localID: LocalConversationID;
 	service: string;
 	name?: string;
 	members: string[];
@@ -19,7 +19,7 @@ interface BaseConversation {
 }
 
 export interface LinkedConversation extends BaseConversation {
-	guid: string;
+	guid: RemoteConversationID;
 	localOnly: false;
 }
 
@@ -52,8 +52,8 @@ export interface ConversationItemBase {
 	readonly localID?: number;
 	readonly serverID?: number;
 	readonly guid?: string;
-	readonly chatGuid?: string;
-	readonly chatLocalID?: number;
+	readonly chatGuid?: RemoteConversationID;
+	readonly chatLocalID?: LocalConversationID;
 	readonly date: Date;
 }
 
@@ -92,19 +92,18 @@ export interface StatusUpdate extends MessageModifier {
 	date?: Date;
 }
 
-export interface StickerItem extends MessageModifier {
+export interface ResponseMessageModifier extends MessageModifier {
 	readonly messageIndex: number;
 	readonly sender: string;
-	
+}
+
+export interface StickerItem extends ResponseMessageModifier {
 	readonly date: Date;
 	readonly dataType: string;
 	readonly data: ArrayBuffer;
 }
 
-export interface TapbackItem extends MessageModifier {
-	readonly messageIndex: number;
-	readonly sender: string;
-	
+export interface TapbackItem extends ResponseMessageModifier {
 	readonly isAddition: boolean;
 	readonly tapbackType: TapbackType;
 }
@@ -127,4 +126,35 @@ export type ConversationItem = MessageItem | ParticipantAction | ChatRenameActio
 export interface QueuedFile {
 	id: number;
 	file: File;
+}
+
+export type RemoteConversationID = string;
+export type LocalConversationID = number;
+export type MixedConversationID = RemoteConversationID | LocalConversationID;
+
+/**
+ * Gets a {@link MixedConversationID} from a conversation
+ */
+export function getConversationMixedID(conversation: Conversation): MixedConversationID {
+	if(conversation.localOnly) {
+		return conversation.localID;
+	} else {
+		return conversation.guid;
+	}
+}
+
+/**
+ * Gets a {@link MixedConversationID} from a conversation item,
+ * or undefined if the item has none
+ */
+export function getConversationItemMixedID(item: ConversationItem): MixedConversationID | undefined {
+	return item.chatGuid ?? item.chatLocalID;
+}
+
+export function isLocalConversationID(id: MixedConversationID | undefined): id is LocalConversationID {
+	return typeof id === "number";
+}
+
+export function isRemoteConversationID(id: MixedConversationID | undefined): id is RemoteConversationID {
+	return typeof id === "string";
 }

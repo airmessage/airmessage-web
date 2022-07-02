@@ -1,4 +1,4 @@
-import DataProxyImpl from "platform-components/connection/dataProxy";
+import DataProxyConnect from "shared/connection/connect/dataProxyConnect";
 import CommunicationsManager, {CommunicationsManagerListener} from "./communicationsManager";
 import ClientComm5 from "./comm5/clientComm5";
 import DataProxy from "./dataProxy";
@@ -14,7 +14,6 @@ import {
 	RemoteUpdateErrorCode
 } from "../data/stateCodes";
 import EventEmitter, {CachedEventEmitter} from "../util/eventEmitter";
-import ProgressPromise from "../util/progressPromise";
 import promiseTimeout from "../util/promiseTimeout";
 import {TransferAccumulator} from "./transferAccumulator";
 import {isCryptoPasswordSet, setCryptoPassword} from "shared/util/encryptionUtils";
@@ -24,6 +23,7 @@ import ServerUpdateData from "shared/data/serverUpdateData";
 import ResolveablePromiseTimeout from "shared/util/resolveablePromiseTimeout";
 import CallEvent from "shared/data/callEvent";
 import ConversationTarget from "shared/data/conversationTarget";
+import EmitterPromiseTuple from "shared/util/emitterPromiseTuple";
 
 export const warnCommVer: number[] = [5, 4]; //Warn users on a communications version older than this to update
 export const targetCommVer: number[] = [5, 5];
@@ -59,7 +59,7 @@ const communicationsPriorityList: ReadonlyArray<CreatesCommunicationsManager> = 
 let reconnectTimeoutID: any | undefined;
 
 let communicationsManager: CommunicationsManager | null = null;
-let dataProxy: DataProxy = new DataProxyImpl();
+let dataProxy: DataProxy = new DataProxyConnect();
 export function setDataProxy(value: DataProxy) {
 	dataProxy = value;
 }
@@ -90,11 +90,6 @@ interface PromiseExecutor<T> {
 	resolve: (value: T | PromiseLike<T>) => void;
 	reject: (reason?: any) => void;
 }
-interface ProgressPromiseExecutor<T, P> {
-	resolve: (value: T | PromiseLike<T>) => void;
-	reject: (reason?: any) => void;
-	progress: (progress: P) => void;
-}
 
 const liteConversationPromiseArray: PromiseExecutor<LinkedConversation[]>[] = []; //Retrieval of all lite conversations
 interface ThreadKey {
@@ -111,19 +106,25 @@ class FileDownloadState {
 	public get accumulatedData() {
 		return this.accumulator.data;
 	}
-	public get accumulatedDataOffset() {
-		return this.accumulator.offset;
+	public get accumulatedDataLength() {
+		return this.accumulator.length;
 	}
-	promise: ProgressPromiseExecutor<FileDownloadResult, FileDownloadProgress>;
+	readonly promise: PromiseExecutor<FileDownloadResult>;
+	readonly progressEmitter: EventEmitter<FileDownloadProgress>;
 	private readonly timeoutCallback: () => void;
 	
-	private timeoutID: any | undefined;
+	private timeoutID: number | undefined;
 	
 	public downloadFileName: string | undefined = undefined;
 	public downloadFileType: string | undefined = undefined;
 	
-	constructor(promise: ProgressPromiseExecutor<FileDownloadResult, FileDownloadProgress>, timeoutCallback: () => void) {
+	constructor(
+		promise: PromiseExecutor<FileDownloadResult>,
+		progressEmitter: EventEmitter<FileDownloadProgress>,
+		timeoutCallback: () => void
+	) {
 		this.promise = promise;
+		this.progressEmitter = progressEmitter;
 		this.timeoutCallback = timeoutCallback;
 	}
 	
@@ -142,12 +143,12 @@ class FileDownloadState {
 	}
 	
 	public finish() {
-		if(this.timeoutID) clearTimeout(this.timeoutID);
+		if(this.timeoutID !== undefined) clearTimeout(this.timeoutID);
 	}
 	
 	private refreshTimeout() {
-		if(this.timeoutID) clearTimeout(this.timeoutID);
-		this.timeoutID = setTimeout(this.timeoutCallback, requestTimeoutMillis);
+		if(this.timeoutID !== undefined) clearTimeout(this.timeoutID);
+		this.timeoutID = window.setTimeout(this.timeoutCallback, requestTimeoutMillis);
 	}
 }
 
@@ -269,7 +270,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		state.initializeAccumulator(accumulator);
 		
 		//Updating the progress
-		state.promise.progress({type: "size", value: dataLength});
+		state.progressEmitter.notify({type: "size", value: dataLength});
 	}, onFileRequestData(requestID: number, data: ArrayBuffer): void {
 		//Finding the local request
 		const state = fileDownloadStateMap.get(requestID);
@@ -279,7 +280,7 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		state.appendData(data);
 		
 		//Updating the progress
-		state.promise.progress({type: "downloaded", value: state.accumulatedDataOffset});
+		state.progressEmitter.notify({type: "downloaded", value: state.accumulatedDataLength});
 	}, onFileRequestComplete(requestID: number): void {
 		//Finding the local request
 		const state = fileDownloadStateMap.get(requestID);
@@ -327,10 +328,13 @@ const communicationsManagerListener: CommunicationsManagerListener = {
 		const promise = messageSendPromiseMap.get(requestID);
 		if(!promise) return;
 		
-		if(error) promise.reject(error);
-		else promise.resolve(undefined);
+		if(error !== undefined) {
+			promise.reject(error);
+		} else {
+			promise.resolve(true);
+		}
 		
-		chatCreatePromiseMap.delete(requestID);
+		messageSendPromiseMap.delete(requestID);
 	}, onCreateChatResponse(requestID: number, error: CreateChatErrorCode | undefined, details: string | undefined): void {
 		//Resolving pending promises
 		const promise = chatCreatePromiseMap.get(requestID);
@@ -514,22 +518,35 @@ export function sendMessage(target: ConversationTarget, message: string): Promis
 	}));
 }
 
-export function sendFile(chatGUID: ConversationTarget, file: File): ProgressPromise<any, string | number> {
-	//Failing immediately if there is no network connection
-	if(!isConnected()) return Promise.reject(messageErrorNetwork) as ProgressPromise<any, string | number>;
+export function sendFile(chatGUID: ConversationTarget, file: File): EmitterPromiseTuple<string | number, void> {
+	const emitter = new EventEmitter<string | number>();
+	
+	//Fail immediately if there is no network connection
+	if(!isConnected()) {
+		return {
+			emitter,
+			promise: Promise.reject(messageErrorNetwork)
+		};
+	}
 	
 	//Starting a new promise
-	return new ProgressPromise<any, string | number>((resolve, reject, progress) => {
+	const promise = new Promise<void>((resolve, reject) => {
 		const requestID = generateRequestID();
 		
 		//Sending the request
-		communicationsManager!.sendFile(requestID, chatGUID, file, progress)
+		communicationsManager!.sendFile(
+			requestID,
+			chatGUID,
+			file,
+			(progress) => emitter.notify(progress)
+		)
 			.then((value) => {
 				//Forwarding the value to the promise
-				progress(value);
+				emitter.notify(value);
 				
 				//Starting a timeout for the server response
-				setTimeout(reject, requestTimeoutMillis);
+				const timeoutError: MessageError = {code: MessageErrorCode.LocalNetwork};
+				setTimeout(() => reject(timeoutError), requestTimeoutMillis);
 			})
 			.catch((error) => {
 				//Forwarding the value to the promise
@@ -542,6 +559,8 @@ export function sendFile(chatGUID: ConversationTarget, file: File): ProgressProm
 		//Recording the promise
 		messageSendPromiseMap.set(requestID, {resolve: resolve, reject: reject});
 	});
+	
+	return {emitter, promise};
 }
 
 export function fetchConversations(): Promise<LinkedConversation[]> {
@@ -588,24 +607,37 @@ export function fetchThread(chatGUID: string, firstMessageID?: number): Promise<
 	}));
 }
 
-export function fetchAttachment(attachmentGUID: string): ProgressPromise<FileDownloadResult, FileDownloadProgress> {
+export function fetchAttachment(attachmentGUID: string): EmitterPromiseTuple<FileDownloadProgress, FileDownloadResult> {
+	const emitter = new EventEmitter<FileDownloadProgress>();
+	
 	//Failing immediately if there is no network connection
-	if(!isConnected()) return ProgressPromise.reject(AttachmentRequestErrorCode.Timeout) as ProgressPromise<FileDownloadResult, FileDownloadProgress>;
+	if(!isConnected()) {
+		return {
+			emitter,
+			promise: Promise.reject(AttachmentRequestErrorCode.Timeout)
+		};
+	}
 	
 	//Starting a new promise
-	return new ProgressPromise<FileDownloadResult, FileDownloadProgress>((resolve, reject, progress) => {
+	const promise = new Promise<FileDownloadResult>((resolve, reject) => {
 		const requestID = generateRequestID();
 		
 		//Sending the request
 		communicationsManager!.requestAttachmentDownload(requestID, attachmentGUID);
 		
 		//Recording the promise
-		fileDownloadStateMap.set(requestID, new FileDownloadState({resolve: resolve, reject: reject, progress: progress}, () => {
-			//Removing and rejecting the promise
-			fileDownloadStateMap.delete(requestID);
-			reject();
-		}));
+		fileDownloadStateMap.set(requestID, new FileDownloadState(
+			{resolve: resolve, reject: reject},
+			emitter,
+			() => {
+				//Removing and rejecting the promise
+				fileDownloadStateMap.delete(requestID);
+				reject();
+			}
+		));
 	});
+	
+	return {emitter, promise};
 }
 
 export function createChat(members: string[], service: string): Promise<string> {

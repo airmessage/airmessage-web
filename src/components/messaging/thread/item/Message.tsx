@@ -1,330 +1,361 @@
-import React, {CSSProperties, useCallback, useEffect, useState} from "react";
-import styles from "./Message.module.css";
-
-import * as Blocks from "../../../../data/blocks";
-import {StickerItem, TapbackItem} from "../../../../data/blocks";
+import React, {useCallback, useMemo, useState} from "react";
+import {MessageItem} from "shared/data/blocks";
 import {
-	Avatar, Button,
+	Avatar,
+	Button,
 	CircularProgress,
-	Dialog, DialogActions, DialogContent,
+	Dialog,
+	DialogActions,
+	DialogContent,
 	DialogContentText,
 	DialogTitle,
-	IconButton, PaletteColor,
-	Typography, useTheme
+	IconButton,
+	Palette,
+	Stack,
+	StackProps,
+	styled,
+	Typography
 } from "@mui/material";
-import {getDeliveryStatusTime, getTimeDivider} from "../../../../util/dateUtils";
-import {findPerson} from "../../../../util/peopleUtils";
-import {MessageErrorCode, MessageStatusCode} from "../../../../data/stateCodes";
-import MessageAttachmentDownloadable from "../attachment/MessageAttachmentDownloadable";
-import MessageAttachmentImage from "../attachment/MessageAttachmentImage";
-import {downloadArrayBuffer, downloadBlob} from "../../../../util/browserUtils";
-import MessageModifierTapbackRow from "../modifier/MessageModifierTapbackRow";
-import MessageModifierStickerStack from "../modifier/MessageModifierStickerStack";
-import {colorFromContact} from "../../../../util/avatarUtils";
-import Linkify from "linkify-react";
-import {appleServiceAppleMessage} from "../../../../data/appleConstants";
-import FileDownloadResult, {FileDisplayResult} from "shared/data/fileDownloadResult";
-import {PersonData} from "../../../../../window";
-import {Property} from "csstype";
+import {getDeliveryStatusTime, getTimeDivider} from "shared/util/dateUtils";
 import {ErrorRounded} from "@mui/icons-material";
+import {colorFromContact} from "shared/util/avatarUtils";
+import {findPerson, PersonData} from "shared/interface/people/peopleUtils";
+import {useCancellableEffect} from "shared/util/hookUtils";
+import {MessageStatusCode} from "shared/data/stateCodes";
+import MessageBubbleText from "shared/components/messaging/thread/item/bubble/MessageBubbleText";
+import {appleServiceAppleMessage} from "shared/data/appleConstants";
+import FileDownloadResult, {FileDisplayResult} from "shared/data/fileDownloadResult";
+import {downloadBlob} from "shared/util/browserUtils";
+import {getBubbleSpacing, MessageFlow, MessagePartFlow} from "shared/util/messageFlow";
+import MessageBubbleImage from "shared/components/messaging/thread/item/bubble/MessageBubbleImage";
+import MessageBubbleDownloadable from "shared/components/messaging/thread/item/bubble/MessageBubbleDownloadable";
+import {messageErrorToDisplay} from "shared/util/languageUtils";
+import {groupArray} from "shared/util/arrayUtils";
 
-const radiusLinked = "4px";
-const radiusUnlinked = "16.5px";
-
-const marginLinked = "2px";
-const marginUnlinked = "8px";
-
-const opacityUnconfirmed = 0.5;
-const opacityConfirmed = 1;
-
-//A message's position in the thread in accordance with other nearby messages
-export interface MessageFlow {
-	anchorTop: boolean;
-	anchorBottom: boolean;
-	showDivider: boolean;
+enum MessageDialog {
+	Error,
+	RawError
 }
 
-export interface MessagePartProps {
-	alignSelf: Property.AlignSelf; //Message alignment
-	color: Property.Color; //Text and action button colors
-	backgroundColor: Property.Color; //Message background color
-	opacity: Property.Opacity; //Content opacity
-	
-	borderRadius: Property.BorderRadius; //Content border radius
-	marginTop: Property.MarginTop; //Message top margin
-}
+const MessageStack = styled(Stack, {
+	shouldForwardProp: (prop) => prop !== "amLinked"
+})<{amLinked: boolean} & StackProps>(({amLinked, theme}) => ({
+	width: "100%",
+	marginTop: theme.spacing(getBubbleSpacing(amLinked))
+}));
 
-interface Props {
-	message: Blocks.MessageItem;
+export default function Message(props: {
+	message: MessageItem;
 	isGroupChat: boolean;
 	service: string;
 	flow: MessageFlow;
 	showStatus?: boolean;
-}
-
-export default function Message(props: Props) {
-	//State
-	const [attachmentDataArray, setAttachmentDataArray] = useState<FileDownloadResult[]>([]);
-	const [dialogOpen, setDialogOpen] = useState<"error" | "rawError" | undefined>(undefined);
+}) {
+	const [dialogState, setDialogState] = useState<MessageDialog | undefined>(undefined);
+	const closeDialog = useCallback(() => setDialogState(undefined), [setDialogState]);
+	const openDialogError = useCallback(() => setDialogState(MessageDialog.Error), [setDialogState]);
+	const openDialogRawError = useCallback(() => setDialogState(MessageDialog.RawError), [setDialogState]);
 	
-	function closeDialog() {
-		setDialogOpen(undefined);
-	}
-	function openDialogError() {
-		setDialogOpen("error");
-	}
-	function openDialogRawError() {
-		setDialogOpen("rawError");
-	}
-	function copyRawErrorAndClose() {
-		navigator.clipboard.writeText(props.message.error!.detail!);
+	/**
+	 * Copies the message error detail to the clipboard,
+	 * and closes the dialog
+	 */
+	const copyRawErrorAndClose = useCallback(async () => {
+		const errorDetail = props.message.error?.detail;
+		if(errorDetail !== undefined) {
+			await navigator.clipboard.writeText(errorDetail);
+		}
 		closeDialog();
-	}
+	}, [props.message, closeDialog]);
 	
-	//Getting the message information
+	const [attachmentDataMap, setAttachmentDataMap] = useState<Map<number, FileDownloadResult>>(new Map());
+	
+	//Compute the message information
 	const isOutgoing = props.message.sender === undefined;
 	const displayAvatar = !isOutgoing && !props.flow.anchorTop;
 	const displaySender = props.isGroupChat && displayAvatar;
-	const messageConfirmed = props.message.status !== MessageStatusCode.Unconfirmed;
+	const isUnconfirmed = props.message.status === MessageStatusCode.Unconfirmed;
 	
-	//Building the message style
-	const theme = useTheme();
-	let colorPalette: PaletteColor;
-	if(isOutgoing) {
-		if(props.service === appleServiceAppleMessage) colorPalette = theme.palette.messageOutgoing;
-		else colorPalette = theme.palette.messageOutgoingTextMessage;
-	} else {
-		colorPalette = theme.palette.messageIncoming;
-	}
-	const messagePartPropsBase: Partial<MessagePartProps> = {
-		alignSelf: isOutgoing ? "flex-end" : "flex-start",
-		color: colorPalette.contrastText,
-		backgroundColor: colorPalette.main,
-		opacity: messageConfirmed ? opacityConfirmed : opacityUnconfirmed
-	};
-	
-	//Splitting the modifiers for each message part
-	const stickerGroups = props.message.stickers.reduce((accumulator: {[index: number]: StickerItem[]}, item: StickerItem) => {
-		if(accumulator[item.messageIndex]) accumulator[item.messageIndex].push(item);
-		else accumulator[item.messageIndex] = [item];
-		return accumulator;
-	}, {});
-	const tapbackGroups = props.message.tapbacks.reduce((accumulator: {[index: number]: TapbackItem[]}, item: TapbackItem) => {
-		if(accumulator[item.messageIndex]) accumulator[item.messageIndex].push(item);
-		else accumulator[item.messageIndex] = [item];
-		return accumulator;
-	}, {});
-	
-	//Adding the message text
-	const components: React.ReactNode[] = [];
-	if(props.message.text) {
-		const partProps: MessagePartProps = {
-			...messagePartPropsBase,
-			borderRadius: getBorderRadius(props.flow.anchorTop, props.flow.anchorBottom || props.message.attachments.length > 0, isOutgoing),
-			marginTop: 0
-		} as MessagePartProps;
-		
-		const component = <MessageBubble key="messagetext" text={props.message.text!} index={0} partProps={partProps} stickers={stickerGroups[0]} tapbacks={tapbackGroups[0]} />;
-		
-		components.push(component);
-	}
-	
-	function onAttachmentData(attachmentIndex: number, shouldDownload: boolean, result: FileDownloadResult) {
+	const handleAttachmentData = useCallback((attachmentIndex: number, shouldDownload: boolean, result: FileDownloadResult) => {
 		if(shouldDownload) {
-			//Downloading the file
+			//Download the file
 			const attachment = props.message.attachments[attachmentIndex];
-			downloadArrayBuffer(result.data, result.downloadType ?? attachment.type, result.downloadName ?? attachment.name);
+			downloadBlob(
+				result.data,
+				result.downloadType ?? attachment.type,
+				result.downloadName ?? attachment.name
+			);
 		} else {
-			//Updating the data
-			const newArray = [...attachmentDataArray];
-			newArray[attachmentIndex] = result;
-			setAttachmentDataArray(newArray);
+			//Update the data map
+			setAttachmentDataMap((attachmentDataMap) => new Map(attachmentDataMap).set(attachmentIndex, result));
 		}
-	}
+	}, [props.message.attachments, setAttachmentDataMap]);
 	
-	function downloadData(attachmentIndex: number, data: ArrayBuffer | Blob) {
+	/**
+	 * Saves the data of an attachment to the user's downloads
+	 */
+	const downloadAttachmentFile = useCallback((attachmentIndex: number, data: Blob) => {
 		const attachment = props.message.attachments[attachmentIndex];
-		if(data instanceof ArrayBuffer) {
-			downloadArrayBuffer(data, attachment.type, attachment.name);
-		} else {
-			downloadBlob(data, attachment.type, attachment.name);
-		}
-	}
+		downloadBlob(data, attachment.type, attachment.name);
+	}, [props.message.attachments]);
 	
 	/**
 	 * Computes the file data to display to the user
 	 */
 	const getComputedFileData = useCallback((attachmentIndex: number): FileDisplayResult => {
 		const attachment = props.message.attachments[attachmentIndex];
-		const downloadData = attachmentDataArray[attachmentIndex];
+		const downloadData = attachmentDataMap.get(attachmentIndex);
 		
-		if(downloadData === undefined) {
-			return {
-				data: attachment.data,
-				name: attachment.name,
-				type: attachment.type
-			};
-		} else return {
-			data: downloadData.data,
-			name: downloadData.downloadName ?? attachment.name,
-			type: downloadData.downloadType ?? attachment.type
+		return {
+			data: downloadData?.data ?? attachment.data,
+			name: downloadData?.downloadName ?? attachment.name,
+			type: downloadData?.downloadType ?? attachment.type
 		};
-	}, [props.message.attachments, attachmentDataArray]);
+	}, [props.message.attachments, attachmentDataMap]);
 	
-	//Adding the attachments
-	for(let i = 0; i < props.message.attachments.length; i++) {
-		const index = props.message.text ? i + 1 : i;
-		const attachment = props.message.attachments[i];
+	//Load the message sender person
+	const [personData, setPersonData] = useState<PersonData | undefined>(undefined);
+	useCancellableEffect((addPromise) => {
+		if(props.message.sender === undefined) {
+			setPersonData(undefined);
+			return;
+		}
 		
-		const partProps: MessagePartProps = {
-			...messagePartPropsBase,
-			borderRadius: getBorderRadius(props.flow.anchorTop || index > 0, props.flow.anchorBottom || i + 1 < props.message.attachments.length, isOutgoing),
-			marginTop: index > 0 ? marginLinked : undefined
-		} as MessagePartProps;
-		
-		//Checking if the attachment has data
-		const attachmentData = getComputedFileData(i);
-		if(attachmentData.data !== undefined && isAttachmentPreviewable(attachmentData.type)) {
-			//Custom background color
-			const imagePartProps = {
-				...partProps,
-				backgroundColor: theme.palette.background.sidebar,
+		//Request contact data
+		addPromise(findPerson(props.message.sender))
+			.then(setPersonData, console.warn);
+	}, [props.message.sender, setPersonData]);
+	
+	//Get the color palette to use for the message
+	let colorPalette: keyof Palette;
+	if(isOutgoing) {
+		if(props.service === appleServiceAppleMessage) colorPalette = "messageOutgoing";
+		else colorPalette = "messageOutgoingTextMessage";
+	} else {
+		colorPalette = "messageIncoming";
+	}
+	
+	//Split the modifiers for each message part
+	const stickerGroups = useMemo(() =>
+			groupArray(props.message.stickers, (sticker) => sticker.messageIndex),
+		[props.message.stickers]);
+	const tapbackGroups = useMemo(() =>
+			groupArray(props.message.tapbacks, (tapback) => tapback.messageIndex),
+		[props.message.tapbacks]);
+	
+	//Build message parts
+	const messagePartsArray: React.ReactNode[] = [];
+	if(props.message.text) {
+		messagePartsArray.push(
+			<MessageBubbleText
+				key="messagetext"
+				flow={{
+					isOutgoing: isOutgoing,
+					isUnconfirmed: isUnconfirmed,
+					color: `${colorPalette}.contrastText`,
+					backgroundColor: `${colorPalette}.main`,
+					anchorTop: props.flow.anchorTop,
+					anchorBottom: props.flow.anchorBottom || props.message.attachments.length > 0
+				}}
+				text={props.message.text}
+				stickers={stickerGroups.get(0) ?? []}
+				tapbacks={tapbackGroups.get(0) ?? []} />
+		);
+	}
+	messagePartsArray.push(
+		props.message.attachments.map((attachment, i, attachmentArray) => {
+			const componentKey = attachment.guid ?? attachment.localID;
+			const messagePartIndex = props.message.text ? i + 1 : i;
+			const stickers = stickerGroups.get(messagePartIndex) ?? [];
+			const tapbacks = tapbackGroups.get(messagePartIndex) ?? [];
+			
+			//Get the attachment's data
+			const attachmentData = getComputedFileData(i);
+			
+			const flow: MessagePartFlow = {
+				isOutgoing: isOutgoing,
+				isUnconfirmed: isUnconfirmed,
+				color: `${colorPalette}.contrastText`,
+				backgroundColor: `${colorPalette}.main`,
+				anchorTop: !!props.message.text || props.flow.anchorTop || i > 0,
+				anchorBottom: props.flow.anchorBottom || i + 1 < attachmentArray.length
 			};
 			
-			if(attachmentData.type.startsWith("image/")) {
-				components.push(<MessageAttachmentImage key={attachment.guid ?? attachment.localID} data={attachmentData.data} name={attachmentData.name} type={attachmentData.type} partProps={imagePartProps} stickers={stickerGroups[index]} tapbacks={tapbackGroups[index]} />);
+			if(attachmentData.data !== undefined && isAttachmentPreviewable(attachmentData.type)) {
+				return (
+					<MessageBubbleImage
+						key={componentKey}
+						flow={flow}
+						data={attachmentData.data}
+						name={attachmentData.name}
+						type={attachmentData.type}
+						stickers={stickers}
+						tapbacks={tapbacks} />
+				);
+			} else {
+				return (
+					<MessageBubbleDownloadable
+						key={componentKey}
+						flow={flow}
+						data={attachmentData.data}
+						name={attachmentData.name}
+						type={attachmentData.type}
+						size={attachment.size}
+						guid={attachment.guid!}
+						onDataAvailable={(data) => handleAttachmentData(i, !isAttachmentPreviewable(attachmentData.type), data)}
+						onDataClicked={(data) => downloadAttachmentFile(i, data)}
+						stickers={stickers}
+						tapbacks={tapbacks} />
+				);
 			}
-		} else {
-			//Adding a generic download attachment
-			components.push(<MessageAttachmentDownloadable
-				key={attachment.guid ?? attachment.localID}
-				data={attachmentData.data}
-				name={attachmentData.name}
-				type={attachmentData.type}
-				size={attachment.size}
-				guid={attachment.guid!}
-				onDataAvailable={(data) => onAttachmentData(i, !isAttachmentPreviewable(data.downloadType ?? attachment.type), data)}
-				onDataClicked={(data) => downloadData(i, data)}
-				partProps={partProps}
-				stickers={stickerGroups[index]}
-				tapbacks={tapbackGroups[index]} />);
-		}
-	}
+		})
+	);
 	
-	const messageStyle: CSSProperties = {
-		marginTop: props.flow.anchorTop ? marginLinked : marginUnlinked,
-	};
-	
-	//Initializing state
-	const [personData, setPersonData] = useState<PersonData | undefined>();
-	useEffect(() => {
-		if(!props.message.sender) return;
+	return (<>
+		<MessageStack
+			direction="column"
+			amLinked={props.flow.anchorTop}>
+			{/* Time divider */}
+			{props.flow.showDivider && (
+				<Typography
+					paddingTop={6}
+					paddingBottom={1}
+					paddingX={1}
+					textAlign="center"
+					variant="body2"
+					color="textSecondary">
+					{getTimeDivider(props.message.date)}
+				</Typography>
+			)}
+			
+			{/* Sender name */}
+			{displaySender && (
+				<Typography
+					marginBottom={0.2}
+					marginLeft="40px"
+					variant="caption"
+					color="textSecondary">
+					{personData?.name ?? props.message.sender}
+				</Typography>
+			)}
+			
+			{/* Horizontal message split */}
+			<Stack
+				direction="row"
+				alignItems="flex-start"
+				flexShrink={0}>
+				{/* User avatar */}
+				<Avatar
+					sx={{
+						width: 32,
+						height: 32,
+						fontSize: 14
+					}}
+					style={{
+						backgroundColor: colorFromContact(props.message.sender ?? ""),
+						visibility: displayAvatar ? undefined : "hidden"
+					}}
+					src={personData?.avatar} />
+				
+				{/* Message parts */}
+				<Stack
+					sx={{marginLeft: 1}}
+					gap={getBubbleSpacing(false)}
+					flexGrow={1}
+					direction="column"
+					alignItems={isOutgoing ? "end" : "start"}>
+					{messagePartsArray}
+				</Stack>
+				
+				{/* Progress spinner */}
+				{props.message.progress !== undefined
+					&& props.message.error === undefined
+					&& (
+						<CircularProgress
+							sx={{
+								marginX: 1,
+								marginY: "1px"
+							}}
+							size={24}
+							variant={props.message.progress === -1 ? "indeterminate" : "determinate"}
+							value={props.message.progress} />
+					)}
+				
+				{/* Error indicator	*/}
+				{props.message.error !== undefined && (
+					<IconButton
+						sx={{margin: "1px"}}
+						color="error"
+						size="small"
+						onClick={openDialogError}>
+						<ErrorRounded />
+					</IconButton>
+				)}
+			</Stack>
+			
+			{/* Message status */}
+			{props.showStatus && (
+				<Typography
+					marginTop={0.5}
+					textAlign="end"
+					variant="caption"
+					color="textSecondary">
+					{getStatusString(props.message)}
+				</Typography>
+			)}
+		</MessageStack>
 		
-		//Requesting contact data
-		findPerson(props.message.sender).then(setPersonData, console.warn);
-	}, [props.message.sender]);
-	
-	//Building and returning the component
-	return (
-		<div className={styles.message} style={messageStyle}>
-			{props.flow.showDivider && <Typography className={styles.separator} variant="body2" color="textSecondary">{getTimeDivider(props.message.date)}</Typography>}
-			{displaySender && <Typography className={styles.labelSender} variant="caption" color="textSecondary">{personData?.name ?? props.message.sender}</Typography>}
-			<div className={styles.messageSplit}>
-				{<Avatar className={styles.avatar} src={personData?.avatar} style={displayAvatar ? {visibility: "visible", backgroundColor: colorFromContact(props.message.sender ?? "")} : {visibility: "hidden"}} />}
-				<div className={styles.messageParts}>
-					{components}
-				</div>
-				{props.message.progress && !props.message.error && <CircularProgress className={styles.messageProgress} size={24} variant={props.message.progress === -1 ? "indeterminate" : "determinate"} value={props.message.progress} />}
-				{props.message.error && <IconButton className={styles.messageError} style={{color: theme.palette.error.light}} size="small" onClick={openDialogError}>
-					<ErrorRounded />
-				</IconButton>}
-				<Dialog open={dialogOpen === "error"} onClose={closeDialog}>
-					<DialogTitle>Your message could not be sent</DialogTitle>
-					{props.message.error !== undefined && <React.Fragment>
-						<DialogContent>
-							<DialogContentText>{messageErrorToUserString(props.message.error!.code)}</DialogContentText>
-						</DialogContent>
-						<DialogActions>
-							{props.message.error!.detail && <Button onClick={openDialogRawError} color="primary">
-								Error details
-							</Button>}
-							<Button onClick={closeDialog} color="primary" autoFocus>
-								Dismiss
-							</Button>
-						</DialogActions>
-					</React.Fragment>}
-				</Dialog>
-				<Dialog open={dialogOpen === "rawError"} onClose={closeDialog}>
-					<DialogTitle>Error details</DialogTitle>
-					{props.message.error !== undefined && <React.Fragment>
-						<DialogContent>
-							<DialogContentText className={styles.rawErrorText}>{props.message.error.detail!}</DialogContentText>
-						</DialogContent>
-						<DialogActions>
-							<Button onClick={copyRawErrorAndClose} color="primary">
-								Copy to clipboard
-							</Button>
-							<Button onClick={closeDialog} color="primary" autoFocus>
-								Dismiss
-							</Button>
-						</DialogActions>
-					</React.Fragment>}
-				</Dialog>
-			</div>
-			{props.showStatus && <Typography className={styles.labelStatus} variant="caption" color="textSecondary">{getStatusString(props.message)}</Typography>}
-		</div>
-	);
+		{/* Message error dialog */}
+		<Dialog open={dialogState === MessageDialog.Error} onClose={closeDialog}>
+			<DialogTitle>Your message could not be sent</DialogTitle>
+			{props.message.error !== undefined && <React.Fragment>
+				<DialogContent>
+					<DialogContentText>
+						{messageErrorToDisplay(props.message.error!.code)}
+					</DialogContentText>
+				</DialogContent>
+				
+				<DialogActions>
+					{props.message.error!.detail !== undefined && (
+						<Button onClick={openDialogRawError} color="primary">
+							Error details
+						</Button>
+					)}
+					<Button onClick={closeDialog} color="primary" autoFocus>
+						Dismiss
+					</Button>
+				</DialogActions>
+			</React.Fragment>}
+		</Dialog>
+		
+		{/* Message raw error dialog */}
+		<Dialog open={dialogState === MessageDialog.RawError} onClose={closeDialog}>
+			<DialogTitle>Error details</DialogTitle>
+			{props.message.error !== undefined && <React.Fragment>
+				<DialogContent>
+					<DialogContentText fontFamily="monospace">
+						{props.message.error.detail!}
+					</DialogContentText>
+				</DialogContent>
+				
+				<DialogActions>
+					<Button onClick={copyRawErrorAndClose} color="primary">
+						Copy to clipboard
+					</Button>
+					<Button onClick={closeDialog} color="primary" autoFocus>
+						Dismiss
+					</Button>
+				</DialogActions>
+			</React.Fragment>}
+		</Dialog>
+	</>);
 }
 
-//A standard message bubble with text
-function MessageBubble(props: {text: string, index: number, partProps: MessagePartProps, tapbacks?: TapbackItem[], stickers?: StickerItem[]}) {
-	return (
-		<DecorativeMessageBubble element="div" className={styles.textBubble} style={props.partProps} tapbacks={props.tapbacks} stickers={props.stickers}>
-			<Linkify options={{target: "_blank"}}>{props.text}</Linkify>
-		</DecorativeMessageBubble>
-	);
-	
-	/* return <div className={styles.textBubble + (props.tapbacks ? " " + styles.tapbackMargin : "")} style={props.partProps}>
-		{props.stickers && <MessageModifierStickerStack modifiers={props.stickers} />}
-		{props.tapbacks && <MessageModifierTapbackRow modifiers={props.tapbacks} />}
-		{props.text}
-	</div> */
-}
-
-export function DecorativeMessageBubble(props: {element: React.ElementType, className?: string, style?: React.CSSProperties, tapbacks?: TapbackItem[], stickers?: StickerItem[], children: React.ReactNode, [x: string]: any}) {
-	const {className, style, tapbacks, stickers, children, ...rest} = props;
-	
-	const [isPeeking, setPeeking] = useState(false);
-	
-	function enablePeeking() {
-		setPeeking(true);
-	}
-	
-	function disablePeeking() {
-		setPeeking(false);
-	}
-	
-	return (
-		<props.element className={(props.className ?? "") + (props.tapbacks ? " " + styles.tapbackMargin : "")} style={props.style} onMouseEnter={enablePeeking} onMouseLeave={disablePeeking} {...rest}>
-			{props.stickers && <MessageModifierStickerStack modifiers={props.stickers} reveal={isPeeking} />}
-			{props.tapbacks && <MessageModifierTapbackRow modifiers={props.tapbacks} />}
-			{props.children}
-		</props.element>
-	);
-}
-
-function getBorderRadius(anchorTop: boolean, anchorBottom: boolean, isOutgoing: boolean): string {
-	const radiusTop = anchorTop ? radiusLinked : radiusUnlinked;
-	const radiusBottom = anchorBottom ? radiusLinked : radiusUnlinked;
-	
-	if(isOutgoing) {
-		return `${radiusUnlinked} ${radiusTop} ${radiusBottom} ${radiusUnlinked}`;
-	} else {
-		return `${radiusTop} ${radiusUnlinked} ${radiusUnlinked} ${radiusBottom}`;
-	}
-}
-
-function getStatusString(message: Blocks.MessageItem): string | undefined {
+/**
+ * Gets a human-readable status string for the given message item,
+ * or undefined if no status string should be displayed
+ */
+function getStatusString(message: MessageItem): string | undefined {
 	if(message.status === MessageStatusCode.Delivered) {
 		return "Delivered";
 	} else if(message.status === MessageStatusCode.Read) {
@@ -334,40 +365,10 @@ function getStatusString(message: Blocks.MessageItem): string | undefined {
 	}
 }
 
+/**
+ * Gets whether the attachment of the specified MIME type
+ * can be previewed in this app
+ */
 function isAttachmentPreviewable(mimeType: string): boolean {
-	//return mimeType.startsWith("image/") || mimeType.startsWith("video/") || mimeType.startsWith("audio/");
 	return mimeType.startsWith("image/");
-}
-
-function messageErrorToUserString(error: MessageErrorCode): string {
-	switch(error) {
-		case MessageErrorCode.LocalInvalidContent:
-			return "The selected content is unavailable";
-		case MessageErrorCode.LocalTooLarge:
-			return "The selected content is too large to send";
-		case MessageErrorCode.LocalIO:
-			return "Couldn't process selected content";
-		case MessageErrorCode.LocalNetwork:
-			return "Couldn't connect to AirMessage server";
-		case MessageErrorCode.LocalInternalError:
-			return "An internal error occurred";
-		case MessageErrorCode.ServerUnknown:
-			return "An unknown external error occurred";
-		case MessageErrorCode.ServerExternal:
-			return "An external error occurred";
-		case MessageErrorCode.ServerBadRequest:
-			return "An error occurred while sending this message";
-		case MessageErrorCode.ServerUnauthorized:
-			return "AirMessage server isn't allowed to send messages";
-		case MessageErrorCode.ServerTimeout:
-			return "This message couldn't be delivered properly";
-		case MessageErrorCode.AppleNoConversation:
-			return "This conversation isn't available";
-		case MessageErrorCode.AppleNetwork:
-			return "Couldn't connect to iMessage server";
-		case MessageErrorCode.AppleUnregistered:
-			return "This recipient is not registered with iMessage";
-		default:
-			return "An unknown error occurred";
-	}
 }

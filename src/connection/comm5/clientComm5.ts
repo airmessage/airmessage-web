@@ -19,7 +19,7 @@ export default class ClientComm5 extends CommunicationsManager {
 	private protocolManagerVer: number | undefined;
 	
 	//State
-	private handshakeTimeout : any | undefined;
+	private handshakeTimeout : ReturnType<typeof setTimeout> | undefined;
 	
 	protected handleOpen(): void {
 		//Starting the handshake timeout

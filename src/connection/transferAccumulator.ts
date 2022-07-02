@@ -2,37 +2,31 @@ import pako from "pako";
 
 export abstract class TransferAccumulator {
 	public abstract push(data: ArrayBuffer): void;
-	public abstract get data(): ArrayBuffer;
-	public abstract get offset(): number;
+	public abstract get data(): Blob;
+	public abstract get length(): number;
 }
 
 export class BasicAccumulator extends TransferAccumulator {
-	private readonly accumulatedData: Uint8Array | undefined;
-	private accumulatedDataOffset: number = 0;
-	
-	
-	constructor(length: number) {
-		super();
-		this.accumulatedData = new Uint8Array(length);
-	}
+	private readonly accumulatedData: ArrayBuffer[] = [];
+	private dataLength = 0;
 	
 	push(data: ArrayBuffer) {
 		//Adding the data to the array
-		this.accumulatedData!.set(new Uint8Array(data), this.accumulatedDataOffset);
-		this.accumulatedDataOffset += data.byteLength;
+		this.accumulatedData.push(data);
+		this.dataLength += data.byteLength;
 	}
 	
 	get data() {
-		return this.accumulatedData!;
+		return new Blob(this.accumulatedData);
 	}
 	
-	get offset() {
-		return this.accumulatedDataOffset;
+	get length() {
+		return this.dataLength;
 	}
 }
 
 export class InflatorAccumulator extends TransferAccumulator {
-	private inflator = new pako.Inflate();
+	private readonly inflator = new pako.Inflate();
 	private accumulatedDataOffset: number = 0;
 	
 	push(data: ArrayBuffer) {
@@ -43,10 +37,10 @@ export class InflatorAccumulator extends TransferAccumulator {
 	
 	get data() {
 		if(this.inflator.err) throw this.inflator.err;
-		return (this.inflator.result as Uint8Array).buffer;
+		return new Blob([this.inflator.result as Uint8Array]);
 	}
 	
-	get offset() {
+	get length() {
 		return this.accumulatedDataOffset;
 	}
 }

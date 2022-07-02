@@ -11,7 +11,7 @@ module.exports = (env) => ({
 	entry: "./src/index.tsx",
 	target: "web",
 	mode: env.WEBPACK_SERVE ? "development" : "production",
-	devtool: env.WEBPACK_SERVE ? "cheap-source-map" : (env.windows ? "inline-source-map" : "source-map"),
+	devtool: env.WEBPACK_SERVE ? "cheap-source-map" : "source-map",
 	devServer: {
 		static: {
 			directory: path.join(__dirname, "public")
@@ -83,17 +83,11 @@ module.exports = (env) => ({
 			".js"
 		],
 		alias: {
-			"shared": path.resolve(__dirname, "src"),
-			"platform-components": path.resolve(__dirname, env.windows ? "windows/web" : "browser")
+			"shared": path.resolve(__dirname, "src")
 		}
 	},
 	optimization: {
 		usedExports: true
-	},
-	externals: {
-		chrome: {
-			root: ["window", "chrome"],
-		},
 	},
 	plugins: [
 		new ForkTsCheckerWebpackPlugin(),
@@ -108,10 +102,9 @@ module.exports = (env) => ({
 		}),
 		new webpack.DefinePlugin({
 			"WPEnv.ENVIRONMENT": JSON.stringify(env.WEBPACK_SERVE ? "development" : "production"),
-			"WPEnv.IS_WEB": !env.windows,
 			"WPEnv.PACKAGE_VERSION": JSON.stringify(process.env.npm_package_version),
 			"WPEnv.RELEASE_HASH": "\"undefined\"",
 			"WPEnv.BUILD_DATE": Date.now()
 		}),
-	].concat(!env.WEBPACK_SERVE && !env.windows ? new WorkboxPlugin.GenerateSW() : [])
+	].concat(!env.WEBPACK_SERVE ? new WorkboxPlugin.GenerateSW() : [])
 });

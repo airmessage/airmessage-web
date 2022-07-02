@@ -29,12 +29,12 @@ import {
 	ParticipantActionType,
 	TapbackType
 } from "../../data/stateCodes";
-import {arrayBufferToHex} from "../../util/fileUtils";
 import SparkMD5 from "spark-md5";
 import {InflatorAccumulator} from "../transferAccumulator";
 import {encryptData, isCryptoPasswordAvailable} from "shared/util/encryptionUtils";
 import {generateConversationLocalID} from "shared/util/conversationUtils";
 import ConversationTarget from "shared/data/conversationTarget";
+import {arrayBufferToHex} from "shared/util/encodingUtils";
 
 
 const attachmentChunkSize = 2 * 1024 * 1024; //2 MiB

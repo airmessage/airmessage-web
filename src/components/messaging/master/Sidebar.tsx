@@ -1,15 +1,12 @@
 import React, {useCallback, useContext, useEffect, useState} from "react";
 import styles from "./Sidebar.module.css";
-
 import AirMessageLogo from "../../logo/AirMessageLogo";
-import {IconButton, List, Menu, MenuItem, Skeleton, Toolbar} from "@mui/material";
-
+import {Box, Collapse, IconButton, List, Menu, MenuItem, Stack, Toolbar} from "@mui/material";
 import ListConversation from "./ListConversation";
 import {Conversation} from "../../../data/blocks";
-import {Flipped, Flipper} from "react-flip-toolkit";
 import ConnectionBanner from "./ConnectionBanner";
 import {ConnectionErrorCode, FaceTimeLinkErrorCode} from "../../../data/stateCodes";
-import {AddRounded, MoreVertRounded, Update, SyncProblem, VideoCallOutlined} from "@mui/icons-material";
+import {AddRounded, MoreVertRounded, SyncProblem, Update, VideoCallOutlined} from "@mui/icons-material";
 import ChangelogDialog from "../dialog/ChangelogDialog";
 import FeedbackDialog from "shared/components/messaging/dialog/FeedbackDialog";
 import SignOutDialog from "shared/components/messaging/dialog/SignOutDialog";
@@ -20,8 +17,10 @@ import {RemoteUpdateListener} from "../../../connection/connectionManager";
 import SidebarBanner from "shared/components/messaging/master/SidebarBanner";
 import {SnackbarContext} from "shared/components/control/SnackbarProvider";
 import FaceTimeLinkDialog from "shared/components/messaging/dialog/FaceTimeLinkDialog";
-import {useIsFaceTimeSupported} from "shared/util/hookUtils";
+import {useIsFaceTimeSupported, useNonNullableCacheState} from "shared/util/hookUtils";
 import UpdateRequiredDialog from "../dialog/UpdateRequiredDialog";
+import ConversationSkeleton from "shared/components/skeleton/ConversationSkeleton";
+import {TransitionGroup} from "react-transition-group";
 
 export default function Sidebar(props: {
 	conversations: Conversation[] | undefined;
@@ -33,7 +32,15 @@ export default function Sidebar(props: {
 }) {
 	const displaySnackbar = useContext(SnackbarContext);
 	
+	//The anchor element for the overflow menu
 	const [overflowMenu, setOverflowMenu] = useState<HTMLElement | null>(null);
+	useEffect(() => {
+		//Don't hold dangling references to DOM elements
+		return () => {
+			setOverflowMenu(null);
+		};
+	}, [setOverflowMenu]);
+	
 	const openOverflowMenu = useCallback((event: React.MouseEvent<HTMLElement>) => {
 		setOverflowMenu(event.currentTarget);
 	}, [setOverflowMenu]);
@@ -49,20 +56,19 @@ export default function Sidebar(props: {
 	const [faceTimeLinkDialog, setFaceTimeLinkDialog] = useState<string | undefined>(undefined);
 	
 	//Keep track of remote updates
-	const [remoteUpdate, setRemoteUpdate] = useState<ServerUpdateData | undefined>(undefined);
+	const [remoteUpdate, remoteUpdateCache, setRemoteUpdate] = useNonNullableCacheState<ServerUpdateData | undefined>(
+		undefined,
+		{id: 0, notes: "", protocolRequirement: [], remoteInstallable: false, version: ""}
+	);
 	useEffect(() => {
 		const listener: RemoteUpdateListener = {onUpdate: setRemoteUpdate};
 		ConnectionManager.addRemoteUpdateListener(listener);
-		return () => ConnectionManager.removeRemoteUpdateListener(listener);
+		
+		return () => {
+			ConnectionManager.removeRemoteUpdateListener(listener);
+			setRemoteUpdate(undefined);
+		};
 	}, [setRemoteUpdate]);
-	const [remoteUpdateCache, setRemoteUpdateCache] = useState<ServerUpdateData>({
-		id: 0, notes: "", protocolRequirement: [], remoteInstallable: false, version: ""
-	});
-	useEffect(() => {
-		if(remoteUpdate !== undefined) {
-			setRemoteUpdateCache(remoteUpdate);
-		}
-	}, [remoteUpdate, setRemoteUpdateCache]);
 	
 	//Keep track of whether FaceTime is supported
 	const isFaceTimeSupported = useIsFaceTimeSupported();
@@ -92,7 +98,7 @@ export default function Sidebar(props: {
 	}, [setFaceTimeLinkLoading, displaySnackbar]);
 	
 	return (
-		<div className={styles.sidebar}>
+		<Stack height="100%">
 			<ChangelogDialog isOpen={isChangelogDialog} onDismiss={hideChangelogDialog} />
 			<FeedbackDialog isOpen={isFeedbackDialog} onDismiss={hideFeedbackDialog} />
 			<SignOutDialog isOpen={isSignOutDialog} onDismiss={hideSignOutDialog} />
@@ -100,50 +106,55 @@ export default function Sidebar(props: {
 			<UpdateRequiredDialog isOpen={isUpdateRequiredDialog} onDismiss={hideUpdateRequiredDialog} />
 			<FaceTimeLinkDialog isOpen={faceTimeLinkDialog !== undefined} onDismiss={() => setFaceTimeLinkDialog(undefined)} link={faceTimeLinkDialog ?? ""} />
 			
-			<Toolbar className={styles.sidebarToolbar}>
+			<Toolbar>
 				<AirMessageLogo />
-				<div style={{flexGrow: 1}} />
-				{isFaceTimeSupported && (
+				
+				<Box sx={{flexGrow: 1}} />
+				
+				<Box sx={{display: "flex"}}>
+					{isFaceTimeSupported && (
+						<IconButton
+							size="large"
+							onClick={createFaceTimeLink}
+							disabled={isFaceTimeLinkLoading}>
+							<VideoCallOutlined />
+						</IconButton>
+					)}
+					
 					<IconButton
 						size="large"
-						onClick={createFaceTimeLink}
-						disabled={isFaceTimeLinkLoading}>
-						<VideoCallOutlined />
+						onClick={props.onCreateSelected}
+						disabled={props.conversations === undefined}>
+						<AddRounded />
 					</IconButton>
-				)}
-				
-				<IconButton
-					size="large"
-					onClick={props.onCreateSelected}
-					disabled={props.conversations === undefined}>
-					<AddRounded />
-				</IconButton>
-				
-				<IconButton
-					aria-haspopup="true"
-					size="large"
-					onClick={openOverflowMenu}
-					disabled={props.conversations === undefined}>
-					<MoreVertRounded />
-				</IconButton>
-				
-				<Menu
-					anchorEl={overflowMenu}
-					anchorOrigin={{
-						vertical: "top",
-						horizontal: "right",
-					}}
-					keepMounted
-					transformOrigin={{
-						vertical: "top",
-						horizontal: "right",
-					}}
-					open={!!overflowMenu}
-					onClose={closeOverflowMenu}>
-					<MenuItem onClick={showChangelogDialog}>What&apos;s new</MenuItem>
-					<MenuItem onClick={showFeedbackDialog}>Help and feedback</MenuItem>
-					<MenuItem onClick={showSignOutDialog}>Sign out</MenuItem>
-				</Menu>
+					
+					<IconButton
+						aria-haspopup="true"
+						size="large"
+						edge="end"
+						onClick={openOverflowMenu}
+						disabled={props.conversations === undefined}>
+						<MoreVertRounded />
+					</IconButton>
+					
+					<Menu
+						anchorEl={overflowMenu}
+						anchorOrigin={{
+							vertical: "top",
+							horizontal: "right",
+						}}
+						keepMounted
+						transformOrigin={{
+							vertical: "top",
+							horizontal: "right",
+						}}
+						open={!!overflowMenu}
+						onClose={closeOverflowMenu}>
+						<MenuItem onClick={showChangelogDialog}>What&apos;s new</MenuItem>
+						<MenuItem onClick={showFeedbackDialog}>Help and feedback</MenuItem>
+						<MenuItem onClick={showSignOutDialog}>Sign out</MenuItem>
+					</Menu>
+				</Box>
 			</Toolbar>
 			
 			{props.errorBanner !== undefined && <ConnectionBanner error={props.errorBanner} /> }
@@ -165,58 +176,48 @@ export default function Sidebar(props: {
 			)}
 			
 			{props.conversations !== undefined ? (
-				<Flipper
-					className={styles.sidebarList}
-					flipKey={props.conversations.map(conversation => conversation.localID).join(" ")}>
-					<List>
-						{props.conversations.map((conversation) =>
-							<Flipped key={conversation.localID} flipId={conversation.localID}>
-								{flippedProps => (
-									<ListConversation
-										conversation={conversation}
-										selected={conversation.localID === props.selectedConversation}
-										highlighted={conversation.unreadMessages}
-										onSelected={() => props.onConversationSelected(conversation.localID)}
-										flippedProps={flippedProps as Record<string, unknown>} />
-								)}
-							</Flipped>
-						)}
-					</List>
-				</Flipper>
+				<List className={styles.sidebarList}>
+					<TransitionGroup>
+						{props.conversations.map((conversation) => (
+							<Collapse key={conversation.localID}>
+								<ListConversation
+									conversation={conversation}
+									selected={conversation.localID === props.selectedConversation}
+									highlighted={conversation.unreadMessages}
+									onSelected={() => props.onConversationSelected(conversation.localID)} />
+							</Collapse>
+						))}
+					</TransitionGroup>
+				</List>
 			) : (
-				<div className={styles.sidebarListLoading}>
+				<Box className={styles.sidebarListLoading}>
 					{[...Array(16)].map((element, index) => <ConversationSkeleton key={`skeleton-${index}`} />)}
-				</div>
+				</Box>
 			)}
-		</div>
-	);
-}
-
-function ConversationSkeleton() {
-	return (
-		<div className={styles.skeletonMain}>
-			<Skeleton variant="circular" width={40} height={40} animation={false} />
-			<div className={styles.skeletonText}>
-				<Skeleton variant="text" animation={false} />
-				<Skeleton variant="text" animation={false} />
-			</div>
-		</div>
+		</Stack>
 	);
 }
 
 /**
- * Creates a toggleable state for a sidebar dialog,
- * which also hides the menu on activation
+ * Creates a toggleable state for a sidebar dialog
+ * @param openCallback A callback invoked when the menu is opened
  */
-function useSidebarDialog(hideMenu?: VoidFunction): [boolean, VoidFunction, VoidFunction] {
+function useSidebarDialog(openCallback?: VoidFunction): [boolean, VoidFunction, VoidFunction] {
 	const [showDialog, setShowDialog] = useState(false);
 	
 	const openDialog = useCallback(() => {
-		hideMenu?.();
+		openCallback?.();
 		setShowDialog(true);
-	}, [hideMenu, setShowDialog]);
+	}, [openCallback, setShowDialog]);
 	const closeDialog = useCallback(() => {
 		setShowDialog(false);
+	}, [setShowDialog]);
+	
+	useEffect(() => {
+		//Close the dialog on unmount
+		return () => {
+			setShowDialog(false);
+		};
 	}, [setShowDialog]);
 	
 	return [showDialog, openDialog, closeDialog];

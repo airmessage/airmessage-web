@@ -1,8 +1,10 @@
 import React from "react";
-import styles from "./SidebarBanner.module.css";
+import {Box, Button, Paper, Stack, Typography} from "@mui/material";
 
-import {Button, Paper, Typography} from "@mui/material";
-
+/**
+ * A banner element that has an icon, a message,
+ * and an optional button
+ */
 export default function SidebarBanner(props: {
 	icon: React.ReactNode,
 	message: string,
@@ -10,17 +12,34 @@ export default function SidebarBanner(props: {
 	onClickButton?: VoidFunction
 }) {
 	return (
-		<Paper variant="outlined" className={props.button != undefined ? styles.rootButton : styles.rootText}>
-			<div className={styles.icon}>
+		<Paper
+			sx={{
+				display: "flex",
+				flexDirection: "row",
+				margin: 1,
+				paddingX: 1,
+				paddingTop: 2,
+				paddingBottom: props.button ? 1 : 2
+			}}
+			variant="outlined">
+			<Box marginLeft={1} marginRight={2}>
 				{props.icon}
-			</div>
+			</Box>
 			
-			<div className={styles.stack}>
+			<Stack
+				flexGrow={1}
+				gap={1}
+				direction="column">
 				<Typography display="inline">{props.message}</Typography>
 				{props.button !== undefined && (
-					<Button color="primary" className={styles.button} onClick={props.onClickButton}>{props.button}</Button>
+					<Button
+						sx={{alignSelf: "flex-end"}}
+						color="primary"
+						onClick={props.onClickButton}>
+						{props.button}
+					</Button>
 				)}
-			</div>
+			</Stack>
 		</Paper>
 	);
 }

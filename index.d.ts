@@ -20,7 +20,6 @@ declare module "*.md" {
 
 declare const WPEnv: {
 	ENVIRONMENT: "production" | "development";
-	IS_WEB: boolean;
 	PACKAGE_VERSION: string;
 	RELEASE_HASH: string | undefined;
 	BUILD_DATE: number;
