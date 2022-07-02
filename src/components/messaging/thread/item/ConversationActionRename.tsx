@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {ChatRenameAction} from "../../../../data/blocks";
-import {findPerson} from "../../../../util/peopleUtils";
+import {findPerson} from "../../../../interface/people/peopleUtils";
 import ConversationActionLine from "./ConversationActionLine";
 
 export default function ConversationActionRename(props: {action: ChatRenameAction}) {
@@ -16,11 +16,15 @@ export default function ConversationActionRename(props: {action: ChatRenameActio
 				if(contact.name !== undefined) {
 					setUserName(contact.name);
 				}
-			});
+			}).catch(console.warn);
 		}
 	}, [props.action.user]);
 	
-	return <ConversationActionLine message={generateMessage(userName, props.action.chatName)} />;
+	return (
+		<ConversationActionLine>
+			{generateMessage(userName, props.action.chatName)}
+		</ConversationActionLine>
+	);
 }
 
 function generateMessage(user: string | undefined, title: string | undefined): string {

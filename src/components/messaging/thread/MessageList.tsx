@@ -1,12 +1,9 @@
 import React from "react";
-import styles from "./MessageList.module.css";
-
-import {CircularProgress} from "@mui/material";
+import {Box, CircularProgress, Stack} from "@mui/material";
 import Message from "./item/Message";
-import * as ConversationUtils from "../../../util/conversationUtils";
-import {Conversation, ConversationItem} from "../../../data/blocks";
 import {getMessageFlow} from "../../../util/conversationUtils";
-import {MessageStatusCode} from "../../../data/stateCodes";
+import {Conversation, ConversationItem} from "../../../data/blocks";
+import {ConversationItemType, MessageStatusCode} from "../../../data/stateCodes";
 import EventEmitter from "../../../util/eventEmitter";
 import ConversationActionParticipant from "./item/ConversationActionParticipant";
 import ConversationActionRename from "./item/ConversationActionRename";
@@ -14,7 +11,7 @@ import ConversationActionRename from "./item/ConversationActionRename";
 interface Props {
 	conversation: Conversation;
 	items: ConversationItem[];
-	messageSubmitEmitter: EventEmitter<any>;
+	messageSubmitEmitter: EventEmitter<void>;
 	onRequestHistory: () => void;
 	showHistoryLoader?: boolean;
 }
@@ -55,33 +52,72 @@ export default class MessageList extends React.Component<Props, State> {
 	
 	render() {
 		//The latest outgoing item with the "read" status
-		const readTargetIndex = this.props.items.findIndex((item) => ConversationUtils.isConversationItemMessage(item) && !item.sender && item.status === MessageStatusCode.Read);
+		const readTargetIndex = this.props.items.findIndex((item) =>
+			item.itemType === ConversationItemType.Message
+			&& item.sender === undefined
+			&& item.status === MessageStatusCode.Read);
+		
 		//The latest outgoing item with the "delivered" status, no further than the latest item with the "read" status
-		const deliveredTargetIndex = this.props.items.slice(0, readTargetIndex !== -1 ? readTargetIndex : undefined).findIndex((item) => ConversationUtils.isConversationItemMessage(item) && !item.sender && item.status === MessageStatusCode.Delivered);
+		const deliveredTargetIndex = this.props.items
+			.slice(0, readTargetIndex === -1 ? undefined : readTargetIndex)
+			.findIndex((item) =>
+				item.itemType === ConversationItemType.Message
+				&& item.sender === undefined
+				&& item.status === MessageStatusCode.Delivered);
 		
 		return (
-			<div className={styles.scroll} ref={this.scrollRef} onScroll={this.handleScroll}>
-				<div className={styles.list}>
+			<Box sx={{
+				width: "100%",
+				flexGrow: 1,
+				minHeight: 0,
+				
+				padding: 2,
+				overflowX: "hidden",
+				overflowY: "scroll",
+				scrollBehavior: "smooth"
+			}} ref={this.scrollRef} onScroll={this.handleScroll}>
+				<Stack sx={{
+					width: "100%",
+					maxWidth: "1000px",
+					marginX: "auto"
+				}} direction="column-reverse">
 					{this.props.items.map((item, i, array) => {
-						if(ConversationUtils.isConversationItemMessage(item)) {
-							return <Message key={(item.localID ?? item.guid)} message={item} isGroupChat={this.props.conversation.members.length > 1} service={this.props.conversation.service} flow={getMessageFlow(item, array[i + 1], array[i - 1])} showStatus={i === readTargetIndex || i === deliveredTargetIndex} />;
-						} else if(ConversationUtils.isConversationItemParticipantAction(item)) {
-							return <ConversationActionParticipant key={(item.localID ?? item.guid)} action={item} />;
-						} else if(ConversationUtils.isConversationItemChatRenameAction(item)) {
-							return <ConversationActionRename key={(item.localID ?? item.guid)} action={item} />;
+						if(item.itemType === ConversationItemType.Message) {
+							return (
+								<Message
+									key={(item.localID ?? item.guid)}
+									message={item}
+									isGroupChat={this.props.conversation.members.length > 1}
+									service={this.props.conversation.service}
+									flow={getMessageFlow(item, array[i + 1], array[i - 1])}
+									showStatus={i === readTargetIndex || i === deliveredTargetIndex} />
+							);
+						} else if(item.itemType === ConversationItemType.ParticipantAction) {
+							return (
+								<ConversationActionParticipant
+									key={(item.localID ?? item.guid)}
+									action={item} />
+							);
+						} else if(item.itemType === ConversationItemType.ChatRenameAction) {
+							return (
+								<ConversationActionRename
+									key={(item.localID ?? item.guid)}
+									action={item} />
+							);
 						} else {
 							return null;
 						}
 					})}
+					
 					{this.props.showHistoryLoader && <HistoryLoadingProgress key="static-historyloader" />}
-				</div>
-			</div>
+				</Stack>
+			</Box>
 		);
 	}
 	
 	componentDidMount() {
 		//Registering the submit listener
-		this.props.messageSubmitEmitter.registerListener(this.onMessageSubmit);
+		this.props.messageSubmitEmitter.subscribe(this.onMessageSubmit);
 		
 		//Scrolling to the bottom of the list
 		this.scrollToBottom(true);
@@ -111,15 +147,15 @@ export default class MessageList extends React.Component<Props, State> {
 		
 		//Updating the submit emitter
 		if(this.props.messageSubmitEmitter !== prevProps.messageSubmitEmitter) {
-			prevProps.messageSubmitEmitter.unregisterListener(this.onMessageSubmit);
-			this.props.messageSubmitEmitter.registerListener(this.onMessageSubmit);
+			prevProps.messageSubmitEmitter.unsubscribe(this.onMessageSubmit);
+			this.props.messageSubmitEmitter.subscribe(this.onMessageSubmit);
 		}
 	}
 	
 	
 	componentWillUnmount() {
 		//Unregistering the submit listener
-		this.props.messageSubmitEmitter.unregisterListener(this.onMessageSubmit);
+		this.props.messageSubmitEmitter.unsubscribe(this.onMessageSubmit);
 	}
 	
 	private readonly onMessageSubmit = () => {
@@ -150,8 +186,12 @@ export default class MessageList extends React.Component<Props, State> {
 
 function HistoryLoadingProgress() {
 	return (
-		<div className={styles.progressContainer}>
+		<Box sx={{
+			display: "flex",
+			alignItems: "center",
+			justifyContent: "center"
+		}}>
 			<CircularProgress />
-		</div>
+		</Box>
 	);
 }

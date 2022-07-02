@@ -1,8 +1,5 @@
 import React from "react";
-import styles from "./DetailFrame.module.css";
-
-import {IconButton, Toolbar, Typography} from "@mui/material";
-import SoftDivider from "../../SoftDivider";
+import {Divider, IconButton, Stack, Toolbar, Typography} from "@mui/material";
 import {VideocamOutlined} from "@mui/icons-material";
 
 interface Props {
@@ -14,11 +11,21 @@ interface Props {
 	onClickCall?: () => void;
 }
 
+/**
+ * A frame component with a toolbar, used to wrap detail views
+ */
 export const DetailFrame = React.forwardRef<HTMLDivElement, Props>((props, ref) => {
 	return (
-		<div className={styles.root} ref={ref}>
+		<Stack height="100%" ref={ref}>
 			<Toolbar>
-				<Typography className={styles.title} variant="h6" noWrap>{props.title}</Typography>
+				<Typography
+					flexGrow={1}
+					flexShrink={1}
+					flexBasis={0}
+					variant="h6"
+					noWrap>
+					{props.title}
+				</Typography>
 				
 				{props.showCall && (
 					<IconButton
@@ -28,8 +35,10 @@ export const DetailFrame = React.forwardRef<HTMLDivElement, Props>((props, ref) 
 					</IconButton>
 				)}
 			</Toolbar>
-			<SoftDivider />
+			
+			<Divider />
+			
 			{props.children}
-		</div>
+		</Stack>
 	);
 });

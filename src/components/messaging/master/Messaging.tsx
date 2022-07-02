@@ -1,21 +1,16 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
-
-import styles from "./Messaging.module.css";
 import Sidebar from "../master/Sidebar";
-
 import * as ConnectionManager from "../../../connection/connectionManager";
 import {ConnectionListener, warnCommVer} from "../../../connection/connectionManager";
-import {initializePeople} from "../../../util/peopleUtils";
+import {initializePeople} from "../../../interface/people/peopleUtils";
 import {ConnectionErrorCode, MessageError} from "../../../data/stateCodes";
 import {Conversation} from "../../../data/blocks";
-import SoftDivider from "../../SoftDivider";
 import SnackbarProvider from "../../control/SnackbarProvider";
-import {getNotificationUtils} from "shared/util/notificationUtils";
-import {getPlatformUtils} from "shared/util/platformUtils";
-import {Box} from "@mui/material";
+import {getNotificationUtils} from "shared/interface/notification/notificationUtils";
+import {getPlatformUtils} from "shared/interface/platform/platformUtils";
+import {Box, Divider, Stack} from "@mui/material";
 import CallOverlay from "shared/components/calling/CallOverlay";
 import useConversationState from "shared/state/conversationState";
-import DetailThread from "shared/components/messaging/thread/DetailThread";
 import DetailCreate from "shared/components/messaging/create/DetailCreate";
 import DetailLoading from "shared/components/messaging/detail/DetailLoading";
 import DetailError from "shared/components/messaging/detail/DetailError";
@@ -23,6 +18,7 @@ import DetailWelcome from "shared/components/messaging/detail/DetailWelcome";
 import {arrayContainsAll} from "shared/util/arrayUtils";
 import {normalizeAddress} from "shared/util/addressHelper";
 import {compareVersions} from "shared/util/versionUtils";
+import DetailThread from "shared/components/messaging/thread/DetailThread";
 
 export default function Messaging(props: {
 	onReset?: VoidFunction
@@ -92,10 +88,10 @@ export default function Messaging(props: {
 	
 	//Register for notification response events
 	useEffect(() => {
-		getNotificationUtils().getMessageActionEmitter().registerListener(navigateConversation);
+		getNotificationUtils().getMessageActionEmitter().subscribe(navigateConversation);
 		return () => {
-			getNotificationUtils().getMessageActionEmitter().unregisterListener(navigateConversation);
-			getPlatformUtils().getChatActivationEmitter()?.unregisterListener(navigateConversation);
+			getNotificationUtils().getMessageActionEmitter().unsubscribe(navigateConversation);
+			getPlatformUtils().getChatActivationEmitter()?.unsubscribe(navigateConversation);
 		};
 	}, [navigateConversation]);
 	
@@ -131,7 +127,7 @@ export default function Messaging(props: {
 						
 						//Register for activations
 						getPlatformUtils().initializeActivations();
-						getPlatformUtils().getChatActivationEmitter()?.registerListener(navigateConversation);
+						getPlatformUtils().getChatActivationEmitter()?.subscribe(navigateConversation);
 					}).catch((reason: MessageError) => {
 						console.error("Failed to fetch conversations", reason);
 						ConnectionManager.disconnect();
@@ -188,7 +184,7 @@ export default function Messaging(props: {
 	switch(detailPane.type) {
 		case DetailType.Thread: {
 			const conversation: Conversation = conversations!.find((conversation) => conversation.localID === detailPane.conversationID)!;
-			masterNode = <DetailThread conversation={conversation} key={conversation.localID} />;
+			masterNode = <DetailThread conversation={conversation} />;
 			break;
 		}
 		case DetailType.Create:
@@ -207,8 +203,12 @@ export default function Messaging(props: {
 	
 	return (
 		<SnackbarProvider>
-			<div className={styles.split}>
-				<Box className={styles.splitDetail} sx={{backgroundColor: "background.sidebar"}}>
+			<Stack direction="row" width="100%" height="100%">
+				<Box
+					width="30vw"
+					minWidth="350px"
+					maxWidth="400px"
+					bgcolor="background.sidebar">
 					<Sidebar
 						conversations={conversations}
 						selectedConversation={detailPane.type === DetailType.Thread ? detailPane.conversationID : undefined}
@@ -218,10 +218,10 @@ export default function Messaging(props: {
 						needsServerUpdate={needsServerUpdate} />
 				</Box>
 				
-				<SoftDivider vertical />
+				<Divider orientation="vertical" />
 				
-				<div className={styles.splitMaster}>{masterNode}</div>
-			</div>
+				<Box flex={1}>{masterNode}</Box>
+			</Stack>
 			
 			<CallOverlay />
 		</SnackbarProvider>

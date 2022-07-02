@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from "react";
-import styles from "./ListConversation.module.css";
 
 import * as ConversationUtils from "../../../util/conversationUtils";
 import {isConversationPreviewMessage} from "../../../util/conversationUtils";
@@ -12,9 +11,15 @@ import {getLastUpdateStatusTime} from "../../../util/dateUtils";
 import GroupAvatar from "./GroupAvatar";
 import {ConversationPreviewType} from "../../../data/stateCodes";
 
-export default function ListConversation(props: {conversation: Conversation, selected?: boolean, highlighted?: boolean, onSelected: () => void, flippedProps?: Record<string, unknown>}) {
+export default function ListConversation(props: {
+	conversation: Conversation;
+	selected?: boolean;
+	highlighted?: boolean;
+	onSelected: () => void;
+}) {
 	//Getting the conversation title
-	const [title, setConversationTitle] = useState(ConversationUtils.getFallbackTitle(props.conversation));
+	const [title, setConversationTitle] = useState("");
+	
 	useEffect(() => {
 		//Updating the conversation's name if it has one
 		if(props.conversation.name) {
@@ -23,8 +28,10 @@ export default function ListConversation(props: {conversation: Conversation, sel
 		}
 		
 		//Building the conversation title
-		ConversationUtils.getMemberTitle(props.conversation.members).then((title) => setConversationTitle(title));
-	}, [props.conversation.name, props.conversation.members]);
+		setConversationTitle(ConversationUtils.getFallbackTitle(props.conversation));
+		ConversationUtils.getMemberTitle(props.conversation.members)
+			.then((title) => setConversationTitle(title));
+	}, [setConversationTitle, props.conversation]);
 	
 	const primaryStyle: TypographyProps = props.highlighted ? {
 		color: "primary",
@@ -47,27 +54,50 @@ export default function ListConversation(props: {conversation: Conversation, sel
 	} : {};
 	
 	return (
-		<div className={styles.containerOuter} {...props.flippedProps}>
-			<ListItemButton
-				className={styles.containerInner}
-				key={props.conversation.localID}
-				onClick={props.onSelected}
-				selected={props.selected}
+		<ListItemButton
+			key={props.conversation.localID}
+			onClick={props.onSelected}
+			selected={props.selected}
+			sx={{
+				marginX: 1,
+				marginY: 0.5,
+				borderRadius: 1,
+				paddingX: 1.5,
+				paddingY: 0.5,
+				"&&.Mui-selected, &&.Mui-selected:hover": {
+					backgroundColor: "action.selected"
+				},
+				"&&:hover": {
+					backgroundColor: "action.hover"
+				}
+			}}>
+			<ListItemAvatar>
+				<GroupAvatar members={props.conversation.members} />
+			</ListItemAvatar>
+			<ListItemText
 				sx={{
-					"&&.Mui-selected, &&.Mui-selected:hover": {
-						backgroundColor: "action.selected"
-					},
-					"&&:hover": {
-						backgroundColor: "action.hover"
+					".MuiTypography-root": {
+						whiteSpace: "nowrap",
+						overflow: "hidden",
+						textOverflow: "ellipsis"
 					}
-				}}>
-				<ListItemAvatar>
-					<GroupAvatar members={props.conversation.members} />
-				</ListItemAvatar>
-				<ListItemText className={styles.textPreview} primary={title} primaryTypographyProps={primaryStyle} secondary={previewString(props.conversation.preview)} secondaryTypographyProps={secondaryStyle} />
-				<Typography className={styles.textTime} variant="body2" color="textSecondary">{getLastUpdateStatusTime(props.conversation.preview.date)}</Typography>
-			</ListItemButton>
-		</div>
+				}}
+				primary={title}
+				primaryTypographyProps={primaryStyle}
+				secondary={previewString(props.conversation.preview)}
+				secondaryTypographyProps={secondaryStyle} />
+			<Typography
+				sx={{
+					alignSelf: "flex-start",
+					paddingTop: 1,
+					paddingLeft: 2,
+					flexShrink: 0
+				}}
+				variant="body2"
+				color="textSecondary">
+				{getLastUpdateStatusTime(props.conversation.preview.date)}
+			</Typography>
+		</ListItemButton>
 	);
 }
 

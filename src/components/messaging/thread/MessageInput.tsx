@@ -1,11 +1,7 @@
 import React, {ChangeEvent, useCallback} from "react";
-import styles from "./MessageInput.module.css";
-
-import {IconButton, InputBase} from "@mui/material";
-import {useTheme} from "@mui/material/styles";
+import {Box, IconButton, InputBase, Stack} from "@mui/material";
 import PushIcon from "../../icon/PushIcon";
 import {QueuedFile} from "../../../data/blocks";
-import {Flipped, Flipper, spring} from "react-flip-toolkit";
 import {QueuedAttachmentImage} from "./queue/QueuedAttachmentImage";
 import QueuedAttachmentGeneric from "./queue/QueuedAttachmentGeneric";
 import {QueuedAttachmentProps} from "./queue/QueuedAttachment";
@@ -21,9 +17,6 @@ interface Props {
 }
 
 export default function MessageInput(props: Props) {
-	const theme = useTheme();
-	const colorBG = theme.palette.messageIncoming.main;
-	
 	const {
 		onMessageChange: propsOnMessageChange,
 		onMessageSubmit: propsOnMessageSubmit,
@@ -40,7 +33,7 @@ export default function MessageInput(props: Props) {
 		propsOnMessageSubmit(propsMessage, propsAttachments);
 	}, [propsOnMessageSubmit, propsMessage, propsAttachments]);
 	
-	const handleKeyPress = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
+	const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
 		if(!event.shiftKey && event.key === "Enter") {
 			event.preventDefault();
 			submitInput();
@@ -52,50 +45,76 @@ export default function MessageInput(props: Props) {
 	}, [propsOnAttachmentAdd]);
 	
 	return (
-		<div className={styles.root} style={{backgroundColor: colorBG}}>
-			<Flipper flipKey={props.attachments.map(attachment => attachment.id).join(" ")}>
-				{props.attachments.length > 0 &&
-					<div className={styles.attachmentqueue}>
-						{props.attachments.map((file) => {
-							const queueData: QueuedAttachmentProps = {
-								file: file.file,
-								onRemove: () => props.onAttachmentRemove(file)
-							};
-							
-							let component: React.ReactNode;
-							if(file.file.type.startsWith("image/")) component = <QueuedAttachmentImage queueData={queueData} />;
-							else component = <QueuedAttachmentGeneric queueData={queueData} />;
-							
-							return (<Flipped flipId={"attachmentqueue-" + file.id} key={file.id} onAppear={onAttachmentAppear} onExit={onAttachmentExit}>
-								{component}
-							</Flipped>);
-						})}
-					</div>
-				}
-				<div className={styles.control}>
-					<InputBase className={styles.textfield} maxRows="5" multiline fullWidth autoFocus placeholder={props.placeholder} value={props.message} onChange={handleChange} onKeyPress={handleKeyPress} onPaste={handlePaste} />
-					<IconButton size="small" color="primary" disabled={props.message.trim() === "" && props.attachments.length === 0} onClick={submitInput}><PushIcon /></IconButton>
-				</div>
-			</Flipper>
-		</div>
+		<Box sx={{
+			borderRadius: 5,
+			backgroundColor: "messageIncoming.main",
+			overflow: "hidden",
+			maxWidth: 1000,
+			marginX: "auto"
+		}}>
+			{props.attachments.length > 0 &&
+				<Stack
+					sx={{
+						overflowX: "scroll",
+						overflowY: "hidden",
+						scrollbarWidth: "none",
+						"&::-webkit-scrollbar": {
+							display: "none"
+						},
+						
+						paddingX: "16px",
+						paddingTop: "16px"
+					}}
+					direction="row"
+					gap={2}>
+					{props.attachments.map((file) => {
+						const queueData: QueuedAttachmentProps = {
+							file: file.file,
+							onRemove: () => props.onAttachmentRemove(file)
+						};
+						
+						let component: React.ReactNode;
+						if(file.file.type.startsWith("image/")) {
+							component = (<QueuedAttachmentImage key={file.id} queueData={queueData} />);
+						} else {
+							component = (<QueuedAttachmentGeneric key={file.id} queueData={queueData} />);
+						}
+						
+						return component;
+					})}
+				</Stack>
+			}
+			
+			<Stack direction="row">
+				<InputBase
+					sx={{
+						typography: "body2",
+						paddingX: "16px",
+						paddingY: "10px"
+					}}
+					maxRows="5"
+					multiline
+					fullWidth
+					autoFocus
+					placeholder={props.placeholder}
+					value={props.message}
+					onChange={handleChange}
+					onKeyDown={handleKeyDown}
+					onPaste={handlePaste} />
+				<IconButton
+					sx={{
+						width: "40px",
+						height: "40px",
+						flexShrink: 0,
+						alignSelf: "flex-end"
+					}}
+					size="small"
+					color="primary"
+					disabled={props.message.trim() === "" && props.attachments.length === 0}
+					onClick={submitInput}>
+					<PushIcon />
+				</IconButton>
+			</Stack>
+		</Box>
 	);
-}
-
-function onAttachmentAppear(element: HTMLElement) {
-	spring({
-		config: "stiff",
-		onUpdate: (val) => {
-			element.style.opacity = val.toString();
-		}
-	});
-}
-
-function onAttachmentExit(element: HTMLElement, index: number, removeElement: () => void) {
-	spring({
-		config: "stiff",
-		onUpdate: (val) => {
-			element.style.opacity = (1 - (val as number)).toString();
-		},
-		onComplete: removeElement
-	});
 }

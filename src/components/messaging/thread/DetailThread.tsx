@@ -1,135 +1,353 @@
-import React from "react";
-import styles from "./DetailThread.module.css";
-
-import * as ConnectionManager from "../../../connection/connectionManager";
-
-import {Button, CircularProgress, Typography} from "@mui/material";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import {
 	Conversation,
 	ConversationItem,
-	LinkedConversation,
+	LocalConversationID,
 	MessageItem,
 	MessageModifier,
 	QueuedFile
-} from "../../../data/blocks";
-import MessageList from "./MessageList";
-import MessageInput from "./MessageInput";
+} from "shared/data/blocks";
+import MessageList from "shared/components/messaging/thread/MessageList";
+import {Box, Button, CircularProgress, Stack, Typography} from "@mui/material";
+import {DetailFrame} from "shared/components/messaging/master/DetailFrame";
+import MessageInput from "shared/components/messaging/thread/MessageInput";
+import {useConversationTitle, useIsFaceTimeSupported, useUnsubscribeContainer} from "shared/util/hookUtils";
+import {mapServiceName} from "shared/util/languageUtils";
+import * as ConnectionManager from "shared/connection/connectionManager";
 import {
+	checkMessageConversationOwnership,
+	findMatchingUnconfirmedMessageIndex,
 	generateAttachmentLocalID,
 	generateMessageLocalID,
-	getFallbackTitle,
-	getMemberTitle,
-	isConversationItemMessage,
 	isModifierStatusUpdate,
 	isModifierSticker,
 	isModifierTapback
-} from "../../../util/conversationUtils";
-import {ConversationItemType, MessageError, MessageStatusCode} from "../../../data/stateCodes";
-import {DetailFrame} from "../master/DetailFrame";
-import EventEmitter from "../../../util/eventEmitter";
-import {playSoundMessageOut} from "../../../util/soundUtils";
-import {appleServiceAppleMessage} from "../../../data/appleConstants";
-import {getNotificationUtils} from "shared/util/notificationUtils";
-import localMessageCache from "shared/util/localMessageCacheUtils";
+} from "shared/util/conversationUtils";
 import ConversationTarget from "shared/data/conversationTarget";
+import {ConversationItemType, MessageError, MessageStatusCode} from "shared/data/stateCodes";
+import EmitterPromiseTuple from "shared/util/emitterPromiseTuple";
+import {playSoundMessageOut} from "shared/util/soundUtils";
+import EventEmitter from "shared/util/eventEmitter";
+import localMessageCache from "shared/state/localMessageCache";
+import {installCancellablePromise} from "shared/util/cancellablePromise";
 
-type HistoryLoadState = "idle" | "loading" | "complete";
-
-interface Props {
-	conversation: Conversation;
-}
-
-interface State {
-	display: Display;
-	unconfirmedMessages: MessageItem[];
-	title?: string;
-	message: string;
-	attachments: QueuedFile[];
-	historyLoadState: HistoryLoadState;
-	isFaceTimeSupported: boolean;
-}
-
-enum DisplayType {
-	Loading,
-	Error,
-	Messages
-}
-
-type DisplayMessages = {
-	type: DisplayType.Messages;
-	data: ConversationItem[];
-};
-type Display = {
-	type: DisplayType.Loading | DisplayType.Error;
-} | DisplayMessages;
-
-export default class DetailThread extends React.Component<Props, State> {
-	readonly dragDropRef = React.createRef<HTMLDivElement>();
-	readonly messageSubmitEmitter = new EventEmitter();
+export default function DetailThread({conversation}: {
+	conversation: Conversation
+}) {
+	const [displayState, setDisplayState] = useState<DisplayState>({type: DisplayType.Loading});
+	const [historyLoadState, setHistoryLoadState] = useState(HistoryLoadState.Idle);
 	
-	state: Readonly<State> = {
-		display: {type: DisplayType.Loading},
-		unconfirmedMessages: [],
-		title: getFallbackTitle(this.props.conversation),
-		message: "",
-		attachments: [],
-		historyLoadState: "idle",
-		isFaceTimeSupported: false
-	};
+	const conversationTitle = useConversationTitle(conversation);
+	const faceTimeSupported = useIsFaceTimeSupported();
+	const messageSubmitEmitter = useRef(new EventEmitter<void>());
 	
-	private handleMessageChange(messageText: string) {
-		//Updating the message input
-		this.setState({message: messageText});
-	}
+	const [messageInput, setMessageInput] = useState<string>("");
+	const [attachmentInput, setAttachmentInput] = useState<QueuedFile[]>([]);
 	
-	private applyMessageError(error: MessageError, localID: number) {
-		this.setState((prevState) => {
-			//Ignoring if there are no messages
-			if(prevState.display.type !== DisplayType.Messages) return null;
+	/**
+	 * Requests messages, and updates the display state
+	 */
+	const requestMessages = useCallback(() => {
+		if(conversation.localOnly) {
+			//Fetch messages from the cache
+			setDisplayState({type: DisplayType.Messages, messages: localMessageCache.get(conversation.localID) ?? []});
 			
-			//Updating the message's error state
-			const pendingItems = [...prevState.display.data];
-			const itemIndex = pendingItems.findIndex((item) => item.localID === localID);
-			if(itemIndex !== -1) {
-				pendingItems[itemIndex] = {
-					...pendingItems[itemIndex],
-					error: error
-				} as MessageItem;
+			return;
+		}
+		
+		//Set the state to loading
+		setDisplayState({type: DisplayType.Loading});
+		
+		//Fetch messages from the server
+		ConnectionManager.fetchThread(conversation.guid).then((messages) => {
+			setDisplayState({type: DisplayType.Messages, messages: messages});
+		}).catch(() => {
+			setDisplayState({type: DisplayType.Error});
+		});
+	}, [conversation, setDisplayState]);
+	const loadedThreadMessages = useRef<LocalConversationID | undefined>(undefined);
+	
+	const requestHistoryUnsubscribeContainer = useUnsubscribeContainer([conversation.localID]);
+	const requestHistory = useCallback(() => {
+		//Return if this is a local conversation, or if the state is already loading or is complete
+		if(displayState.type !== DisplayType.Messages
+			|| conversation.localOnly
+			|| historyLoadState !== HistoryLoadState.Idle) return;
+		
+		//Set the state to loading
+		setHistoryLoadState(HistoryLoadState.Loading);
+		
+		//Fetch history
+		const displayStateMessages = displayState.messages;
+		
+		//Make sure we cancel if the conversation changes while we're loading
+		installCancellablePromise(
+			ConnectionManager.fetchThread(conversation.guid, displayStateMessages[displayStateMessages.length - 1].serverID),
+			requestHistoryUnsubscribeContainer
+		)
+			.then((messages) => {
+				if(messages.length > 0) {
+					//Return to idle, and add new messages
+					setHistoryLoadState(HistoryLoadState.Idle);
+					
+					setDisplayState((displayState) => {
+						if(displayState.type !== DisplayType.Messages) return displayState;
+						
+						return {
+							type: DisplayType.Messages,
+							messages: displayState.messages.concat(messages)
+						};
+					});
+				} else {
+					//No more history, we're done
+					setHistoryLoadState(HistoryLoadState.Complete);
+				}
+			}).catch(() => {
+			//Ignore, and wait for the user to retry
+			setHistoryLoadState(HistoryLoadState.Idle);
+		});
+	}, [conversation, displayState, setDisplayState, historyLoadState, setHistoryLoadState, requestHistoryUnsubscribeContainer]);
+	
+	//Request messages when the conversation changes
+	useEffect(() => {
+		if(loadedThreadMessages.current === conversation.localID) return;
+		requestMessages();
+		loadedThreadMessages.current = conversation.localID;
+	}, [conversation.localID, requestMessages]);
+	
+	const handleMessageUpdate = useCallback((itemArray: ConversationItem[]) => {
+		setDisplayState((displayState) => {
+			//Ignore if the chat isn't loaded
+			if(displayState.type !== DisplayType.Messages) return displayState;
+			
+			//Clone the item array
+			const pendingMessages = [...displayState.messages];
+			const newMessages: ConversationItem[] = [];
+			
+			for(const newItem of itemArray) {
+				//Ignore items that aren't part of this conversation
+				if(!checkMessageConversationOwnership(conversation, newItem)) continue;
+				
+				//Try to find a matching conversation item
+				let itemMatched = false;
+				if(newItem.itemType === ConversationItemType.Message) {
+					const matchedIndex = findMatchingUnconfirmedMessageIndex(pendingMessages, newItem);
+					if(matchedIndex !== -1) {
+						//Merge the information into the item
+						const mergeTargetItem = pendingMessages[matchedIndex] as MessageItem;
+						pendingMessages[matchedIndex] = {
+							...mergeTargetItem,
+							serverID: newItem.serverID,
+							guid: newItem.guid,
+							date: newItem.date,
+							status: newItem.status,
+							error: newItem.error,
+							statusDate: newItem.statusDate
+						};
+						
+						itemMatched = true;
+					}
+				}
+				
+				//If we didn't merge this item, add it to the end of the message list
+				if(!itemMatched) {
+					newMessages.push(newItem);
+				}
 			}
 			
-			return {display: {type: DisplayType.Messages, data: pendingItems}};
+			pendingMessages.unshift(...newMessages);
+			
+			return {type: DisplayType.Messages, messages: pendingMessages};
 		});
-	}
+	}, [setDisplayState, conversation]);
 	
-	private handleMessageSubmit(messageText: string, queuedFiles: QueuedFile[]) {
-		//Ignoring if there are no messages
-		if(this.state.display.type !== DisplayType.Messages) return;
+	//Subscribe to message updates
+	useEffect(() => {
+		return ConnectionManager.messageUpdateEmitter.subscribe(handleMessageUpdate);
+	}, [handleMessageUpdate]);
+	
+	const handleModifierUpdate = useCallback((itemArray: MessageModifier[]) => {
+		setDisplayState((displayState) => {
+			//Ignore if the chat isn't loaded
+			if(displayState.type !== DisplayType.Messages) return displayState;
+			
+			//Cloning the item array
+			const pendingItemArray = [...displayState.messages];
+			
+			for(const modifier of itemArray) {
+				//Try to match the modifier with an item
+				const matchingIndex = pendingItemArray.findIndex((item) => item.itemType === ConversationItemType.Message && item.guid === modifier.messageGuid);
+				if(matchingIndex === -1) continue;
+				const matchedItem = pendingItemArray[matchingIndex] as MessageItem;
+				
+				//Apply the modifier
+				if(isModifierStatusUpdate(modifier)) {
+					pendingItemArray[matchingIndex] = {
+						...matchedItem,
+						status: modifier.status,
+						statusDate: modifier.date
+					};
+				} else if(isModifierSticker(modifier)) {
+					pendingItemArray[matchingIndex] = {
+						...matchedItem,
+						stickers: matchedItem.stickers.concat(modifier),
+					} as MessageItem;
+				} else if(isModifierTapback(modifier)) {
+					const pendingTapbacks = [...matchedItem.tapbacks];
+					const matchingTapbackIndex = pendingTapbacks.findIndex((tapback) => tapback.sender === modifier.sender);
+					if(matchingTapbackIndex !== -1) pendingTapbacks[matchingTapbackIndex] = modifier;
+					else pendingTapbacks.push(modifier);
+					
+					pendingItemArray[matchingIndex] = {
+						...matchedItem,
+						tapbacks: pendingTapbacks
+					};
+				}
+			}
+			
+			return {type: DisplayType.Messages, messages: pendingItemArray};
+		});
+	}, [setDisplayState]);
+	
+	//Subscribe to modifier updates
+	useEffect(() => {
+		return ConnectionManager.modifierUpdateEmitter.subscribe(handleModifierUpdate);
+	}, [handleModifierUpdate]);
+	
+	//Add an attachment to the attachment input
+	const addAttachment = useCallback((files: File[]) => {
+		setAttachmentInput((attachments) => [
+			...attachments,
+			...files.map((file): QueuedFile => (
+				{id: generateAttachmentLocalID(), file: file}
+			))
+		]);
+	}, [setAttachmentInput]);
+	
+	//Remove an attachment from the attachment input
+	const removeAttachment = useCallback((file: QueuedFile) => {
+		setAttachmentInput((attachments) =>
+			attachments.filter((queuedFile) => queuedFile.id !== file.id)
+		);
+	}, [setAttachmentInput]);
+	
+	//Clear subscriptions when the display state or conversation changes
+	const uploadSubscriptionsContainer = useUnsubscribeContainer([conversation.localID, displayState.type]);
+	
+	/**
+	 * Applies a message error the message with the specified ID
+	 */
+	const applyMessageError = useCallback((localID: LocalConversationID, error: MessageError) => {
+		setDisplayState((displayState) => {
+			//Ignore if there are no messages
+			if(displayState.type !== DisplayType.Messages) return displayState;
+			
+			//Update the message's error state
+			const pendingItems = [...displayState.messages];
+			const itemIndex = pendingItems.findIndex((item) => item.localID === localID);
+			if(itemIndex !== -1) {
+				const message = pendingItems[itemIndex] as MessageItem;
+				pendingItems[itemIndex] = {
+					...message,
+					error: error
+				};
+			}
+			
+			return {type: DisplayType.Messages, messages: pendingItems};
+		});
+	}, [setDisplayState]);
+	
+	/**
+	 * Subscribes to an upload progress for an outgoing attachment message
+	 */
+	const registerUploadProgress = useCallback((
+		messageID: LocalConversationID,
+		uploadProgress: EmitterPromiseTuple<number | string, void>
+	) => {
+		/**
+		 * Updates the target message state
+		 * @param updater A function that takes a {@link MessageItem},
+		 * and returns a modified partial
+		 */
+		const updateMessage = (updater: (message: MessageItem) => Partial<MessageItem>) => {
+			setDisplayState((displayState) => {
+				//Ignore if there are no messages
+				if(displayState.type !== DisplayType.Messages) return displayState;
+				
+				//Clone the item array
+				const pendingItems: ConversationItem[] = [...displayState.messages];
+				
+				//Find the item
+				const itemIndex = pendingItems.findIndex((item) => item.localID === messageID);
+				if(itemIndex === -1) return displayState;
+				const message = pendingItems[itemIndex] as MessageItem;
+				
+				//Update the item
+				pendingItems[itemIndex] = {...message, ...updater(message)};
+				
+				return {type: DisplayType.Messages, messages: pendingItems};
+			});
+		};
 		
+		//Sync the progress meter
+		uploadProgress.emitter.subscribe((progressData) => {
+			updateMessage((message) => {
+				if(typeof progressData === "number") {
+					//Update the upload progress
+					return {
+						progress: progressData / message.attachments[0].size * 100
+					};
+				} else {
+					//Update the checksum
+					return {
+						attachments: [{
+							...message.attachments[0],
+							checksum: progressData
+						}]
+					};
+				}
+			});
+		}, uploadSubscriptionsContainer);
+		
+		//Remove the progress when the file is finished uploading
+		installCancellablePromise(uploadProgress.promise, uploadSubscriptionsContainer)
+			.then(() => {
+				updateMessage(() => ({
+					progress: undefined
+				}));
+			})
+			.catch((error: MessageError) => applyMessageError(messageID, error));
+	}, [setDisplayState, applyMessageError, uploadSubscriptionsContainer]);
+	
+	const submitInput = useCallback((messageText: string, queuedFileArray: QueuedFile[]) => {
+		//Ignore if messages aren't loaded
+		if(displayState.type !== DisplayType.Messages) return;
+		
+		//Get the conversation target
 		const conversationTarget: ConversationTarget =
-			!this.props.conversation.localOnly ? {
+			!conversation.localOnly ? {
 				type: "linked",
-				guid: this.props.conversation.guid
+				guid: conversation.guid
 			} : {
 				type: "unlinked",
-				members: this.props.conversation.members,
-				service: this.props.conversation.service
+				members: conversation.members,
+				service: conversation.service
 			};
+		
 		const addedItems: MessageItem[] = [];
 		
-		//Handling the text message
-		messageText = messageText.trim();
-		if(messageText !== "") {
-			//Clearing the message input
-			this.setState({message: ""});
-			
-			//Creating the message and adding it to the chat
+		//Check if there is a message input
+		const trimmedMessageText = messageText.trim();
+		if(trimmedMessageText !== "") {
+			//Create the message
+			const messageLocalID = generateMessageLocalID();
 			const message: MessageItem = {
 				itemType: ConversationItemType.Message,
-				localID: generateMessageLocalID(),
+				localID: messageLocalID,
 				serverID: undefined,
 				guid: undefined,
-				chatGuid: !this.props.conversation.localOnly ? this.props.conversation.guid : undefined,
-				chatLocalID: this.props.conversation.localID,
+				chatGuid: conversation.localOnly ? undefined : conversation.guid,
+				chatLocalID: conversation.localID,
 				date: new Date(),
 				
 				text: messageText,
@@ -144,467 +362,183 @@ export default class DetailThread extends React.Component<Props, State> {
 				statusDate: undefined
 			};
 			
-			//Sending the message
+			//Send the message
 			ConnectionManager.sendMessage(conversationTarget, messageText)
-				.catch((error: MessageError) => this.applyMessageError(error, message.localID!));
+				.catch((error: MessageError) => applyMessageError(messageLocalID, error));
 			
-			//Adding the item to the added items list
+			//Keep track of the message
 			addedItems.push(message);
 		}
-		//Handling attachments
-		if(queuedFiles.length > 0) {
-			//Clearing the attachments input
-			this.setState({attachments: []});
+		
+		//Clear the message input
+		setMessageInput("");
+		
+		//Handle attachments
+		for(const queuedFile of queuedFileArray) {
+			//Convert the file to a message
+			const messageLocalID = generateMessageLocalID();
+			const message: MessageItem = {
+				itemType: ConversationItemType.Message,
+				localID: messageLocalID,
+				serverID: undefined,
+				guid: undefined,
+				chatGuid: !conversation.localOnly ? conversation.guid : undefined,
+				chatLocalID: conversation.localID,
+				date: new Date(),
+				
+				text: undefined,
+				subject: undefined,
+				sender: undefined,
+				attachments: [{
+					localID: queuedFile.id,
+					name: queuedFile.file.name,
+					type: queuedFile.file.type,
+					size: queuedFile.file.size,
+					data: queuedFile.file
+				}],
+				stickers: [],
+				tapbacks: [],
+				sendStyle: undefined,
+				status: MessageStatusCode.Unconfirmed,
+				statusDate: undefined,
+				error: undefined,
+				progress: -1 //Show indeterminate progress by default for attachments
+			};
 			
-			const messages = queuedFiles.map((file) => {
-				return {
-					itemType: ConversationItemType.Message,
-					localID: generateMessageLocalID(),
-					serverID: undefined,
-					guid: undefined,
-					chatGuid: !this.props.conversation.localOnly ? this.props.conversation.guid : undefined,
-					chatLocalID: this.props.conversation.localID,
-					date: new Date(),
-					
-					text: undefined,
-					subject: undefined,
-					sender: undefined,
-					attachments: [{
-						localID: file.id,
-						name: file.file.name,
-						type: file.file.type,
-						size: file.file.size,
-						data: file.file
-					}],
-					stickers: [],
-					tapbacks: [],
-					sendStyle: undefined,
-					status: MessageStatusCode.Unconfirmed,
-					statusDate: undefined,
-					error: undefined,
-					progress: -1 //Show indeterminate progress by default for attachments
-				} as MessageItem;
-			});
+			//Send the file
+			const progress = ConnectionManager.sendFile(conversationTarget, queuedFile.file);
 			
-			//Sending the messages
-			for(const message of messages) {
-				ConnectionManager.sendFile(conversationTarget, message.attachments[0].data!)
-					.progress((progressData) => {
-						this.setState((prevState) => {
-							//Ignoring if there are no messages
-							if(prevState.display.type !== DisplayType.Messages) return null;
-							
-							//Cloning the item array
-							const pendingItems: ConversationItem[] = [...prevState.display.data];
-							
-							//Finding the item
-							const itemIndex = pendingItems.findIndex((item) => item.localID === message.localID);
-							if(itemIndex !== -1) {
-								if(typeof progressData === "number") {
-									//Updating the upload progress
-									pendingItems[itemIndex] = {
-										...pendingItems[itemIndex],
-										progress: progressData / message.attachments[0].size * 100
-									} as MessageItem;
-								} else {
-									//Updating the checksum
-									pendingItems[itemIndex] = {
-										...pendingItems[itemIndex],
-										attachments: [{
-											...(pendingItems[itemIndex] as MessageItem).attachments[0],
-											checksum: progressData
-										}]
-									} as MessageItem;
-								}
-							}
-							
-							return {display: {type: DisplayType.Messages, data: pendingItems}};
-						});
-					})
-					.then(() => {
-						this.setState((prevState) => {
-							//Ignoring if there are no messages
-							if(prevState.display.type !== DisplayType.Messages) return null;
-							
-							//Cloning the item array
-							const pendingItems: ConversationItem[] = [...prevState.display.data];
-							
-							//Finding the item
-							const itemIndex = pendingItems.findIndex((item) => item.localID === message.localID);
-							if(itemIndex !== -1) {
-								//Clearing the item's upload progress
-								pendingItems[itemIndex] = {
-									...pendingItems[itemIndex],
-									progress: undefined
-								} as MessageItem;
-							}
-							
-							return {display: {type: DisplayType.Messages, data: pendingItems}};
-						});
-					})
-					.catch((error: MessageError) => this.applyMessageError(error, message.localID!));
-			}
+			//Subscribe to the file upload progress
+			registerUploadProgress(messageLocalID, progress);
 			
-			//Adding the items to the added items list
-			addedItems.push(...messages);
+			//Keep track of the messages
+			addedItems.push(message);
 		}
+		
+		//Clear attachments
+		setAttachmentInput([]);
 		
 		if(addedItems.length > 0) {
-			//Notifying message listeners
+			//Notify message listeners
 			ConnectionManager.messageUpdateEmitter.notify(addedItems);
-			this.messageSubmitEmitter.notify(undefined);
+			messageSubmitEmitter.current.notify();
 			
-			//Playing a sound
+			//Play a message sound
 			playSoundMessageOut();
 		}
-	}
+	}, [displayState, conversation, registerUploadProgress, setMessageInput, setAttachmentInput, applyMessageError]);
 	
-	private handleAttachmentRemove(file: QueuedFile) {
-		this.setState(state => {
-			const attachments = [...state.attachments];
-			const itemIndex = attachments.findIndex((queuedFile) => file.id === queuedFile.id);
-			if(itemIndex !== -1) {
-				attachments.splice(itemIndex, 1);
-			}
-			return {attachments: attachments};
-		});
-	}
+	const startCall = useCallback(async () => {
+		await ConnectionManager.initiateFaceTimeCall(conversation.members);
+	}, [conversation]);
 	
-	private handleAttachmentAdd(files: File[]) {
-		const queuedFiles: QueuedFile[] = files.map((file) => {
-			return {id: generateAttachmentLocalID(), file: file};
-		});
-		
-		this.setState(state => {
-			return {attachments: state.attachments.concat(...queuedFiles)};
-		});
-	}
-	
-	private readonly handleDragIn = (event: DragEvent) => {
-		event.preventDefault();
-		event.stopPropagation();
-		
-		//this.dragCounter++;
-		//this.setState({dragHighlight: true});
-	};
-	
-	private readonly handleDragOut = (event: DragEvent) => {
-		event.preventDefault();
-		event.stopPropagation();
-		
-		/* this.dragCounter--;
-		if(this.dragCounter === 0) {
-			this.setState({dragHighlight: false});
-		} */
-	};
-	
-	private readonly handleDragOver = (event: DragEvent) => {
-		event.preventDefault();
-		event.stopPropagation();
-		
-		if(event.dataTransfer) event.dataTransfer.dropEffect = "copy";
-	};
-	
-	private readonly handleDrop = (event: DragEvent) => {
-		event.preventDefault();
-		event.stopPropagation();
-		
-		//this.setState({dragHighlight: false});
-		//this.dragCounter = 0;
-		
-		//Adding the files
-		if(event.dataTransfer) {
-			const files: QueuedFile[] = [...event.dataTransfer.files].map((file) => {
-				return {id: generateAttachmentLocalID(), file: file};
-			});
-			
-			this.setState(state => {
-				return {attachments: state.attachments.concat(...files)};
-			});
-		}
-	};
-	
-	private readonly handleRequestHistory = () => {
-		//Returning if this is a local conversation, or if the state is already loading or is complete
-		if(this.props.conversation.localOnly || this.state.historyLoadState !== "idle") return;
-		
-		//Fetching history
-		const items = (this.state.display as DisplayMessages).data;
-		ConnectionManager.fetchThread(this.props.conversation.guid, items[items.length - 1].serverID).then(data => {
-			if(data.length > 0) {
-				//Add the new items to the end of the array, and reset the load state
-				this.setState((prevState) => {
-					if(prevState.display.type !== DisplayType.Messages) return null;
-					
-					return {
-						display: {type: DisplayType.Messages, data: prevState.display.data.concat(data)},
-						historyLoadState: "idle"
-					};
-				});
-			} else {
-				//No more history, we're done
-				this.setState({historyLoadState: "complete"});
-			}
-		}).catch(() => {
-			//Ignore, and wait for the user to retry
-			this.setState({historyLoadState: "idle"});
-		});
-		
-		//Setting the state
-		this.setState({historyLoadState: "loading"});
-	};
-	
-	private readonly requestMessages = () => {
-		if(!this.props.conversation.localOnly) {
-			//Fetching messages from the server
-			ConnectionManager.fetchThread(this.props.conversation.guid).then(data => {
-				this.setState({display: {type: DisplayType.Messages, data: data}});
-			}).catch(() => {
-				this.setState({display: {type: DisplayType.Error}});
-			});
-		} else {
-			//Fetching messages from the cache
-			this.setState({display: {type: DisplayType.Messages, data: localMessageCache.get(this.props.conversation.localID) ?? []}});
-		}
-	};
-	
-	private readonly updateFaceTimeSupported = (isFaceTimeSupported: boolean) => {
-		this.setState({isFaceTimeSupported});
-	};
-	
-	private readonly startCall = () => {
-		ConnectionManager.initiateFaceTimeCall(this.props.conversation.members);
-	};
-	
-	render() {
-		//Creating the body view (use a loading spinner while conversation details aren't available)
-		let body: React.ReactNode;
-		if(this.state.display.type === DisplayType.Messages) {
-			body = <MessageList conversation={this.props.conversation} items={this.state.display.data} messageSubmitEmitter={this.messageSubmitEmitter} showHistoryLoader={this.state.historyLoadState === "loading"} onRequestHistory={this.handleRequestHistory} />;
-		} else if(this.state.display.type === DisplayType.Loading) {
-			body = (
-				<div className={styles.centerContainer}>
-					<CircularProgress />
-				</div>
-			);
-		} else if(this.state.display.type === DisplayType.Error) {
-			body = (
-				<div className={styles.centerContainer}>
-					<Typography color="textSecondary" gutterBottom>Couldn&apos;t load this conversation</Typography>
-					<Button onClick={this.requestMessages}>Retry</Button>
-				</div>
-			);
-		}
-		
-		let inputPlaceholder: string;
-		if(this.props.conversation.service === appleServiceAppleMessage) {
-			inputPlaceholder = "iMessage";
-		} else {
-			inputPlaceholder = "Text message";
-		}
-		
-		//Returning the element
-		return (
-			<DetailFrame
-				title={this.state.title ?? ""}
-				ref={this.dragDropRef}
-				showCall={this.state.isFaceTimeSupported}
-				onClickCall={this.startCall}>
-				<div className={styles.body}>{body}</div>
-				<div className={styles.input}>
-					<MessageInput placeholder={inputPlaceholder} message={this.state.message} attachments={this.state.attachments}
-								  onMessageChange={this.handleMessageChange.bind(this)} onMessageSubmit={this.handleMessageSubmit.bind(this)}
-								  onAttachmentAdd={this.handleAttachmentAdd.bind(this)} onAttachmentRemove={this.handleAttachmentRemove.bind(this)} />
-				</div>
-			</DetailFrame>
+	let body: React.ReactNode;
+	if(displayState.type === DisplayType.Messages) {
+		body = (
+			<MessageList
+				conversation={conversation}
+				items={displayState.messages}
+				messageSubmitEmitter={messageSubmitEmitter.current}
+				showHistoryLoader={historyLoadState === HistoryLoadState.Loading}
+				onRequestHistory={requestHistory} />
+		);
+	} else if(displayState.type === DisplayType.Loading) {
+		body = (
+			<Stack height="100%" alignItems="center" justifyContent="center">
+				<CircularProgress />
+			</Stack>
+		);
+	} else if(displayState.type === DisplayType.Error) {
+		body = (
+			<Stack height="100%" alignItems="center" justifyContent="center">
+				<Typography color="textSecondary" gutterBottom>Couldn&apos;t load this conversation</Typography>
+				<Button onClick={requestMessages}>Retry</Button>
+			</Stack>
 		);
 	}
 	
-	componentDidMount() {
-		//Clearing notifications
-		if(!this.props.conversation.localOnly) {
-			getNotificationUtils().dismissMessageNotifications(this.props.conversation.guid);
-		}
-		
-		//Fetching messages
-		this.requestMessages();
-		
-		//Building a conversation title from the participants' names if the conversation isn't explicitly named
-		if(!this.props.conversation.name) {
-			getMemberTitle(this.props.conversation.members).then((title) => {
-				this.setState({title: title});
-			});
-		}
-		
-		//Subscribing to message updates
-		ConnectionManager.messageUpdateEmitter.registerListener(this.onMessageUpdate);
-		ConnectionManager.modifierUpdateEmitter.registerListener(this.onModifierUpdate);
-		
-		//Subscribing to FaceTime updates
-		ConnectionManager.faceTimeSupportedEmitter.registerListener(this.updateFaceTimeSupported);
-		
-		//Subscribing to drag-and-drop updates
-		{
-			const element = this.dragDropRef.current!;
-			element.addEventListener("dragenter", this.handleDragIn);
-			element.addEventListener("dragleave", this.handleDragOut);
-			element.addEventListener("dragover", this.handleDragOver);
-			element.addEventListener("drop", this.handleDrop);
-		}
-	}
+	const cancelDrag = useCallback((event: React.DragEvent) => {
+		event.preventDefault();
+		event.stopPropagation();
+	}, []);
 	
-	componentDidUpdate(prevProps: Readonly<Props>) {
-		//Checking if the conversation's title or members have changed
-		if(this.props.conversation.name !== prevProps.conversation.name || this.props.conversation.members !== prevProps.conversation.members) {
-			//Updating the conversation title
-			if(this.props.conversation.name) {
-				this.setState({title: this.props.conversation.name});
-			} else {
-				this.setState({title: getFallbackTitle(this.props.conversation)});
-				getMemberTitle(this.props.conversation.members).then((title) => {
-					this.setState({title: title});
-				});
-			}
-		}
-	}
+	const handleDragOver = useCallback((event: React.DragEvent) => {
+		event.preventDefault();
+		event.stopPropagation();
+		
+		if(!event.dataTransfer) return;
+		event.dataTransfer.dropEffect = "copy";
+	}, []);
 	
-	componentWillUnmount() {
-		//Unsubscribing from message updates
-		ConnectionManager.messageUpdateEmitter.unregisterListener(this.onMessageUpdate);
-		ConnectionManager.modifierUpdateEmitter.unregisterListener(this.onModifierUpdate);
+	const handleDrop = useCallback((event: React.DragEvent) => {
+		event.preventDefault();
+		event.stopPropagation();
 		
-		//Unsubscribing from FaceTime updates
-		ConnectionManager.faceTimeSupportedEmitter.unregisterListener(this.updateFaceTimeSupported);
+		if(!event.dataTransfer) return;
 		
-		//Unsubscribing from drag-and-drop updates
-		{
-			const element = this.dragDropRef.current!;
-			element.removeEventListener("dragenter", this.handleDragIn);
-			element.removeEventListener("dragleave", this.handleDragOut);
-			element.removeEventListener("dragover", this.handleDragOver);
-			element.removeEventListener("drop", this.handleDrop);
-		}
-		
-		//Storing messages in the cache
-		if(this.props.conversation.localOnly && this.state.display.type === DisplayType.Messages) {
-			localMessageCache.set(this.props.conversation.localID, this.state.display.data);
-		}
-	}
-	
-	private readonly onMessageUpdate = (itemArray: ConversationItem[]): void => {
-		//Ignoring if the chat isn't loaded
-		if(this.state.display.type !== DisplayType.Messages) return;
-		
-		//Merging the item into the conversation
-		this.setState((prevState, props) => {
-			if(prevState.display.type !== DisplayType.Messages) return null;
-			
-			//Filtering out items that aren't part of this conversation
-			const newItemArray = itemArray.filter((item) => {
-				if(item.chatGuid !== undefined) {
-					if(!props.conversation.localOnly) {
-						return item.chatGuid === props.conversation.guid;
-					}
-				} else if(item.chatLocalID !== undefined) {
-					return item.chatLocalID === props.conversation.localID;
-				}
-				
-				return false;
-			});
-			
-			//Cloning the item array
-			const pendingItemArray: ConversationItem[] = [...prevState.display.data];
-			
-			//Iterating over new items
-			for(let i = 0; i < newItemArray.length; i++) {
-				const newItem = newItemArray[i];
-				
-				//If this is not a message, or the message is incoming, we can't match the item
-				if(!isConversationItemMessage(newItem) || newItem.sender) continue;
-				
-				//Trying to find a matching unconfirmed message
-				let matchedIndex: number = -1;
-				if(newItem.text && newItem.attachments.length === 0) {
-					matchedIndex = pendingItemArray.findIndex((existingItem) =>
-						isConversationItemMessage(existingItem) &&
-						existingItem.status === MessageStatusCode.Unconfirmed &&
-						!existingItem.sender &&
-						existingItem.attachments.length === 0 &&
-						existingItem.text === newItem.text);
-				} else if(!newItem.text && newItem.attachments.length === 1 && newItem.attachments[0].checksum) {
-					matchedIndex = pendingItemArray.findIndex((existingItem) =>
-						isConversationItemMessage(existingItem) &&
-						existingItem.status === MessageStatusCode.Unconfirmed &&
-						!existingItem.sender &&
-						existingItem.attachments.length === 1 &&
-						existingItem.attachments[0].checksum === newItem.attachments[0].checksum);
-				}
-				if(matchedIndex === -1) continue;
-				
-				//Merging the information into the item
-				pendingItemArray[matchedIndex] = {
-					...pendingItemArray[matchedIndex],
-					serverID: newItem.serverID,
-					guid: newItem.guid,
-					date: newItem.date,
-					status: newItem.status,
-					error: newItem.error,
-					statusDate: newItem.statusDate
-				} as MessageItem;
-				
-				//Removing the new message from the new item array (since we've already added it to the conversation)
-				newItemArray.splice(i, 1);
-			}
-			
-			//Adding new unmatched conversation items to the start of the array
-			pendingItemArray.unshift(...newItemArray);
-			
-			return {display: {type: DisplayType.Messages, data: pendingItemArray}};
+		//Add the files
+		const files = [...event.dataTransfer.files].map((file): QueuedFile => {
+			return {id: generateAttachmentLocalID(), file: file};
 		});
-	};
-	
-	private readonly onModifierUpdate = (itemArray: MessageModifier[]): void => {
-		//Ignoring if the chat isn't loaded
-		if(this.state.display.type !== DisplayType.Messages) return;
 		
-		//Updating affected messages
-		this.setState((prevState) => {
-			if(prevState.display.type !== DisplayType.Messages) return null;
-			
-			//Cloning the item array
-			const pendingItemArray: ConversationItem[] = [...prevState.display.data];
-			
-			for(const modifier of itemArray) {
-				//Trying to match the modifier with an item
-				const matchingIndex = pendingItemArray.findIndex((item) => isConversationItemMessage(item) && item.guid === modifier.messageGuid);
-				if(matchingIndex === -1) continue;
-				
-				//Applying the modifier
-				if(isModifierStatusUpdate(modifier)) {
-					pendingItemArray[matchingIndex] = {
-						...pendingItemArray[matchingIndex],
-						status: modifier.status,
-						statusDate: modifier.date
-					} as MessageItem;
-				} else if(isModifierSticker(modifier)) {
-					pendingItemArray[matchingIndex] = {
-						...pendingItemArray[matchingIndex],
-						stickers: (pendingItemArray[matchingIndex] as MessageItem).stickers.concat(modifier),
-					} as MessageItem;
-				} else if(isModifierTapback(modifier)) {
-					const pendingTapbacks = [...(pendingItemArray[matchingIndex] as MessageItem).tapbacks];
-					const matchingTapbackIndex = pendingTapbacks.findIndex((tapback) => tapback.sender === modifier.sender);
-					if(matchingTapbackIndex !== -1) pendingTapbacks[matchingTapbackIndex] = modifier;
-					else pendingTapbacks.push(modifier);
-					
-					pendingItemArray[matchingIndex] = {
-						...pendingItemArray[matchingIndex],
-						tapbacks: pendingTapbacks
-					} as MessageItem;
-				}
-			}
-			
-			return {display: {type: DisplayType.Messages, data: pendingItemArray}};
+		setAttachmentInput((attachmentInput) => {
+			return attachmentInput.concat(...files);
 		});
-	};
+	}, [setAttachmentInput]);
+	
+	return (
+		<DetailFrame
+			title={conversationTitle}
+			showCall={faceTimeSupported}
+			onClickCall={startCall}>
+			<Stack
+				flexGrow={1}
+				minHeight={0}
+				
+				onDragEnter={cancelDrag}
+				onDragLeave={cancelDrag}
+				onDragOver={handleDragOver}
+				onDrop={handleDrop}>
+				<Stack
+					flexGrow={1}
+					minHeight={0}>
+					{body}
+				</Stack>
+				
+				<Box
+					width="100%"
+					padding={2}>
+					<MessageInput
+						placeholder={mapServiceName(conversation.service)}
+						message={messageInput}
+						onMessageChange={setMessageInput}
+						attachments={attachmentInput}
+						onAttachmentAdd={addAttachment}
+						onAttachmentRemove={removeAttachment}
+						onMessageSubmit={submitInput} />
+				</Box>
+			</Stack>
+		</DetailFrame>
+	);
+}
+
+enum DisplayType {
+	Loading,
+	Error,
+	Messages
+}
+
+type DisplayStateMessages = {
+	type: DisplayType.Messages;
+	messages: ConversationItem[];
+};
+
+type DisplayState = {
+	type: DisplayType.Loading | DisplayType.Error
+} | DisplayStateMessages;
+
+enum HistoryLoadState {
+	Idle,
+	Loading,
+	Complete
 }

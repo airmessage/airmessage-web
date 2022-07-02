@@ -17,7 +17,7 @@ import {getMemberTitle} from "shared/util/conversationUtils";
 import {buildListString} from "shared/util/languageUtils";
 import CallEvent from "shared/data/callEvent";
 import {SnackbarContext} from "shared/components/control/SnackbarProvider";
-import {getNotificationUtils} from "shared/util/notificationUtils";
+import {getNotificationUtils} from "shared/interface/notification/notificationUtils";
 
 export default function CallOverlay() {
 	const displaySnackbar = useContext(SnackbarContext);
@@ -39,21 +39,21 @@ export default function CallOverlay() {
 	//Subscribe to incoming caller updates
 	const [incomingCaller, setIncomingCaller] = useState<string | undefined>(undefined);
 	useEffect(() => {
-		ConnectionManager.incomingCallerEmitter.registerListener((caller) => {
+		ConnectionManager.incomingCallerEmitter.subscribe((caller) => {
 			//Update the caller state
 			setIncomingCaller(caller);
 			
 			//Display a notification
 			getNotificationUtils().updateCallerNotification(caller);
 		});
-		return () => ConnectionManager.incomingCallerEmitter.unregisterListener(setIncomingCaller);
+		return () => ConnectionManager.incomingCallerEmitter.unsubscribe(setIncomingCaller);
 	}, [setIncomingCaller]);
 	
 	//Subscribe to outgoing callee updates
 	const [outgoingCallee, setOutgoingCallee] = useState<string[] | undefined>(undefined);
 	useEffect(() => {
-		ConnectionManager.outgoingCalleeEmitter.registerListener(setOutgoingCallee);
-		return () => ConnectionManager.outgoingCalleeEmitter.unregisterListener(setOutgoingCallee);
+		ConnectionManager.outgoingCalleeEmitter.subscribe(setOutgoingCallee);
+		return () => ConnectionManager.outgoingCalleeEmitter.unsubscribe(setOutgoingCallee);
 	}, [setOutgoingCallee]);
 	
 	const [outgoingCalleeReadable, setOutgoingCalleeReadable] = useState<string>("");
@@ -133,8 +133,8 @@ export default function CallOverlay() {
 			}
 		};
 		
-		ConnectionManager.callEventEmitter.registerListener(listener);
-		return () => ConnectionManager.callEventEmitter.unregisterListener(listener);
+		ConnectionManager.callEventEmitter.subscribe(listener);
+		return () => ConnectionManager.callEventEmitter.unsubscribe(listener);
 	}, [displaySnackbar, setErrorDetailsDisplay]);
 	
 	return (<>

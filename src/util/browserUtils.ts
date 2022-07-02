@@ -1,9 +1,3 @@
-export function downloadArrayBuffer(data: ArrayBuffer, type: string, name: string) {
-	const blobURL = URL.createObjectURL(new Blob([data], {type: type}));
-	downloadURL(blobURL, type, name);
-	URL.revokeObjectURL(blobURL);
-}
-
 export function downloadBlob(data: Blob, type: string, name: string) {
 	const blobURL = URL.createObjectURL(data);
 	downloadURL(blobURL, type, name);

@@ -4,14 +4,23 @@ import {
 	ConversationItem,
 	ConversationPreview,
 	ConversationPreviewMessage,
-	MessageItem, MessageModifier,
-	ParticipantAction, StatusUpdate, StickerItem, TapbackItem
+	MessageItem,
+	MessageModifier,
+	ParticipantAction,
+	StatusUpdate,
+	StickerItem,
+	TapbackItem
 } from "../data/blocks";
-import {ConversationItemType, ConversationPreviewType, MessageModifierType} from "../data/stateCodes";
-import {MessageFlow} from "../components/messaging/thread/item/Message";
-import {findPerson} from "./peopleUtils";
+import {
+	ConversationItemType,
+	ConversationPreviewType,
+	MessageModifierType,
+	MessageStatusCode
+} from "../data/stateCodes";
+import {findPerson} from "../interface/people/peopleUtils";
 import {parsePhoneNumberFromString} from "libphonenumber-js";
 import {buildListString} from "shared/util/languageUtils";
+import {MessageFlow} from "shared/util/messageFlow";
 
 //Message burst - Sending single messages one after the other
 //Used to decide if adjacent messages should be "attached" together
@@ -159,4 +168,47 @@ export function generateMessageLocalID(): number {
 let nextAttachmentLocalID = 0;
 export function generateAttachmentLocalID(): number {
 	return nextAttachmentLocalID++;
+}
+
+/**
+ * Gets if a conversation item should be part of a conversation
+ */
+export function checkMessageConversationOwnership(conversation: Conversation, item: ConversationItem): boolean {
+	if(item.chatGuid !== undefined) {
+		if(!conversation.localOnly) {
+			return item.chatGuid === conversation.guid;
+		}
+	} else if(item.chatLocalID !== undefined) {
+		return item.chatLocalID === conversation.localID;
+	}
+	
+	return false;
+}
+
+/**
+ * Finds the index of the unconfirmed message in the item array that
+ * the new message item can be merged into, or -1 if no match is found
+ */
+export function findMatchingUnconfirmedMessageIndex(itemArray: ConversationItem[], newItem: MessageItem): number {
+	//If the message is incoming, we can't match the item
+	if(newItem.sender !== undefined) return -1;
+	
+	//Try to find a matching unconfirmed message
+	if(newItem.text !== undefined && newItem.attachments.length === 0) {
+		return itemArray.findIndex((existingItem) =>
+			existingItem.itemType === ConversationItemType.Message &&
+			existingItem.status === MessageStatusCode.Unconfirmed &&
+			existingItem.sender === undefined &&
+			existingItem.attachments.length === 0 &&
+			existingItem.text === newItem.text);
+	} else if(newItem.text === undefined && newItem.attachments.length === 1 && newItem.attachments[0].checksum !== undefined) {
+		return itemArray.findIndex((existingItem) =>
+			existingItem.itemType === ConversationItemType.Message &&
+			existingItem.status === MessageStatusCode.Unconfirmed &&
+			existingItem.sender === undefined &&
+			existingItem.attachments.length === 1 &&
+			existingItem.attachments[0].checksum === newItem.attachments[0].checksum);
+	} else {
+		return -1;
+	}
 }

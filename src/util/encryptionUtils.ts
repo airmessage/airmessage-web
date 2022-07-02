@@ -11,6 +11,9 @@ const keyLength = 128; //128 bits
 let cryptoPasswordSet = false;
 let userKey: CryptoKey | undefined;
 
+/**
+ * Sets the password to use for future cryptographic operations
+ */
 export async function setCryptoPassword(password: string | undefined) {
 	cryptoPasswordSet = true;
 	
@@ -21,14 +24,24 @@ export async function setCryptoPassword(password: string | undefined) {
 	}
 }
 
+/**
+ * Gets whether {@link setCryptoPassword} has been called once
+ * (even if the password as undefined)
+ */
 export function isCryptoPasswordSet() {
 	return cryptoPasswordSet;
 }
 
+/**
+ * Gets if a valid crypto password is available to use
+ */
 export function isCryptoPasswordAvailable() {
 	return userKey !== undefined;
 }
 
+/**
+ * Encrypts the provided ArrayBuffer with the crypto password
+ */
 export async function encryptData(inData: ArrayBuffer): Promise<ArrayBuffer> {
 	//Generating random data
 	const salt = new Uint8Array(saltLen);
@@ -54,6 +67,9 @@ export async function encryptData(inData: ArrayBuffer): Promise<ArrayBuffer> {
 	return returnData.buffer;
 }
 
+/**
+ * Decrypts the provided ArrayBuffer with the crypto password
+ */
 export async function decryptData(inData: ArrayBuffer): Promise<ArrayBuffer> {
 	//Reading the data
 	const salt = inData.slice(0, saltLen);

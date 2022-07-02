@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {ParticipantAction} from "../../../../data/blocks";
 import {ParticipantActionType} from "../../../../data/stateCodes";
-import {findPerson} from "../../../../util/peopleUtils";
+import {findPerson} from "../../../../interface/people/peopleUtils";
 import ConversationActionLine from "./ConversationActionLine";
 
 export default function ConversationActionParticipant(props: {action: ParticipantAction}) {
@@ -19,18 +19,22 @@ export default function ConversationActionParticipant(props: {action: Participan
 				if(name.name !== undefined) {
 					setUserName(name.name);
 				}
-			});
+			}).catch(console.warn);
 		}
 		if(props.action.target) {
 			findPerson(props.action.target).then((name) => {
 				if(name.name) {
 					setTargetName(name.name);
 				}
-			});
+			}).catch(console.warn);
 		}
 	}, [props.action]);
 	
-	return <ConversationActionLine message={generateMessage(props.action.type, userName, targetName)} />;
+	return (
+		<ConversationActionLine>
+			{generateMessage(props.action.type, userName, targetName)}
+		</ConversationActionLine>
+	);
 }
 
 function generateMessage(type: ParticipantActionType, user: string | undefined, target: string | undefined): string {
