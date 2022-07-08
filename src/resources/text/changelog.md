@@ -1,1 +1,1 @@
-AirMessage for web v1.4.2 contains internal refactoring and security updates
+AirMessage for web v1.4.3 contains internal dependency updates
