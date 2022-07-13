@@ -28,11 +28,21 @@
     "jsx": "react",
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "shared/*": ["./src/*"],
-      "platform-components/*": ["./browser/*"]
+      "shared/*": [
+        "./src/*"
+      ],
+      "platform-components/*": [
+        "./browser/*"
+      ]
     },
     "sourceMap": true,
     "inlineSources": true
   },
-  "include": ["src", "browser", "windows/web", "index.d.ts", "window.ts"]
+  "include": [
+    "src",
+    "browser",
+    "windows/web",
+    "index.d.ts",
+    "window.ts"
+  ]
 }

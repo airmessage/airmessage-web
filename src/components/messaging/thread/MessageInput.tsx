@@ -1,10 +1,12 @@
-import React, { ChangeEvent, useCallback } from "react";
+import React, { ChangeEvent, useCallback, useState } from "react";
 import { Box, IconButton, InputBase, Stack } from "@mui/material";
 import PushIcon from "../../icon/PushIcon";
 import { QueuedFile } from "../../../data/blocks";
 import { QueuedAttachmentImage } from "./queue/QueuedAttachmentImage";
 import QueuedAttachmentGeneric from "./queue/QueuedAttachmentGeneric";
 import { QueuedAttachmentProps } from "./queue/QueuedAttachment";
+import EmojiPicker from "./EmojiPicker";
+import { IEmojiData } from "emoji-picker-react";
 
 interface Props {
   placeholder: string;
@@ -24,6 +26,7 @@ export default function MessageInput(props: Props) {
     attachments: propsAttachments,
     onAttachmentAdd: propsOnAttachmentAdd,
   } = props;
+  const [chosenEmoji, setChosenEmoji] = useState<IEmojiData | null>(null);
 
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -52,6 +55,10 @@ export default function MessageInput(props: Props) {
     },
     [propsOnAttachmentAdd]
   );
+
+  const onEmojiClick = (event: React.MouseEvent, emojiObject: IEmojiData) => {
+    setChosenEmoji(emojiObject);
+  };
 
   return (
     <Box
