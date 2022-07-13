@@ -1,10 +1,10 @@
 .sidebarList {
-	flex-grow: 1;
-	overflow-x: hidden;
-	overflow-y: scroll;
+  flex-grow: 1;
+  overflow-x: hidden;
+  overflow-y: scroll;
 }
 
 .sidebarListLoading {
-	flex-grow: 1;
-	overflow: hidden;
+  flex-grow: 1;
+  overflow: hidden;
 }

@@ -1,27 +1,27 @@
 declare module "*.module.css" {
-	const classes: { [key: string]: string };
-	export default classes;
+  const classes: { [key: string]: string };
+  export default classes;
 }
 
 declare module "*.svg" {
-	const content: any;
-	export default content;
+  const content: any;
+  export default content;
 }
 
 declare module "*.wav" {
-	const content: any;
-	export default content;
+  const content: any;
+  export default content;
 }
 
 declare module "*.md" {
-	const content: string;
-	export default content;
+  const content: string;
+  export default content;
 }
 
 declare const WPEnv: {
-	ENVIRONMENT: "production" | "development";
-	PACKAGE_VERSION: string;
-	RELEASE_HASH: string | undefined;
-	BUILD_DATE: number;
-	WINRT: boolean;
+  ENVIRONMENT: "production" | "development";
+  PACKAGE_VERSION: string;
+  RELEASE_HASH: string | undefined;
+  BUILD_DATE: number;
+  WINRT: boolean;
 };

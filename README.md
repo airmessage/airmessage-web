@@ -16,6 +16,7 @@ Other AirMessage repositories:
 To build AirMessage for web, you will need [Node.js](https://nodejs.org).
 
 AirMessage for web uses [React](https://reactjs.org) and [TypeScript](https://www.typescriptlang.org). If you're not familiar with these tools, they both have great introductory guides:
+
 - [React - Getting started](https://reactjs.org/docs/getting-started.html)
 - [TypeScript for JavaScript Programmers](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html)
 

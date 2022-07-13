@@ -1,44 +1,44 @@
 .container {
-	height: 100%;
+  height: 100%;
 
-	display: flex;
-	justify-content: center;
-	align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .main {
-	margin: 16px;
-	max-width: 1000px;
+  margin: 16px;
+  max-width: 1000px;
 
-	display: flex;
-	flex-direction: row;
-	align-items: flex-start;
-	justify-content: center;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .split {
-	display: flex;
-	flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
-	margin-inline-start: 16px;
+  margin-inline-start: 16px;
 }
 
 .icon {
-	width: 64px !important;
-	height: 64px !important;
+  width: 64px !important;
+  height: 64px !important;
 }
 
 .buttonRow {
-	display: flex;
-	flex-direction: row;
+  display: flex;
+  flex-direction: row;
 
-	margin-top: 12px;
+  margin-top: 12px;
 }
 
 .buttonRowReverse {
-	flex-direction: row-reverse;
+  flex-direction: row-reverse;
 }
 
 .buttonRow > button:not(:first-child) {
-	margin-left: 16px;
+  margin-left: 16px;
 }

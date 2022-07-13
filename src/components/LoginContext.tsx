@@ -1,7 +1,9 @@
 import React from "react";
 
 export default React.createContext<{
-	signOut: () => void;
+  signOut: () => void;
 }>({
-	signOut: () => { throw new Error("signOut not defined"); }
+  signOut: () => {
+    throw new Error("signOut not defined");
+  },
 });

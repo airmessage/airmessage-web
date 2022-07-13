@@ -1,17 +1,17 @@
 .logo {
-	display: flex;
-	align-items: center;
-	font-family: 'Manrope', sans-serif;
-	font-size: 22px;
-	font-weight: bold;
-	color: red;
+  display: flex;
+  align-items: center;
+  font-family: "Manrope", sans-serif;
+  font-size: 22px;
+  font-weight: bold;
+  color: red;
 }
 
 .logo > img {
-	width: 22px;
-	height: 22px;
+  width: 22px;
+  height: 22px;
 }
 
 .logo > span {
-	margin-left: 8px;
+  margin-left: 8px;
 }

@@ -1,44 +1,38 @@
 {
-	"compilerOptions": {
-		"baseUrl": ".",
-		"outDir": "dist",
-		"target": "ES2021",
-		"lib": [
-			"es5",
-			"es6",
-			"es2017",
-			"es2018",
-			"es2019",
-			"es2020",
-			"es2021",
-			"dom",
-			"dom.iterable"
-		],
-		"skipLibCheck": true,
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
-		"strict": true,
-		"forceConsistentCasingInFileNames": true,
-		"moduleResolution": "node",
-		"resolveJsonModule": true,
-		"isolatedModules": false,
-		"noImplicitThis": true,
-		"noImplicitAny": true,
-		"strictNullChecks": true,
-		"jsx": "react",
-		"noFallthroughCasesInSwitch": true,
-		"paths": {
-			"shared/*": ["./src/*"],
-			"platform-components/*": ["./browser/*"]
-		},
-		"sourceMap": true,
-		"inlineSources": true
-	},
-	"include": [
-		"src",
-		"browser",
-		"windows/web",
-		"index.d.ts",
-		"window.ts"
-	]
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "dist",
+    "target": "ES2021",
+    "lib": [
+      "es5",
+      "es6",
+      "es2017",
+      "es2018",
+      "es2019",
+      "es2020",
+      "es2021",
+      "dom",
+      "dom.iterable"
+    ],
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": false,
+    "noImplicitThis": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "jsx": "react",
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "shared/*": ["./src/*"],
+      "platform-components/*": ["./browser/*"]
+    },
+    "sourceMap": true,
+    "inlineSources": true
+  },
+  "include": ["src", "browser", "windows/web", "index.d.ts", "window.ts"]
 }
