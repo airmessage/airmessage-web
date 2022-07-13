@@ -40,6 +40,7 @@ export default function MessageBubbleText(props: {
         bgcolor={props.flow.backgroundColor}
         borderRadius={getFlowBorderRadius(props.flow)}
         variant="body2"
+        style={{ whiteSpace: "pre-wrap" }}
       >
         <Linkify options={{ target: "_blank" }}>{props.text}</Linkify>
       </MessageBubbleTypography>
