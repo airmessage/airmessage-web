@@ -125,6 +125,7 @@ export default function MessageInput(props: Props) {
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
         />
+        {/* <EmojiPicker onEmojiClick={onEmojiClick} /> */}
         <IconButton
           sx={{
             width: "40px",
