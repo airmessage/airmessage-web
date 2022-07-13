@@ -12,7 +12,16 @@
     "start": "webpack serve --open",
     "start-secure": "webpack serve --open --env secure",
     "build": "webpack build",
-    "test": "jest"
+    "test": "jest",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.+(js|jsx|ts|tsx)": [
+      "eslint --fix"
+    ],
+    "*.+(js|jsx|ts|tsx|json|css|md|mdx)": [
+      "prettier --write"
+    ]
   },
   "devDependencies": {
     "@babel/core": "^7.18.6",
@@ -42,8 +51,10 @@
     "eslint-plugin-react": "^7.22.0",
     "eslint-plugin-react-hooks": "^4.3.0",
     "fork-ts-checker-webpack-plugin": "^7.0.0",
+    "husky": "^8.0.1",
     "jest": "^28.1.0",
     "jest-environment-jsdom": "^28.1.0",
+    "lint-staged": "^13.0.3",
     "prettier": "^2.7.1",
     "source-map-loader": "^4.0.0",
     "style-loader": "^3.0.0",
