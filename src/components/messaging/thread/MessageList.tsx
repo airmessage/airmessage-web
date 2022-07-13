@@ -151,7 +151,7 @@ export default class MessageList extends React.Component<Props, State> {
   }
 
   getSnapshotBeforeUpdate() {
-    this.shouldScrollNextUpdate = this.checkScrolledToBottom();
+    this.shouldScrollNextUpdate = true;
 
     const element = this.scrollRef.current!;
     this.snapshotScrollHeight = element.scrollHeight;
