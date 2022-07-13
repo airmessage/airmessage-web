@@ -35,11 +35,11 @@ export default function AppTheme(props: { children: React.ReactNode }) {
                 contrastText: "#FFF",
               }
             : {
-                main: "#EDEDED",
-                contrastText: "rgba(0, 0, 0, 0.87)",
+                main: "#e9e9eb",
+                contrastText: "#363637",
               },
           messageOutgoing: {
-            main: "#448AFF",
+            main: "#3478f6",
             contrastText: "#FFF",
           },
           messageOutgoingTextMessage: {

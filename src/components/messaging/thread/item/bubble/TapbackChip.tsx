@@ -20,31 +20,38 @@ export default function TapbackChip(props: {
   isMine: boolean;
 }) {
   let Icon: React.ElementType;
+  let color: string;
   switch (props.type) {
     case TapbackType.Love:
       Icon = TapbackLoveIcon;
+      color = props.isMine ? "#e86995" : "#e86995";
       break;
     case TapbackType.Like:
       Icon = TapbackLikeIcon;
+      color = props.isMine ? "#ffffff" : "#808080";
       break;
     case TapbackType.Dislike:
       Icon = TapbackDislikeIcon;
+      color = props.isMine ? "#ffffff" : "#808080";
       break;
     case TapbackType.Laugh:
       Icon = TapbackLaughIcon;
+      color = props.isMine ? "#ffffff" : "#808080";
       break;
     case TapbackType.Emphasis:
       Icon = TapbackEmphasisIcon;
+      color = props.isMine ? "#ffffff" : "#808080";
       break;
     case TapbackType.Question:
       Icon = TapbackQuestionIcon;
+      color = props.isMine ? "#ffffff" : "#808080";
       break;
   }
 
   return (
     <Stack
       sx={{
-        paddingX: "6px",
+        padding: "6px",
         minWidth: 8,
         height: 18,
         borderStyle: "solid",
@@ -61,8 +68,7 @@ export default function TapbackChip(props: {
     >
       <Icon
         sx={{
-          color: (theme: Theme) =>
-            `${props.isMine ? "messageOutgoing" : "messageIncoming"}.main`,
+          color,
           width: 12,
           height: 12,
         }}
