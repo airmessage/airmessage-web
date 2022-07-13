@@ -15,5 +15,5 @@ export function accessPaletteColor(
     keyof PaletteColor
   ];
   const color = palette[specifierSplit[0]] as PaletteColor;
-  return color[specifierSplit[1]];
+  return color[specifierSplit[1]] as string;
 }
