@@ -1,1 +1,1 @@
-AirMessage for web v1.4.3 contains internal dependency updates
+This update fixes a bug where the conversation's title text could expand beyond the length of the screen
