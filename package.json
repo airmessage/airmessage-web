@@ -60,7 +60,7 @@
 		"libphonenumber-js": "^1.9.15",
 		"linkify-react": "^3.0.3",
 		"linkifyjs": "^3.0.3",
-		"luxon": "^2.0.2",
+		"luxon": "^3.0.1",
 		"markdown-to-jsx": "^7.1.1",
 		"pako": "^2.0.3",
 		"react": "^18.0.0",
