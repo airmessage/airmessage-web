@@ -220,7 +220,7 @@ export default function Messaging(props: {
 				
 				<Divider orientation="vertical" />
 				
-				<Box flex={1}>{masterNode}</Box>
+				<Box flex={1} minWidth={0}>{masterNode}</Box>
 			</Stack>
 			
 			<CallOverlay />
