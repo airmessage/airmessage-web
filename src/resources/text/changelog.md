@@ -1,1 +1,2 @@
-This update fixes a bug where the conversation's title text could expand beyond the length of the screen
+This update fixes a bug where sending a message with leading or trailing whitespace
+would cause the message to linger as a ghost message

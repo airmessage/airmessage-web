@@ -350,7 +350,7 @@ export default function DetailThread({conversation}: {
 				chatLocalID: conversation.localID,
 				date: new Date(),
 				
-				text: messageText,
+				text: trimmedMessageText,
 				subject: undefined,
 				sender: undefined,
 				attachments: [],
@@ -363,7 +363,7 @@ export default function DetailThread({conversation}: {
 			};
 			
 			//Send the message
-			ConnectionManager.sendMessage(conversationTarget, messageText)
+			ConnectionManager.sendMessage(conversationTarget, trimmedMessageText)
 				.catch((error: MessageError) => applyMessageError(messageLocalID, error));
 			
 			//Keep track of the message
