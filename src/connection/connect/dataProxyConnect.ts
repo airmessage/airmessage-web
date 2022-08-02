@@ -120,19 +120,9 @@ export default class DataProxyConnect extends DataProxy {
 			}
 			case NHT.nhtClientProxy: {
 				/*
-				 * App-level encryption was added at a later date,
-				 * so we use a hack by checking the first byte of the message.
-				 *
-				 * All message types will have the first byte as 0 or -1,
-				 * so we can check for other values here.
-				 *
-				 * If we find a match, assume that this was intentional from the server.
-				 * Otherwise, backtrack and assume the server doesn't support encryption.
-				 *
 				 * -100 -> The content is encrypted
 				 * -101 -> The content is not encrypted, but the server has encryption enabled
 				 * -102 -> The server has encryption disabled
-				 * Anything else -> The server does not support encryption
 				 */
 				let isSecure: boolean, isEncrypted: boolean;
 				const encryptionValue = byteBuffer.readByte();
