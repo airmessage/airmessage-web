@@ -13,6 +13,7 @@ const MessageBubbleTypography = styled(Typography)(({theme}) => ({
 	overflowWrap: "break-word",
 	wordBreak: "break-word",
 	hyphens: "auto",
+	whiteSpace: "break-spaces",
 	
 	"& a": {
 		color: "inherit"
