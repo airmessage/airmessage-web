@@ -1,2 +1,1 @@
-This update fixes a bug where sending a message with leading or trailing whitespace
-would cause the message to linger as a ghost message
+This update fixes a bug where line breaks would not show up in messages
