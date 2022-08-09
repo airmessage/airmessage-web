@@ -1,1 +1,2 @@
-This update fixes a bug where line breaks would not show up in messages
+- Updated the feedback dialog to include a link to Discord
+- Added support for read-only volume remote update errors
