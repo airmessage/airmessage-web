@@ -161,6 +161,8 @@ export function remoteUpdateErrorCodeToDisplay(error: RemoteUpdateErrorCode): st
 			return "An error occurred while processing the update";
 		case RemoteUpdateErrorCode.Internal:
 			return "An internal error occurred";
+		case RemoteUpdateErrorCode.ReadOnlyVolume:
+			return "On your Mac, please move AirMessage to the Applications folder to continue";
 		case RemoteUpdateErrorCode.Timeout:
 			return "Request timed out";
 	}

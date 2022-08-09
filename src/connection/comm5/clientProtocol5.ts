@@ -133,7 +133,8 @@ enum NRCCreateChatResult {
 enum NRCUpdateError {
 	Download = 0, //Failed to download update
 	BadPackage = 1, //Failed to validate update package
-	Internal = 2 //Internal update error
+	Internal = 2, //Internal update error
+	ReadOnlyVolume = 3 //App bundle is not writable
 }
 
 enum NRCFaceTimeCallInitiate {
@@ -1237,6 +1238,8 @@ function mapUpdateErrorCode(code: number): RemoteUpdateErrorCode {
 			return RemoteUpdateErrorCode.BadPackage;
 		case NRCUpdateError.Internal:
 			return RemoteUpdateErrorCode.Internal;
+		case NRCUpdateError.ReadOnlyVolume:
+			return RemoteUpdateErrorCode.ReadOnlyVolume;
 		default:
 			return RemoteUpdateErrorCode.Unknown;
 	}

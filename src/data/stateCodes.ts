@@ -111,6 +111,7 @@ export enum RemoteUpdateErrorCode {
 	Download, //Server failed to download update
 	BadPackage, //Server update validation failed
 	Internal, //Internal error
+	ReadOnlyVolume, //App bundle is not writable
 	Timeout //Request timed out
 }
 
