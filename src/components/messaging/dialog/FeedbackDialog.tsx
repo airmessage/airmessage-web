@@ -3,19 +3,27 @@ import {getPlatformUtils} from "shared/interface/platform/platformUtils";
 import {appVersion} from "shared/data/releaseInfo";
 import {
 	getActiveCommVer,
-	getActiveProxyType, getServerSoftwareVersion,
+	getActiveProxyType,
+	getServerSoftwareVersion,
 	getServerSystemVersion,
-	targetCommVer, targetCommVerString
+	targetCommVerString
 } from "shared/connection/connectionManager";
-import {communityPage, supportEmail} from "shared/data/linkConstants";
-import {Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
+import {discordAddress, redditAddress, supportEmail} from "shared/data/linkConstants";
+import {Button, Dialog, DialogContent, DialogContentText, DialogTitle, Stack, ThemeProvider, createTheme} from "@mui/material";
+import {Mail} from "@mui/icons-material";
+import DiscordIcon from "shared/components/icon/DiscordIcon";
+import RedditIcon from "shared/components/icon/RedditIcon";
+
+const discordTheme = createTheme({ palette: { primary: { main: "#5865F2" } } });
+const redditTheme = createTheme({ palette: { primary: { main: "#FF5700" } } });
 
 /**
  * A dialog that presents help and feedback options
  */
-export default function FeedbackDialog(props: {isOpen: boolean, onDismiss: () => void}) {
-	const propsOnDismiss = props.onDismiss;
-	
+export default function FeedbackDialog(props: {
+	isOpen: boolean,
+	onDismiss: () => void
+}) {
 	const onClickEmail = useCallback(async () => {
 		const body =
 			`\n\n---------- DEVICE INFORMATION ----------` +
@@ -30,13 +38,15 @@ export default function FeedbackDialog(props: {isOpen: boolean, onDismiss: () =>
 			`\nServer software version: ${getServerSoftwareVersion()}`;
 		const url = `mailto:${supportEmail}?subject=${encodeURIComponent("AirMessage feedback")}&body=${encodeURIComponent(body)}`;
 		window.open(url, "_blank");
-		propsOnDismiss();
-	}, [propsOnDismiss]);
+	}, []);
 	
-	const onClickCommunity = useCallback(() => {
-		window.open(communityPage, "_blank");
-		propsOnDismiss();
-	}, [propsOnDismiss]);
+	const onClickDiscord = useCallback(() => {
+		window.open(discordAddress, "_blank");
+	}, []);
+	
+	const onClickReddit = useCallback(() => {
+		window.open(redditAddress, "_blank");
+	}, []);
 	
 	return (
 		<Dialog
@@ -47,15 +57,36 @@ export default function FeedbackDialog(props: {isOpen: boolean, onDismiss: () =>
 				<DialogContentText>
 					Have a bug to report, a feature to suggest, or anything else to say? Contact us or discuss with others using the links below.
 				</DialogContentText>
+				
+				<Stack
+					marginTop={4}
+					alignItems="center"
+					spacing={2}>
+					<Button variant="outlined"
+							onClick={onClickEmail}
+							startIcon={<Mail />}>
+						Send E-Mail
+					</Button>
+					
+					<ThemeProvider theme={discordTheme}>
+						<Button
+							variant="outlined"
+							onClick={onClickDiscord}
+							startIcon={<DiscordIcon />}>
+							Join Discord server
+						</Button>
+					</ThemeProvider>
+					
+					<ThemeProvider theme={redditTheme}>
+						<Button
+							variant="outlined"
+							onClick={onClickReddit}
+							startIcon={<RedditIcon />}>
+							Open community subreddit
+						</Button>
+					</ThemeProvider>
+				</Stack>
 			</DialogContent>
-			<DialogActions>
-				<Button onClick={onClickEmail} color="primary">
-					Send E-Mail
-				</Button>
-				<Button onClick={onClickCommunity} color="primary" autoFocus>
-					Open community subreddit
-				</Button>
-			</DialogActions>
 		</Dialog>
 	);
 }
