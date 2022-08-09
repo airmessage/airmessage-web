@@ -77,9 +77,9 @@ declare module "@mui/material/styles/createPalette" {
 	}
 	
 	interface PaletteOptions {
-		messageIncoming: PaletteOptions["primary"];
-		messageOutgoing: PaletteOptions["primary"];
-		messageOutgoingTextMessage: PaletteOptions["primary"];
+		messageIncoming?: PaletteOptions["primary"];
+		messageOutgoing?: PaletteOptions["primary"];
+		messageOutgoingTextMessage?: PaletteOptions["primary"];
 	}
 	
 	interface TypeBackground {
