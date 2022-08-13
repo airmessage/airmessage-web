@@ -6,10 +6,12 @@ import {Box, Button, Paper, Stack, Typography} from "@mui/material";
  * and an optional button
  */
 export default function SidebarBanner(props: {
-	icon: React.ReactNode,
-	message: string,
-	button?: string,
-	onClickButton?: VoidFunction
+	icon: React.ReactNode;
+	message: string;
+	button?: string;
+	onClickButton?: VoidFunction;
+	secondaryButton?: string;
+	onClickSecondaryButton?: VoidFunction;
 }) {
 	return (
 		<Paper
@@ -31,14 +33,24 @@ export default function SidebarBanner(props: {
 				gap={1}
 				direction="column">
 				<Typography display="inline">{props.message}</Typography>
-				{props.button !== undefined && (
-					<Button
-						sx={{alignSelf: "flex-end"}}
-						color="primary"
-						onClick={props.onClickButton}>
-						{props.button}
-					</Button>
-				)}
+				<Stack direction="row" gap={2} justifyContent="end">
+					{props.secondaryButton !== undefined && (
+						<Button
+							color="primary"
+							onClick={props.onClickSecondaryButton}>
+							{props.secondaryButton}
+						</Button>
+					)}
+					
+					{props.button !== undefined && (
+						<Button
+							color="primary"
+							variant={props.secondaryButton === undefined ? "text" : "contained"}
+							onClick={props.onClickButton}>
+							{props.button}
+						</Button>
+					)}
+				</Stack>
 			</Stack>
 		</Paper>
 	);
