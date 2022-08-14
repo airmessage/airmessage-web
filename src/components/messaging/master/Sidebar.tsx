@@ -172,7 +172,7 @@ export default function Sidebar(props: {
 			{showPRBanner && (
 				<SidebarBanner
 					icon={<Feedback />}
-					message="Let's free iMessage"
+					message="Let's free iMessage - #FreeiMessage"
 					button="Details"
 					onClickButton={launchPRLink}
 					secondaryButton="Dismiss"
