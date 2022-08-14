@@ -1,6 +1,6 @@
-import React from "react";
+import React, {useCallback} from "react";
 
-import {Typography, Button, Box, Stack, styled} from "@mui/material";
+import {Typography, Button, Box, Stack, styled, Card, CardContent} from "@mui/material";
 import iconAirMessage from "shared/resources/icons/tile-airmessage.svg";
 import iconMac from "shared/resources/icons/tile-mac.svg";
 import iconGoogle from "shared/resources/icons/logo-google.svg";
@@ -15,6 +15,13 @@ const InstructionIconImg = styled("img")({
 	width: 64,
 	height: 64
 });
+
+const CardContentEvenPadding = styled(CardContent)(({theme}) => (`
+  padding: ${theme.spacing(2)};
+  &:last-child {
+    padding-bottom: ${theme.spacing(2)};
+  }
+`));
 
 export default function Onboarding() {
 	return (
@@ -76,6 +83,25 @@ export default function Onboarding() {
 						</Button>
 					</OnboardingColumn>
 				</Stack>
+				
+				<Card variant="outlined" sx={{marginTop: 6, borderColor: "primary.main"}}>
+					<CardContentEvenPadding>
+						<Stack
+							direction="row"
+							alignItems="center"
+							justifyContent="space-between">
+							<Typography>
+								Let&apos;s free iMessage - #FreeiMessage
+							</Typography>
+							
+							<Button variant="text" onClick={() => {
+								window.open("https://airmessage.org/free-imessage", "_blank");
+							}}>
+								Details
+							</Button>
+						</Stack>
+					</CardContentEvenPadding>
+				</Card>
 			</Stack>
 		</Stack>
 	);
