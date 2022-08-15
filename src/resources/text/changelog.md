@@ -1,2 +1,2 @@
-- Updated the feedback dialog to include a link to Discord
-- Added support for read-only volume remote update errors
+Added a link to #FreeiMessage  
+[https://airmessage.org/free-imessage](https://airmessage.org/free-imessage)
