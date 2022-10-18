@@ -2,6 +2,7 @@ export const connectHostname = "wss://connect-open.airmessage.org";
 
 export const googleApiKey = "AIzaSyDE2nDAKL6smwPmZIBy1IP8-x_pTOqpzfM";
 export const googleClientID = "526640769548-gv7t20cb7evjgmnngnl804gm0ec3kl8h.apps.googleusercontent.com";
+export const googleClientSecret = "AHUS5_B5Ahmas7ioaoiBact0";
 
 export const firebaseConfig = {
 	apiKey: "AIzaSyDE2nDAKL6smwPmZIBy1IP8-x_pTOqpzfM",

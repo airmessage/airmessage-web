@@ -1,24 +1,10 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 import {ChatRenameAction} from "../../../../data/blocks";
-import {findPerson} from "../../../../interface/people/peopleUtils";
 import ConversationActionLine from "./ConversationActionLine";
+import {usePersonName} from "shared/util/hookUtils";
 
 export default function ConversationActionRename(props: {action: ChatRenameAction}) {
-	const [userName, setUserName] = useState<string | undefined>(props.action.user);
-	
-	useEffect(() => {
-		//Filling in the values with the defaults
-		setUserName(props.action.user);
-		
-		//Loading the user data
-		if(props.action.user) {
-			findPerson(props.action.user).then((contact) => {
-				if(contact.name !== undefined) {
-					setUserName(contact.name);
-				}
-			}).catch(console.warn);
-		}
-	}, [props.action.user]);
+	const userName = usePersonName(props.action.user);
 	
 	return (
 		<ConversationActionLine>

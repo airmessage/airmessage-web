@@ -1,12 +1,13 @@
 import {
 	CallerNotificationAction,
-	getConversationTitle,
 	getMessageDescription,
 	NotificationUtils
 } from "shared/interface/notification/notificationUtils";
 import EventEmitter from "shared/util/eventEmitter";
 import {LinkedConversation, MessageItem} from "shared/data/blocks";
 import {playSoundNotification} from "shared/util/soundUtils";
+import {PeopleState} from "shared/state/peopleState";
+import {getMemberTitleSync} from "shared/util/conversationUtils";
 
 export default class BrowserNotificationUtils extends NotificationUtils {
 	private readonly messageNotificationBacklog = new Map<string, [Notification, number]>();
@@ -23,13 +24,13 @@ export default class BrowserNotificationUtils extends NotificationUtils {
 	}
 	
 	private notificationSoundPlayed = false;
-	async showMessageNotifications(conversation: LinkedConversation, messages: MessageItem[]) {
+	showMessageNotifications(conversation: LinkedConversation, messages: MessageItem[], peopleState: PeopleState) {
 		//Ignoring if the app isn't allowed to send notifications,
 		//or if there aren't any messages to notify
 		if(Notification.permission !== "granted" || messages.length === 0) return;
 		
 		//Getting the conversation title to display in the notification
-		const title = await getConversationTitle(conversation);
+		const title = conversation.name ?? getMemberTitleSync(conversation.members, peopleState);
 		
 		//Getting the notification information
 		const itemCount = messages.length;

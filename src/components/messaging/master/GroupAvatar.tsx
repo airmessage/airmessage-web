@@ -1,35 +1,20 @@
-import React, {useEffect, useState} from "react";
+import React, {useContext, useMemo} from "react";
 import styles from "./GroupAvatar.module.css";
 
 import {Avatar, Box} from "@mui/material";
-import {PersonData, findPerson} from "../../../interface/people/peopleUtils";
+import {PersonData} from "../../../interface/people/peopleUtils";
 import {colorFromContact} from "../../../util/avatarUtils";
 import {SxProps} from "@mui/system";
 import {Theme} from "@mui/material/styles";
+import {PeopleContext} from "shared/state/peopleState";
 
 export default function GroupAvatar(props: {members: string[]}) {
 	const members = props.members;
-	const [personArray, setPersonArray] = useState<(PersonData | undefined)[]>([]);
-	
-	useEffect(() => {
-		//Reset the person array
-		setPersonArray(new Array(members.length).fill(undefined));
-		
-		//Fetching member names
-		Promise.allSettled(members.map(findPerson)).then((resultArray) => {
-			//Rebuilding the contact array
-			const personArray: (PersonData | undefined)[] = [];
-			for(let i = 0; i < resultArray.length; i++) {
-				const result = resultArray[i];
-				if(result.status === "fulfilled") {
-					personArray[i] = result.value;
-				}
-			}
-			
-			//Updating the contact array
-			setPersonArray(personArray);
-		});
-	}, [members]);
+	const peopleState = useContext(PeopleContext);
+	const personArray = useMemo(
+		() => members.map((address) => peopleState.getPerson(address)),
+		[members, peopleState]
+	);
 	
 	let body: React.ReactNode[];
 	switch(members.length) {

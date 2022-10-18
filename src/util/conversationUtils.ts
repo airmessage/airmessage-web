@@ -17,10 +17,11 @@ import {
 	MessageModifierType,
 	MessageStatusCode
 } from "../data/stateCodes";
-import {findPerson} from "../interface/people/peopleUtils";
 import {parsePhoneNumberFromString} from "libphonenumber-js";
 import {buildListString} from "shared/util/languageUtils";
 import {MessageFlow} from "shared/util/messageFlow";
+import {PeopleContext, PeopleState} from "shared/state/peopleState";
+import {useContext, useMemo} from "react";
 
 //Message burst - Sending single messages one after the other
 //Used to decide if adjacent messages should be "attached" together
@@ -29,35 +30,15 @@ export const thresholdAnchor = 30 * 1000; //30 seconds
 //Used to decide if a time divider should be displayed
 export const thresholdHeader = 5 * 60 * 1000; //5 minutes
 
-export function getFallbackTitle(conversation: Conversation): string {
-	//Returning the conversation's name if it has one
-	if(conversation.name) return conversation.name;
-	
-	//Building a name from the conversation members
-	return buildListString(conversation.members);
-}
-
-export async function getMemberTitle(members: string[]): Promise<string> {
-	//Duplicating the member array (in case any modifications are made to the conversation in the meantime)
-	const memberArray = [...members];
-	
-	//Fetching member names
-	const resultArray = await Promise.allSettled(memberArray.map((member) => findPerson(member)));
-	
-	//Rebuilding the member array with names
-	const memberNameArray: string[] = [];
-	for(let i = 0; i < resultArray.length; i++) {
-		const result = resultArray[i];
-		if(result.status === "fulfilled") {
-			memberNameArray[i] = result.value.name ?? memberArray[i];
-		} else {
-			//Defaulting to the user's address
-			memberNameArray[i] = memberArray[i];
-		}
-	}
-	
-	//Building a string from the member names
-	return buildListString(memberNameArray);
+/**
+ * Builds a conversation title from a list of members
+ */
+export function getMemberTitleSync(members: string[], peopleState: PeopleState): string {
+	return buildListString(
+		members.map((address) =>
+			peopleState.getPerson(address)?.name
+			?? address)
+	);
 }
 
 export function mimeTypeToDisplay(type: string): string {

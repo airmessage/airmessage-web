@@ -1,7 +1,8 @@
 import {Conversation, LinkedConversation, MessageItem} from "shared/data/blocks";
-import {getMemberTitle, mimeTypeToPreview} from "shared/util/conversationUtils";
+import {mimeTypeToPreview} from "shared/util/conversationUtils";
 import {appleSendStyleBubbleInvisibleInk} from "shared/data/appleConstants";
 import EventEmitter from "shared/util/eventEmitter";
+import {PeopleState} from "shared/state/peopleState";
 
 export abstract class NotificationUtils {
 	/**
@@ -16,8 +17,9 @@ export abstract class NotificationUtils {
 	 * The platform determines whether notifications are persisted or stacked.
 	 * @param conversation The conversation of the messages
 	 * @param messages An array of message items to notify, sorted oldest to newest
+	 * @param peopleState The people state to use to look up contacts
 	 */
-	abstract showMessageNotifications(conversation: LinkedConversation, messages: MessageItem[]): void;
+	abstract showMessageNotifications(conversation: LinkedConversation, messages: MessageItem[], peopleState: PeopleState): void;
 	
 	/**
 	 * Dismisses notifications for a certain chat
@@ -50,15 +52,6 @@ export function setNotificationUtils(value: NotificationUtils) {
 }
 export function getNotificationUtils() {
 	return notificationUtils;
-}
-
-/**
- * Gets the display title of a conversation
- * @param conversation The conversation to generate a title for
- */
-export function getConversationTitle(conversation: Conversation): Promise<string> {
-	if(conversation.name) return Promise.resolve(conversation.name);
-	else return getMemberTitle(conversation.members);
 }
 
 /**

@@ -1,34 +1,12 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 import {ParticipantAction} from "../../../../data/blocks";
 import {ParticipantActionType} from "../../../../data/stateCodes";
-import {findPerson} from "../../../../interface/people/peopleUtils";
 import ConversationActionLine from "./ConversationActionLine";
+import {usePersonName} from "shared/util/hookUtils";
 
 export default function ConversationActionParticipant(props: {action: ParticipantAction}) {
-	const [userName, setUserName] = useState<string | undefined>(props.action.user);
-	const [targetName, setTargetName] = useState<string | undefined>(props.action.target);
-	
-	useEffect(() => {
-		//Filling in the values with the defaults
-		setUserName(props.action.user);
-		setTargetName(props.action.target);
-		
-		//Loading the user data
-		if(props.action.user) {
-			findPerson(props.action.user).then((name) => {
-				if(name.name !== undefined) {
-					setUserName(name.name);
-				}
-			}).catch(console.warn);
-		}
-		if(props.action.target) {
-			findPerson(props.action.target).then((name) => {
-				if(name.name) {
-					setTargetName(name.name);
-				}
-			}).catch(console.warn);
-		}
-	}, [props.action]);
+	const userName = usePersonName(props.action.user);
+	const targetName = usePersonName(props.action.target);
 	
 	return (
 		<ConversationActionLine>

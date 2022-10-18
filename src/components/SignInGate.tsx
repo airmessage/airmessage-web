@@ -1,16 +1,13 @@
-import React, {useCallback, useEffect, useRef, useState} from "react";
-
+import React, {useCallback, useContext, useEffect, useState} from "react";
 import Onboarding from "shared/components/Onboarding";
 import Messaging from "shared/components/messaging/master/Messaging";
-
-import * as secrets from "shared/secrets";
-
 import * as Sentry from "@sentry/react";
-import {promiseGAPI} from "shared/index";
-import {googleScope} from "shared/constants";
 import LoginContext from "shared/components/LoginContext";
-import {getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithCredential, signOut, User} from "firebase/auth";
-import {useCancellableEffect} from "shared/util/hookUtils";
+import {getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithCredential, signOut} from "firebase/auth";
+import {OAuthTokenResult, useGoogleSignIn} from "shared/util/authUtils";
+import {PeopleContextProvider} from "shared/state/peopleState";
+import {getSecureLS, SecureStorageKey, setSecureLS} from "shared/util/secureStorageUtils";
+import {RemoteLibContext} from "shared/state/remoteLibProvider";
 
 enum SignInState {
 	Waiting,
@@ -19,70 +16,105 @@ enum SignInState {
 }
 
 export default function SignInGate() {
+	//Sign-in state
 	const [state, setState] = useState(SignInState.Waiting);
-	const googleAuth = useRef<gapi.auth2.GoogleAuthBase | undefined>(undefined);
 	
-	//Updates whether the current user is signed in
-	const updateGoogleSignIn = useCallback((signedIn: boolean) => {
-		if(signedIn) {
-			//Getting the user
-			const googleUser = googleAuth.current!.currentUser.get();
-			
-			//Register for Firebase auth updates
-			const unsubscribe = onAuthStateChanged(getAuth(), (firebaseUser) => {
-				unsubscribe();
-				
-				//Returning if the same user is already signed in to Firebase
-				if(isUserEqual(googleUser, firebaseUser)) return;
-				
-				//Signing in to Firebase with the credential from Google
-				signInWithCredential(getAuth(), GoogleAuthProvider.credential(googleUser.getAuthResponse().id_token)).catch((error) => {
-					console.warn(`Unable to authenticate Google Sign-In token with Firebase: ${error.code}: ${error.message}`);
-					googleAuth.current!.signOut();
-				});
-			});
-		} else {
-			//Signing out of Firebase
-			signOut(getAuth());
-		}
-	}, []);
+	/**
+	 * undefined - User is signed out, gAPI has no token
+	 * null - User is signed in, gAPI has no token
+	 * string - User is signed in, gAPI has token
+	 */
+	const [accessToken, setAccessToken] = useState<string | undefined | null>(undefined);
+	const [accessTokenRegistered, setAccessTokenRegistered] = useState(false);
 	
-	//Load the current Google auth instance and check if the user is signed in
-	useCancellableEffect((addPromise) => {
-		//Ignore if Google auth is already loaded
-		if(googleAuth.current !== undefined) return;
+	const signOutAccount = useCallback(() => {
+		//Sign out of Firebase
+		signOut(getAuth());
 		
-		addPromise(
-			promiseGAPI
-				.then(() => new Promise((resolve) => gapi.load("auth2", resolve)))
-				.then(() => gapi.auth2.init({client_id: secrets.googleClientID, scope: googleScope}))
-		)
-			.then((authInstance) => {
-				googleAuth.current = authInstance;
-				updateGoogleSignIn(authInstance.isSignedIn.get());
-			});
-	}, [updateGoogleSignIn]);
+		//Reset the access token
+		setAccessToken(undefined);
+		setSecureLS(SecureStorageKey.GoogleRefreshToken, undefined);
+	}, [setAccessToken]);
+	
+	const handleGoogleSignIn = useCallback(async (result: OAuthTokenResult) => {
+		//Sign in to Firebase
+		try {
+			await signInWithCredential(getAuth(), GoogleAuthProvider.credential(result.id_token));
+		} catch(error) {
+			console.warn("Unable to authenticate Google Sign-In token with Firebase:", error);
+			return;
+		}
+		
+		//Set the access token
+		setAccessToken(result.access_token);
+		setSecureLS(SecureStorageKey.GoogleRefreshToken, result.refresh_token);
+	}, [setAccessToken]);
+	
+	const [isAuthResponseSession, signInWithGoogle, exchangeRefreshToken] = useGoogleSignIn(handleGoogleSignIn);
+	
+	//Apply the access token to gAPI
+	const remoteLibState = useContext(RemoteLibContext);
+	useEffect(() => {
+		//Ignore if gAPI isn't loaded
+		if(!remoteLibState.gapiLoaded) return;
+		
+		//Update the gAPI value
+		if(accessToken) {
+			gapi.client.setToken({access_token: accessToken});
+		} else {
+			gapi.client.setToken(null);
+		}
+		
+		//If the access token is null, let people utils error out
+		setAccessTokenRegistered(accessToken !== undefined);
+	}, [accessToken, setAccessTokenRegistered, remoteLibState.gapiLoaded]);
 	
 	useEffect(() => {
 		return onAuthStateChanged(getAuth(), (user) => {
-			//Updating the state
-			setState(user ? SignInState.SignedIn : SignInState.SignedOut);
-			
-			//Checking if the user is logged in
-			if(user) {
-				//Updating Sentry
+			if(user == null) {
+				//Update the state
+				setState(SignInState.SignedOut);
+			} else {
+				//Update the state
+				setState(SignInState.SignedIn);
+				
+				//Set the Sentry user
 				Sentry.setUser({
 					id: user.uid,
 					email: user.email ?? undefined
 				});
-			} else {
-				//Signing out of Google
-				if(googleAuth.current && googleAuth.current.isSignedIn.get()) {
-					googleAuth.current.signOut();
+				
+				//If this sign-in wasn't initiated by a sign-in session, load the token from disk
+				if(!isAuthResponseSession) {
+					(async () => {
+						const refreshToken = await getSecureLS(SecureStorageKey.GoogleRefreshToken);
+						
+						//Ignore if we don't have a refresh token in local storage
+						if(refreshToken === undefined) {
+							console.warn("User is signed in, but no refresh token is available!");
+							setAccessToken(null);
+							return;
+						}
+						
+						//Get a new access token with the refresh token
+						let accessToken: string;
+						try {
+							const exchangeResult = await exchangeRefreshToken(refreshToken);
+							accessToken = exchangeResult.access_token;
+						} catch(error) {
+							//Invalid token, ask user to reauthenticate
+							console.warn(`Failed to exchange stored refresh token: ${error}`);
+							signOutAccount();
+							return;
+						}
+						
+						//Set the access token
+						setAccessToken(accessToken);
+					})();
 				}
 			}
 		});
-	}, [setState]);
+	}, [setState, isAuthResponseSession, exchangeRefreshToken, signOutAccount]);
 	
 	let main: React.ReactElement | null;
 	switch(state) {
@@ -90,33 +122,24 @@ export default function SignInGate() {
 			main = null;
 			break;
 		case SignInState.SignedOut:
-			main = <Onboarding />;
+			main = (
+				<Onboarding onSignInGoogle={signInWithGoogle} />
+			);
 			break;
 		case SignInState.SignedIn:
-			main = <Messaging />;
+			main = (
+				<PeopleContextProvider ready={accessTokenRegistered}>
+					<Messaging onReauthenticate={signInWithGoogle} />
+				</PeopleContextProvider>
+			);
 			break;
 	}
 	
 	return (
 		<LoginContext.Provider value={{
-			signOut: useCallback(() => signOut(getAuth()), [])
+			signOut: signOutAccount
 		}}>
 			{main}
 		</LoginContext.Provider>
 	);
-}
-
-function isUserEqual(googleUser: gapi.auth2.GoogleUser, firebaseUser: User | null) {
-	if(firebaseUser) {
-		const providerData = firebaseUser.providerData;
-		for(let i = 0; i < providerData.length; i++) {
-			if(providerData[i]!.providerId === GoogleAuthProvider.PROVIDER_ID &&
-				providerData[i]!.uid === googleUser.getBasicProfile().getId()) {
-				// We don't need to reauth the Firebase connection.
-				return true;
-			}
-		}
-	}
-	
-	return false;
 }

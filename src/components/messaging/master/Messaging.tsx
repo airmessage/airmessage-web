@@ -1,8 +1,7 @@
-import React, {useCallback, useEffect, useRef, useState} from "react";
+import React, {useCallback, useContext, useEffect, useRef, useState} from "react";
 import Sidebar from "../master/Sidebar";
 import * as ConnectionManager from "../../../connection/connectionManager";
 import {ConnectionListener, warnCommVer} from "../../../connection/connectionManager";
-import {initializePeople} from "../../../interface/people/peopleUtils";
 import {ConnectionErrorCode, MessageError} from "../../../data/stateCodes";
 import {Conversation} from "../../../data/blocks";
 import SnackbarProvider from "../../control/SnackbarProvider";
@@ -19,9 +18,12 @@ import {arrayContainsAll} from "shared/util/arrayUtils";
 import {normalizeAddress} from "shared/util/addressHelper";
 import {compareVersions} from "shared/util/versionUtils";
 import DetailThread from "shared/components/messaging/thread/DetailThread";
+import {PeopleContext} from "shared/state/peopleState";
+import {getAuth} from "firebase/auth";
 
 export default function Messaging(props: {
-	onReset?: VoidFunction
+	onReauthenticate?: (loginHint?: string) => void;
+	onReset?: VoidFunction;
 }) {
 	const [detailPane, setDetailPane] = useState<DetailPane>({type: DetailType.Loading});
 	const [sidebarBanner, setSidebarBanner] = useState<ConnectionErrorCode | "connecting" | undefined>(undefined);
@@ -73,10 +75,15 @@ export default function Messaging(props: {
 		setDetailPane({type: DetailType.Thread, conversationID: conversation.localID});
 	}, [conversations, addConversation, setDetailPane]);
 	
+	const peopleState = useContext(PeopleContext);
+	
+	const onReauthenticate = props.onReauthenticate;
+	const requestPeoplePermission = useCallback(() => {
+		const signedInEmail = getAuth().currentUser?.email ?? undefined;
+		onReauthenticate?.(signedInEmail);
+	}, [onReauthenticate]);
+	
 	useEffect(() => {
-		//Load people
-		initializePeople();
-		
 		//Initialize notifications
 		getNotificationUtils().initialize();
 		
@@ -215,7 +222,9 @@ export default function Messaging(props: {
 						onConversationSelected={navigateConversation}
 						onCreateSelected={navigateConversationCreate}
 						errorBanner={(typeof sidebarBanner === "number") ? sidebarBanner : undefined}
-						needsServerUpdate={needsServerUpdate} />
+						needsServerUpdate={needsServerUpdate}
+						needsPeoplePermission={peopleState.needsPermission}
+						onRequestPeoplePermission={requestPeoplePermission} />
 				</Box>
 				
 				<Divider orientation="vertical" />

@@ -1,8 +1,8 @@
-import React, {useCallback, useContext, useEffect, useMemo, useState} from "react";
+import React, {useCallback, useContext, useMemo, useState} from "react";
 import * as ConnectionManager from "../../../connection/connectionManager";
 import {DetailFrame} from "../master/DetailFrame";
 import {Avatar, Box, Button, CircularProgress, Fade, InputBase, Stack, styled, Typography} from "@mui/material";
-import {AddressData, AddressType, getPeople, PersonData} from "shared/interface/people/peopleUtils";
+import {AddressData, AddressType, PersonData} from "shared/interface/people/peopleUtils";
 import {ConversationPreviewType, CreateChatErrorCode} from "shared/data/stateCodes";
 import {Conversation} from "shared/data/blocks";
 import {parsePhoneNumberFromString} from "libphonenumber-js";
@@ -15,6 +15,7 @@ import DetailCreateAddressButton from "shared/components/messaging/create/Detail
 import DetailCreateListSubheader from "shared/components/messaging/create/DetailCreateListSubheader";
 import DetailCreateDirectSendButton from "shared/components/messaging/create/DetailCreateDirectSendButton";
 import {groupArray} from "shared/util/arrayUtils";
+import {PeopleContext} from "shared/state/peopleState";
 
 const messagingService = "iMessage";
 
@@ -35,15 +36,11 @@ const ScrimStack = styled(Stack)(({theme}) => ({
 export default function DetailCreate(props: {onConversationCreated: (conversation: Conversation) => void}) {
 	const [query, setQuery] = useState<string>("");
 	const [peopleSelection, setPeopleSelection] = useState<NewMessageUser[]>([]);
-	const [peoplePool, setPeoplePool] = useState<PersonData[]>();
 	const [isLoading, setLoading] = useState(false);
 	
 	const displaySnackbar = useContext(SnackbarContext);
-	
-	useEffect(() => {
-		//Loading the people
-		getPeople().then(setPeoplePool);
-	}, [setPeoplePool]);
+	const peopleState = useContext(PeopleContext);
+	const peoplePool = peopleState.allPeople ?? [];
 	
 	const groupedPeople = useMemo(() => {
 		//Return undefined if there are no people

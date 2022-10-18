@@ -23,7 +23,9 @@ const CardContentEvenPadding = styled(CardContent)(({theme}) => (`
   }
 `));
 
-export default function Onboarding() {
+export default function Onboarding(props: {
+	onSignInGoogle?: (() => void)
+}) {
 	return (
 		<Stack
 			sx={{width: "100%", height: "100%"}}
@@ -77,7 +79,8 @@ export default function Onboarding() {
 							}}
 							variant="contained"
 							startIcon={<img src={iconGoogle} alt="" />}
-							onClick={signInGoogle}
+							onClick={props.onSignInGoogle}
+							disabled={props.onSignInGoogle === undefined}
 							fullWidth>
 							Sign in with Google
 						</Button>
@@ -105,15 +108,4 @@ export default function Onboarding() {
 			</Stack>
 		</Stack>
 	);
-}
-
-function signInGoogle() {
-	gapi.auth2.getAuthInstance().signIn({
-		scope: googleScope,
-		ux_mode: "redirect"
-	});
-
-	/* const provider = new firebase.auth.GoogleAuthProvider();
-	provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
-	firebase.auth().signInWithRedirect(provider); */
 }

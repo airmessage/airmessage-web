@@ -10,6 +10,7 @@ import {appleSendStyleBubbleInvisibleInk} from "../../../data/appleConstants";
 import {getLastUpdateStatusTime} from "../../../util/dateUtils";
 import GroupAvatar from "./GroupAvatar";
 import {ConversationPreviewType} from "../../../data/stateCodes";
+import {useConversationTitle} from "shared/util/hookUtils";
 
 export default function ListConversation(props: {
 	conversation: Conversation;
@@ -18,20 +19,7 @@ export default function ListConversation(props: {
 	onSelected: () => void;
 }) {
 	//Getting the conversation title
-	const [title, setConversationTitle] = useState("");
-	
-	useEffect(() => {
-		//Updating the conversation's name if it has one
-		if(props.conversation.name) {
-			setConversationTitle(props.conversation.name);
-			return;
-		}
-		
-		//Building the conversation title
-		setConversationTitle(ConversationUtils.getFallbackTitle(props.conversation));
-		ConversationUtils.getMemberTitle(props.conversation.members)
-			.then((title) => setConversationTitle(title));
-	}, [setConversationTitle, props.conversation]);
+	const title = useConversationTitle(props.conversation);
 	
 	const primaryStyle: TypographyProps = props.highlighted ? {
 		color: "primary",

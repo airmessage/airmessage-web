@@ -19,8 +19,7 @@ import {
 import {getDeliveryStatusTime, getTimeDivider} from "shared/util/dateUtils";
 import {ErrorRounded} from "@mui/icons-material";
 import {colorFromContact} from "shared/util/avatarUtils";
-import {findPerson, PersonData} from "shared/interface/people/peopleUtils";
-import {useCancellableEffect} from "shared/util/hookUtils";
+import {usePersonData} from "shared/util/hookUtils";
 import {MessageStatusCode} from "shared/data/stateCodes";
 import MessageBubbleText from "shared/components/messaging/thread/item/bubble/MessageBubbleText";
 import {appleServiceAppleMessage} from "shared/data/appleConstants";
@@ -114,17 +113,7 @@ export default function Message(props: {
 	}, [props.message.attachments, attachmentDataMap]);
 	
 	//Load the message sender person
-	const [personData, setPersonData] = useState<PersonData | undefined>(undefined);
-	useCancellableEffect((addPromise) => {
-		if(props.message.sender === undefined) {
-			setPersonData(undefined);
-			return;
-		}
-		
-		//Request contact data
-		addPromise(findPerson(props.message.sender))
-			.then(setPersonData, console.warn);
-	}, [props.message.sender, setPersonData]);
+	const personData = usePersonData(props.message.sender);
 	
 	//Get the color palette to use for the message
 	let colorPalette: keyof Palette;

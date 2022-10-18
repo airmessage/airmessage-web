@@ -37,12 +37,12 @@ export default class ResolveablePromiseTimeout<T> extends ResolveablePromise<T> 
 	}
 	
 	resolve(value: PromiseLike<T> | T) {
-		clearTimeout();
+		this.clearTimeout();
 		super.resolve(value);
 	}
 	
 	reject(reason?: any) {
-		clearTimeout();
+		this.clearTimeout();
 		super.reject(reason);
 	}
 }

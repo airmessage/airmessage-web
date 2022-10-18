@@ -5,15 +5,13 @@ import SignInGate from "shared/components/SignInGate";
 import AppTheme from "./components/control/AppTheme";
 import {initializeApp} from "firebase/app";
 import * as secrets from "./secrets";
-import {setPeopleUtils} from "shared/interface/people/peopleUtils";
-import GooglePeopleUtils from "shared/interface/people/googlePeopleUtils";
 import {setNotificationUtils} from "shared/interface/notification/notificationUtils";
 import BrowserNotificationUtils from "shared/interface/notification/browserNotificationUtils";
 import {setPlatformUtils} from "shared/interface/platform/platformUtils";
 import BrowserPlatformUtils from "shared/interface/platform/browserPlatformUtils";
+import {RemoteLibContextProvider} from "shared/state/remoteLibProvider";
 
 //Set platform-specific utilities
-setPeopleUtils(new GooglePeopleUtils());
 setNotificationUtils(new BrowserNotificationUtils());
 setPlatformUtils(new BrowserPlatformUtils());
 
@@ -37,20 +35,14 @@ if(WPEnv.ENVIRONMENT === "production" && "serviceWorker" in navigator) {
 	});
 }
 
-//Loading the Google platform script
-export const promiseGAPI = new Promise<unknown>((resolve) => {
-	const script = document.createElement("script");
-	script.setAttribute("src","https://apis.google.com/js/platform.js");
-	script.onload = resolve;
-	document.head.appendChild(script);
-});
-
 //Initializing React
 const root = createRoot(document.getElementById("root")!);
 root.render(
 	<React.StrictMode>
 		<AppTheme>
-			<SignInGate />
+			<RemoteLibContextProvider>
+				<SignInGate />
+			</RemoteLibContextProvider>
 		</AppTheme>
 	</React.StrictMode>
 );

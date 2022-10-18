@@ -1,8 +1,20 @@
-import {DependencyList, Dispatch, SetStateAction, useDeferredValue, useEffect, useRef, useState} from "react";
+import {
+	DependencyList,
+	Dispatch,
+	SetStateAction,
+	useContext,
+	useDeferredValue,
+	useEffect,
+	useMemo,
+	useRef,
+	useState
+} from "react";
 import * as ConnectionManager from "shared/connection/connectionManager";
 import {Conversation} from "shared/data/blocks";
-import {getFallbackTitle, getMemberTitle} from "./conversationUtils";
+import {getMemberTitleSync} from "./conversationUtils";
 import UnsubscribeCallback from "shared/data/unsubscribeCallback";
+import {PeopleContext} from "shared/state/peopleState";
+import {PersonData} from "shared/interface/people/peopleUtils";
 
 /**
  * Generates a blob URL for a {@link BlobPart}
@@ -154,33 +166,44 @@ export function useIsFaceTimeSupported(): boolean {
  * Builds a title from a conversation
  */
 export function useConversationTitle(conversation: Conversation): string {
-	const [title, setTitle] = useState("");
-	
-	useEffect(() => {
+	const peopleState = useContext(PeopleContext);
+	return useMemo(() => {
 		//If the conversation has a name, use that
 		if(conversation.name !== undefined && conversation.name.length > 0) {
-			setTitle(conversation.name);
-			return;
+			return conversation.name;
 		}
 		
-		//Use the fallback title immediately,
-		//and build the actual title
-		setTitle(getFallbackTitle(conversation));
-		
-		let discardTitle = false;
-		getMemberTitle(conversation.members)
-			.then((title) => {
-				if(!discardTitle) {
-					setTitle(title);
-				}
-			});
-		
-		return () => {
-			//If the conversation gets updated before we have
-			//the chance to finish building the title, cancel
-			discardTitle = true;
-		};
-	}, [setTitle, conversation]);
+		return getMemberTitleSync(conversation.members, peopleState);
+	}, [conversation, peopleState]);
+}
+
+/**
+ * Gets the data of a person, or undefined
+ * if none could be found
+ */
+export function usePersonData(address: string | undefined): PersonData | undefined {
+	const peopleState = useContext(PeopleContext);
 	
-	return title;
+	return useMemo(() => {
+		if(address === undefined) return undefined;
+		return peopleState.getPerson(address);
+	}, [address, peopleState]);
+}
+
+/**
+ * Gets the display name of a person,
+ * returning their address as fallback
+ */
+export function usePersonName(address: string): string;
+export function usePersonName(address: undefined): undefined;
+export function usePersonName(address: string | undefined): string | undefined;
+export function usePersonName(address: string | undefined): string | undefined {
+	const personData = usePersonData(address);
+	return personData?.name ?? address;
+	
+	/* const peopleState = useContext(PeopleContext);
+	return useMemo(() => {
+		if(address === undefined) return undefined;
+		return peopleState.getPerson(address)?.name ?? address;
+	}, [address, peopleState]); */
 }

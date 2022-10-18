@@ -1,11 +1,16 @@
-import {useCallback, useEffect, useRef, useState} from "react";
+import {useCallback, useContext, useEffect, useRef, useState} from "react";
 import {
 	Conversation,
-	ConversationItem, getConversationItemMixedID, isLocalConversationID, isRemoteConversationID,
-	LinkedConversation, LocalConversationID,
+	ConversationItem,
+	getConversationItemMixedID,
+	isLocalConversationID,
+	isRemoteConversationID,
+	LinkedConversation,
+	LocalConversationID,
 	MessageItem,
 	MessageModifier,
-	MixedConversationID, RemoteConversationID
+	MixedConversationID,
+	RemoteConversationID
 } from "shared/data/blocks";
 import {ConversationItemType, ParticipantActionType} from "shared/data/stateCodes";
 import {getPlatformUtils} from "shared/interface/platform/platformUtils";
@@ -17,6 +22,7 @@ import {playSoundMessageIn, playSoundNotification, playSoundTapback} from "share
 import {normalizeAddress} from "shared/util/addressHelper";
 import {arrayContainsAll} from "shared/util/arrayUtils";
 import localMessageCache from "shared/state/localMessageCache";
+import {PeopleContext} from "shared/state/peopleState";
 
 interface ConversationsState {
 	conversations: Conversation[] | undefined,
@@ -28,6 +34,8 @@ interface ConversationsState {
 export default function useConversationState(activeConversationID: LocalConversationID | undefined, interactive: boolean = false): ConversationsState {
 	const [conversations, setConversations] = useState<Conversation[] | undefined>(undefined);
 	const pendingConversationDataMap = useRef(new Map<RemoteConversationID, ConversationItem[]>()).current;
+	
+	const peopleState = useContext(PeopleContext);
 	
 	const applyUpdateMessages = useCallback(async (newItems: ConversationItem[]) => {
 		//Sort new items into their conversations
@@ -281,7 +289,7 @@ export default function useConversationState(activeConversationID: LocalConversa
 						if(conversation === undefined) continue;
 						
 						//Sending a notification
-						getNotificationUtils().showMessageNotifications(conversation, messages);
+						getNotificationUtils().showMessageNotifications(conversation, messages, peopleState);
 					}
 				}
 			} else {
@@ -290,7 +298,7 @@ export default function useConversationState(activeConversationID: LocalConversa
 				}
 			}
 		}
-	}, [activeConversationID, conversations, setConversations, pendingConversationDataMap, interactive]);
+	}, [activeConversationID, conversations, setConversations, pendingConversationDataMap, interactive, peopleState]);
 	
 	//Subscribe to message updates
 	useEffect(() => {

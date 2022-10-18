@@ -13,11 +13,11 @@ import {createTheme, useTheme} from "@mui/material/styles";
 import CallNotificationIncoming from "shared/components/calling/CallNotificationIncoming";
 import CallNotificationOutgoing from "shared/components/calling/CallNotificationOutgoing";
 import * as ConnectionManager from "shared/connection/connectionManager";
-import {getMemberTitle} from "shared/util/conversationUtils";
-import {buildListString} from "shared/util/languageUtils";
+import {getMemberTitleSync} from "shared/util/conversationUtils";
 import CallEvent from "shared/data/callEvent";
 import {SnackbarContext} from "shared/components/control/SnackbarProvider";
 import {getNotificationUtils} from "shared/interface/notification/notificationUtils";
+import {PeopleContext} from "shared/state/peopleState";
 
 export default function CallOverlay() {
 	const displaySnackbar = useContext(SnackbarContext);
@@ -56,28 +56,14 @@ export default function CallOverlay() {
 		return () => ConnectionManager.outgoingCalleeEmitter.unsubscribe(setOutgoingCallee);
 	}, [setOutgoingCallee]);
 	
-	const [outgoingCalleeReadable, setOutgoingCalleeReadable] = useState<string>("");
-	useEffect(() => {
-		//Ignore if there is no outgoing callee
+	const peopleState = useContext(PeopleContext);
+	const outgoingCalleeReadable = useMemo<string>(() => {
 		if(outgoingCallee === undefined) {
-			setOutgoingCalleeReadable("");
-			return;
+			return "";
+		} else {
+			return getMemberTitleSync(outgoingCallee, peopleState);
 		}
-		
-		//Set a quick title by joining the member's addresses
-		setOutgoingCalleeReadable(buildListString(outgoingCallee));
-		
-		//Look up the member's names to build the title
-		let invalidated = false;
-		getMemberTitle(outgoingCallee).then((title) => {
-			if(invalidated) return;
-			setOutgoingCalleeReadable(title);
-		});
-		
-		return () => {
-			invalidated = true;
-		};
-	}, [outgoingCallee, setOutgoingCalleeReadable]);
+	}, [outgoingCallee, peopleState]);
 	
 	//Set to true between the time that we have responded to an incoming call, and the server has yet to answer our message
 	const [incomingCallLoading, setIncomingCallLoading] = useState(false);

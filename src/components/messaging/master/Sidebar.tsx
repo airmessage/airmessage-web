@@ -6,7 +6,15 @@ import ListConversation from "./ListConversation";
 import {Conversation} from "../../../data/blocks";
 import ConnectionBanner from "./ConnectionBanner";
 import {ConnectionErrorCode, FaceTimeLinkErrorCode} from "../../../data/stateCodes";
-import {AddRounded, Feedback, MoreVertRounded, SyncProblem, Update, VideoCallOutlined} from "@mui/icons-material";
+import {
+	AddRounded,
+	Contacts,
+	Feedback,
+	MoreVertRounded,
+	SyncProblem,
+	Update,
+	VideoCallOutlined
+} from "@mui/icons-material";
 import ChangelogDialog from "../dialog/ChangelogDialog";
 import FeedbackDialog from "shared/components/messaging/dialog/FeedbackDialog";
 import SignOutDialog from "shared/components/messaging/dialog/SignOutDialog";
@@ -21,7 +29,6 @@ import {useIsFaceTimeSupported, useNonNullableCacheState} from "shared/util/hook
 import UpdateRequiredDialog from "../dialog/UpdateRequiredDialog";
 import ConversationSkeleton from "shared/components/skeleton/ConversationSkeleton";
 import {TransitionGroup} from "react-transition-group";
-import {discordAddress} from "shared/data/linkConstants";
 
 const prKey = "22-08-pr-dismiss";
 
@@ -32,6 +39,8 @@ export default function Sidebar(props: {
 	onCreateSelected: () => void;
 	errorBanner?: ConnectionErrorCode;
 	needsServerUpdate?: boolean;
+	needsPeoplePermission?: boolean;
+	onRequestPeoplePermission?: () => void;
 }) {
 	const displaySnackbar = useContext(SnackbarContext);
 	
@@ -180,6 +189,14 @@ export default function Sidebar(props: {
 			)}
 			
 			{props.errorBanner !== undefined && <ConnectionBanner error={props.errorBanner} /> }
+			
+			{props.needsPeoplePermission && (
+				<SidebarBanner
+					icon={<Contacts />}
+					message="Allow access to contacts to show names and pictures"
+					button="Enable"
+					onClickButton={props.onRequestPeoplePermission} />
+			)}
 			
 			{remoteUpdate !== undefined && (
 				<SidebarBanner

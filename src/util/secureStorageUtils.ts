@@ -4,7 +4,8 @@ import {decodeBase64, encodeBase64} from "shared/util/encodingUtils";
 const ivLen = 12;
 
 export enum SecureStorageKey {
-	ServerPassword = "serverPassword"
+	ServerPassword = "serverPassword",
+	GoogleRefreshToken = "googleRefreshToken"
 }
 
 const cryptoKey: Promise<CryptoKey> = crypto.subtle.importKey(
