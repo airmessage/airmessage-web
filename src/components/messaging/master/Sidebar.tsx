@@ -6,15 +6,7 @@ import ListConversation from "./ListConversation";
 import {Conversation} from "../../../data/blocks";
 import ConnectionBanner from "./ConnectionBanner";
 import {ConnectionErrorCode, FaceTimeLinkErrorCode} from "../../../data/stateCodes";
-import {
-	AddRounded,
-	Contacts,
-	Feedback,
-	MoreVertRounded,
-	SyncProblem,
-	Update,
-	VideoCallOutlined
-} from "@mui/icons-material";
+import {AddRounded, Contacts, MoreVertRounded, SyncProblem, Update, VideoCallOutlined} from "@mui/icons-material";
 import ChangelogDialog from "../dialog/ChangelogDialog";
 import FeedbackDialog from "shared/components/messaging/dialog/FeedbackDialog";
 import SignOutDialog from "shared/components/messaging/dialog/SignOutDialog";
@@ -29,8 +21,6 @@ import {useIsFaceTimeSupported, useNonNullableCacheState} from "shared/util/hook
 import UpdateRequiredDialog from "../dialog/UpdateRequiredDialog";
 import ConversationSkeleton from "shared/components/skeleton/ConversationSkeleton";
 import {TransitionGroup} from "react-transition-group";
-
-const prKey = "22-08-pr-dismiss";
 
 export default function Sidebar(props: {
 	conversations: Conversation[] | undefined;
@@ -66,15 +56,6 @@ export default function Sidebar(props: {
 	const [isRemoteUpdateDialog, showRemoteUpdateDialog, hideRemoteUpdateDialog] = useSidebarDialog();
 	const [isUpdateRequiredDialog, showUpdateRequiredDialog, hideUpdateRequiredDialog] = useSidebarDialog();
 	const [faceTimeLinkDialog, setFaceTimeLinkDialog] = useState<string | undefined>(undefined);
-	
-	const [showPRBanner, setShowPRBanner] = useState(() => !localStorage.getItem(prKey));
-	const hidePRBanner = useCallback(() => {
-		localStorage.setItem(prKey, "true");
-		setShowPRBanner(false);
-	}, [setShowPRBanner]);
-	const launchPRLink = useCallback(() => {
-		window.open("https://airmessage.org/free-imessage", "_blank");
-	}, []);
 	
 	//Keep track of remote updates
 	const [remoteUpdate, remoteUpdateCache, setRemoteUpdate] = useNonNullableCacheState<ServerUpdateData | undefined>(
@@ -177,16 +158,6 @@ export default function Sidebar(props: {
 					</Menu>
 				</Box>
 			</Toolbar>
-			
-			{showPRBanner && (
-				<SidebarBanner
-					icon={<Feedback />}
-					message="Let's free iMessage - #FreeiMessage"
-					button="Details"
-					onClickButton={launchPRLink}
-					secondaryButton="Dismiss"
-					onClickSecondaryButton={hidePRBanner} />
-			)}
 			
 			{props.errorBanner !== undefined && <ConnectionBanner error={props.errorBanner} /> }
 			
