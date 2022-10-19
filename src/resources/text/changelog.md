@@ -1,2 +1,1 @@
-Added a link to #FreeiMessage  
-[https://airmessage.org/free-imessage](https://airmessage.org/free-imessage)
+This update improves integration with Google sign-in and Google Contacts on browsers with tracking prevention
