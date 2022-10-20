@@ -498,7 +498,8 @@ export default class ClientProtocol4 extends ProtocolManager {
 				progressCallback(Math.min(readOffset, file.size));
 			}
 		} catch(error) {
-			return Promise.reject({code: MessageErrorCode.LocalIO} as MessageError);
+			const messageError: MessageError = {code: MessageErrorCode.LocalIO};
+			return Promise.reject(messageError);
 		}
 		
 		//Returning with the file's MD5 hash
@@ -863,7 +864,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 				messageGuid: messageGuid,
 				status: status,
 				date: date
-			} as StatusUpdate;
+			};
 		}
 		case NSTModifierType.Sticker: {
 			const index = unpacker.unpackInt();
@@ -881,7 +882,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 				date: date,
 				dataType: dataType,
 				data: data
-			} as StickerItem;
+			};
 		}
 		case NSTModifierType.Tapback: {
 			const index = unpacker.unpackInt();
@@ -901,7 +902,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 				sender: sender,
 				isAddition: isAddition,
 				tapbackType: tapbackType
-			} as TapbackItem;
+			};
 		}
 	}
 }

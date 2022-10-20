@@ -6,14 +6,10 @@ import {getInstallationID} from "../../util/installationUtils";
 import AirPacker from "./airPacker";
 import {
 	AttachmentItem,
-	ChatRenameAction,
 	Conversation,
 	ConversationItem,
 	LinkedConversation,
-	MessageItem,
 	MessageModifier,
-	ParticipantAction,
-	StatusUpdate,
 	StickerItem,
 	TapbackItem
 } from "../../data/blocks";
@@ -159,7 +155,8 @@ enum NSTConversationItemType {
 enum NSTModifierType {
 	Activity,
 	Sticker,
-	Tapback
+	Tapback,
+	Edit
 }
 
 enum NSTGroupActionType {
@@ -653,7 +650,8 @@ export default class ClientProtocol6 extends ProtocolManager {
 				progressCallback(Math.min(readOffset, file.size));
 			}
 		} catch(error) {
-			return Promise.reject({code: MessageErrorCode.LocalIO} as MessageError);
+			const messageError: MessageError = {code: MessageErrorCode.LocalIO};
+			return Promise.reject(messageError);
 		}
 
 		//Returning with the file's MD5 hash
@@ -972,7 +970,7 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 			const errorCode = mapCodeDBError(unpacker.unpackInt());
 			const error: MessageError | undefined = errorCode ? {code: errorCode} : undefined;
 			const dateRead = new Date(unpacker.unpackLong());
-			const editHistory = unpackArray(unpacker, (unpacker) => unpacker.unpackString());
+			const editHistory = unpacker.unpackStringArray();
 			const isRemoved = unpacker.unpackBoolean();
 
 			return {
@@ -1068,7 +1066,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 				messageGuid: messageGuid,
 				status: status,
 				date: date
-			} as StatusUpdate;
+			};
 		}
 		case NSTModifierType.Sticker: {
 			const index = unpacker.unpackInt();
@@ -1086,7 +1084,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 				date: date,
 				dataType: dataType,
 				data: data
-			} as StickerItem;
+			};
 		}
 		case NSTModifierType.Tapback: {
 			const index = unpacker.unpackInt();
@@ -1106,7 +1104,18 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 				sender: sender,
 				isAddition: isAddition,
 				tapbackType: tapbackType
-			} as TapbackItem;
+			};
+		}
+		case NSTModifierType.Edit: {
+			const editHistory = unpacker.unpackStringArray();
+			const isRemoved = unpacker.unpackBoolean();
+			
+			return {
+				type: MessageModifierType.Edit,
+				messageGuid: messageGuid,
+				editHistory: editHistory,
+				isRemoved: isRemoved
+			};
 		}
 	}
 }

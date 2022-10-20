@@ -84,30 +84,41 @@ export interface AttachmentItem {
 	data?: File;
 }
 
-export interface MessageModifier {
+export interface MessageModifierBase {
 	readonly type: MessageModifierType;
 	readonly messageGuid: string;
 }
 
-export interface StatusUpdate extends MessageModifier {
-	status: MessageStatusCode;
-	date?: Date;
+export type MessageModifier = StatusUpdate | StickerItem | TapbackItem | EditUpdate;
+
+export interface StatusUpdate extends MessageModifierBase {
+	readonly type: MessageModifierType.StatusUpdate;
+	readonly status: MessageStatusCode;
+	readonly date?: Date;
 }
 
-export interface ResponseMessageModifier extends MessageModifier {
+export interface ResponseMessageModifier extends MessageModifierBase {
 	readonly messageIndex: number;
-	readonly sender: string;
+	readonly sender: string | undefined;
 }
 
 export interface StickerItem extends ResponseMessageModifier {
+	readonly type: MessageModifierType.Sticker;
 	readonly date: Date;
 	readonly dataType: string;
 	readonly data: ArrayBuffer;
 }
 
 export interface TapbackItem extends ResponseMessageModifier {
+	readonly type: MessageModifierType.Tapback;
 	readonly isAddition: boolean;
 	readonly tapbackType: TapbackType;
+}
+
+export interface EditUpdate extends MessageModifierBase {
+	readonly type: MessageModifierType.Edit;
+	readonly editHistory: string[];
+	readonly isRemoved: boolean;
 }
 
 export interface ParticipantAction extends ConversationItemBase {
