@@ -359,7 +359,9 @@ export default function DetailThread({conversation}: {
 				sendStyle: undefined,
 				status: MessageStatusCode.Unconfirmed,
 				error: undefined,
-				statusDate: undefined
+				statusDate: undefined,
+				editHistory: [],
+				isRemoved: false
 			};
 			
 			//Send the message
@@ -402,7 +404,9 @@ export default function DetailThread({conversation}: {
 				status: MessageStatusCode.Unconfirmed,
 				statusDate: undefined,
 				error: undefined,
-				progress: -1 //Show indeterminate progress by default for attachments
+				progress: -1, //Show indeterminate progress by default for attachments
+				editHistory: [],
+				isRemoved: false
 			};
 			
 			//Send the file

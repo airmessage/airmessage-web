@@ -70,6 +70,8 @@ export interface MessageItem extends ConversationItemBase {
 	statusDate?: Date;
 	error?: MessageError;
 	progress?: number; //Undefined for hide, -1 for indeterminate, 0-100 for determinate
+	editHistory: string[];
+	isRemoved: boolean;
 }
 
 export interface AttachmentItem {
@@ -111,14 +113,14 @@ export interface TapbackItem extends ResponseMessageModifier {
 export interface ParticipantAction extends ConversationItemBase {
 	readonly itemType: ConversationItemType.ParticipantAction;
 	readonly type: ParticipantActionType;
-	readonly user?: string;
-	readonly target?: string;
+	readonly user: string | undefined;
+	readonly target: string | undefined;
 }
 
 export interface ChatRenameAction extends ConversationItemBase {
 	readonly itemType: ConversationItemType.ChatRenameAction;
-	readonly user: string;
-	readonly chatName: string;
+	readonly user: string | undefined;
+	readonly chatName: string | undefined;
 }
 
 export type ConversationItem = MessageItem | ParticipantAction | ChatRenameAction;

@@ -787,8 +787,10 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 				sendStyle: sendStyle,
 				status: statusCode,
 				error: error,
-				statusDate: dateRead
-			} as MessageItem;
+				statusDate: dateRead,
+				editHistory: [],
+				isRemoved: false
+			};
 		}
 		case ConversationItemType.ParticipantAction: {
 			const user = unpacker.unpackNullableString();
@@ -805,7 +807,7 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 				type: actionType,
 				user: user,
 				target: target
-			} as ParticipantAction;
+			};
 		}
 		case ConversationItemType.ChatRenameAction: {
 			const user = unpacker.unpackNullableString();
@@ -820,7 +822,7 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 			
 				user: user,
 				chatName: chatName
-			} as ChatRenameAction;
+			};
 		}
 	}
 }

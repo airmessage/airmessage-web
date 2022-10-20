@@ -170,16 +170,16 @@ enum NSTGroupActionType {
 
 type AMBrowser = "chrome" | "safari" | "firefox" | "edge" | "browser";
 
-export default class ClientProtocol5 extends ProtocolManager {
+export default class ClientProtocol6 extends ProtocolManager {
 	processData(data: ArrayBuffer, wasEncrypted: boolean): void {
 		//Notifying the communications manager of a new incoming message
 		this.communicationsManager.listener?.onPacket();
-		
+
 		try {
 			//Unpacking the message
 			const unpacker = new AirUnpacker(data);
 			const messageType = unpacker.unpackInt();
-			
+
 			//Processing the message data
 			if(wasEncrypted) {
 				this.processDataSecure(messageType, unpacker);
@@ -190,7 +190,7 @@ export default class ClientProtocol5 extends ProtocolManager {
 			console.warn(error);
 		}
 	}
-	
+
 	private processDataInsecure(messageType: number, unpacker: AirUnpacker) {
 		switch(messageType) {
 			case nhtClose:
@@ -205,7 +205,7 @@ export default class ClientProtocol5 extends ProtocolManager {
 				} finally {
 					packer.reset();
 				}
-			
+
 				break;
 			}
 			case nhtAuthentication:
@@ -213,7 +213,7 @@ export default class ClientProtocol5 extends ProtocolManager {
 				break;
 		}
 	}
-	
+
 	private processDataSecure(messageType: number, unpacker: AirUnpacker) {
 		switch(messageType) {
 			case nhtMessageUpdate:
@@ -279,14 +279,14 @@ export default class ClientProtocol5 extends ProtocolManager {
 				break;
 		}
 	}
-	
+
 	private handleMessageAuthentication(unpacker: AirUnpacker) {
 		//Stopping the timeout timer
 		this.communicationsManager.stopTimeoutTimer();
-		
+
 		//Reading the result code
 		const resultCode = unpacker.unpackInt();
-		
+
 		//Disconnecting if the authentication didn't go through
 		if(resultCode !== NRCAuthenticationResult.OK) {
 			switch(resultCode) {
@@ -300,10 +300,10 @@ export default class ClientProtocol5 extends ProtocolManager {
 					this.communicationsManager.disconnect(ConnectionErrorCode.Connection);
 					break;
 			}
-			
+
 			return;
 		}
-		
+
 		//Reading the server's information
 		const installationID = unpacker.unpackString();
 		const deviceName = unpacker.unpackString();
@@ -311,26 +311,26 @@ export default class ClientProtocol5 extends ProtocolManager {
 		const softwareVersion = unpacker.unpackString();
 		/*const userName = */unpacker.unpackString(); //Can't use, discard
 		const supportsFaceTime = unpacker.unpackBoolean();
-		
+
 		//Notifying the communications manager
 		this.communicationsManager.onHandshake(installationID, deviceName, systemVersion, softwareVersion, supportsFaceTime);
 	}
-	
+
 	private handleMessageUpdate(unpacker: AirUnpacker) {
 		const messages = unpackArray(unpacker, unpackConversationItem).reverse();
 		this.communicationsManager.listener?.onMessageUpdate(messages);
 	}
-	
+
 	private handleConversationUpdate(unpacker: AirUnpacker) {
 		const conversations = unpackArray(unpacker, unpackRequestedConversation);
 		this.communicationsManager.listener?.onConversationUpdate(conversations);
 	}
-	
+
 	private handleModifierUpdate(unpacker: AirUnpacker) {
 		const modifiers = unpackArray(unpacker, unpackModifier);
 		this.communicationsManager.listener?.onModifierUpdate(modifiers);
 	}
-	
+
 	private handleMessageAttachmentRequest(unpacker: AirUnpacker) {
 		//Reading the response data
 		const requestID = unpacker.unpackShort();
@@ -344,71 +344,71 @@ export default class ClientProtocol5 extends ProtocolManager {
 			fileLength = unpacker.unpackLong();
 		}
 		const isLast = unpacker.unpackBoolean();
-		
+
 		const fileData = unpacker.unpackPayload();
-		
+
 		if(requestIndex === 0) this.communicationsManager.listener?.onFileRequestStart(requestID, downloadFileName, downloadFileType, fileLength!, new InflatorAccumulator());
 		this.communicationsManager.listener?.onFileRequestData(requestID, fileData);
 		if(isLast) this.communicationsManager.listener?.onFileRequestComplete(requestID);
 	}
-	
+
 	private handleMessageAttachmentRequestConfirm(unpacker: AirUnpacker) {
 		//Reading the response data
 		//const requestID = unpacker.unpackShort();
 	}
-	
+
 	private handleMessageAttachmentRequestFail(unpacker: AirUnpacker) {
 		//Reading the response data
 		const requestID = unpacker.unpackShort();
 		const errorCode = mapAttachmentErrorCode(unpacker.unpackInt());
-		
+
 		//Notifying the communications manager
 		this.communicationsManager.listener?.onFileRequestFail(requestID, errorCode);
 	}
-	
+
 	private handleMessageIDUpdate(unpacker: AirUnpacker) {
 		const messageID = unpacker.unpackLong();
-		
+
 		//Notifying the communications manager
 		this.communicationsManager.listener?.onIDUpdate(messageID);
 	}
-	
+
 	private handleMessageLiteConversationRetrieval(unpacker: AirUnpacker) {
 		const conversations = unpackArray(unpacker, unpackPreviewConversation);
-		
+
 		this.communicationsManager.listener?.onMessageConversations(conversations);
 	}
-	
+
 	private handleMessageLiteThreadRetrieval(unpacker: AirUnpacker) {
 		const chatGUID = unpacker.unpackString();
 		const firstMessageID: number | undefined = unpacker.unpackBoolean() ? unpacker.unpackLong() : undefined;
 		//Unlike Android, the bottom of the chat is index 0
 		const conversationItems = unpackArray(unpacker, unpackConversationItem).reverse();
-		
+
 		this.communicationsManager.listener?.onMessageThread(chatGUID, firstMessageID, conversationItems);
 	}
-	
+
 	private handleMessageSendResult(unpacker: AirUnpacker) {
 		const requestID = unpacker.unpackShort();
 		const errorCode = mapMessageErrorCode(unpacker.unpackInt());
 		const details = unpacker.unpackNullableString();
-		
+
 		const messageError: MessageError | undefined = errorCode === undefined ? undefined : {code: errorCode, detail: details};
-		
+
 		this.communicationsManager.listener?.onSendMessageResponse(requestID, messageError);
 	}
-	
+
 	private handleMessageCreateChat(unpacker: AirUnpacker) {
 		const requestID = unpacker.unpackShort();
 		const errorCode = mapCreateChatCode(unpacker.unpackInt());
 		const details = unpacker.unpackNullableString();
-		
+
 		this.communicationsManager.listener?.onCreateChatResponse(requestID, errorCode, details);
 	}
-	
+
 	private handleMessageSoftwareUpdateListing(unpacker: AirUnpacker) {
 		let updateData: ServerUpdateData | undefined = undefined;
-		
+
 		//Read the update data
 		const updateExists = unpacker.unpackBoolean();
 		if(updateExists) {
@@ -416,11 +416,11 @@ export default class ClientProtocol5 extends ProtocolManager {
 			const protocolRequirementCount = unpacker.unpackInt();
 			const protocolRequirement: number[] = [];
 			for(let i = 0; i < protocolRequirementCount; i++) protocolRequirement.push(unpacker.unpackInt());
-			
+
 			const versionName = unpacker.unpackString();
 			const versionNotes = unpacker.unpackString();
 			const remoteInstallable = unpacker.unpackBoolean();
-			
+
 			updateData = {
 				id: updateID,
 				protocolRequirement: protocolRequirement,
@@ -429,21 +429,21 @@ export default class ClientProtocol5 extends ProtocolManager {
 				remoteInstallable: remoteInstallable
 			};
 		}
-		
+
 		this.communicationsManager.listener?.onSoftwareUpdateListing(updateData);
 	}
-	
+
 	private handleMessageSoftwareUpdateInstall(unpacker: AirUnpacker) {
 		const updateInstalling = unpacker.unpackBoolean();
-		
+
 		this.communicationsManager.listener?.onSoftwareUpdateInstall(updateInstalling);
 	}
-	
+
 	private handleMessageSoftwareUpdateError(unpacker: AirUnpacker) {
 		//Reading the message
 		const errorCode = mapUpdateErrorCode(unpacker.unpackInt());
 		const errorDetails = unpacker.unpackString();
-		
+
 		this.communicationsManager.listener?.onSoftwareUpdateError(errorCode, errorDetails);
 	}
 	private handleMessageFaceTimeCreateLink(unpacker: AirUnpacker) {
@@ -451,23 +451,23 @@ export default class ClientProtocol5 extends ProtocolManager {
 		let link: string | undefined = undefined;
 		const linkOK = unpacker.unpackBoolean();
 		if(linkOK) link = unpacker.unpackString();
-		
+
 		this.communicationsManager.listener?.onFaceTimeNewLink(link);
 	}
-	
+
 	private handleMessageFaceTimeOutgoingInitiate(unpacker: AirUnpacker) {
 		//Reading the message
 		const resultCode = mapFaceTimeInitiateCode(unpacker.unpackInt());
 		const errorDetails = unpacker.unpackNullableString();
-		
+
 		//Mapping the result code to a local error code
 		this.communicationsManager.listener?.onFaceTimeOutgoingCallInitiated(resultCode, errorDetails);
 	}
-	
+
 	private handleMessageFaceTimeOutgoingHandled(unpacker: AirUnpacker) {
 		//Reading the message
 		const resultCode = unpacker.unpackInt();
-		
+
 		if(resultCode === NRCFaceTimeCallHandled.Accepted) {
 			//Our call was accepted :)
 			const faceTimeLink = unpacker.unpackString();
@@ -481,12 +481,12 @@ export default class ClientProtocol5 extends ProtocolManager {
 			this.communicationsManager.listener?.onFaceTimeOutgoingCallError(errorDetails);
 		}
 	}
-	
+
 	private handleMessageFaceTimeIncomingCallerUpdate(unpacker: AirUnpacker) {
 		const caller = unpacker.unpackNullableString();
 		this.communicationsManager.listener?.onFaceTimeIncomingCall(caller);
 	}
-	
+
 	private handleMessageFaceTimeIncomingHandle(unpacker: AirUnpacker) {
 		const ok = unpacker.unpackBoolean();
 		if(ok) {
@@ -497,7 +497,7 @@ export default class ClientProtocol5 extends ProtocolManager {
 			this.communicationsManager.listener?.onFaceTimeIncomingCallError(errorDetails);
 		}
 	}
-	
+
 	sendPing(): boolean {
 		const packer = AirPacker.get();
 		try {
@@ -506,19 +506,19 @@ export default class ClientProtocol5 extends ProtocolManager {
 		} finally {
 			packer.reset();
 		}
-		
+
 		return true;
 	}
-	
+
 	async sendAuthenticationRequest(unpacker: AirUnpacker): Promise<boolean> {
 		//Assembling the device information
 		const uaParser = new UAParser();
 		const browser = uaParser.getBrowser();
 		const os = uaParser.getOS();
-		
+
 		const browserName = (browser.name && browser.version) ? `${browser.name} ${browser.version}` : null;
 		const platformName = (os.name && os.version) ? `${os.name} ${os.version}` : null;
-		
+
 		const installationID = getInstallationID();
 		let clientName: string;
 		if(browserName && platformName) clientName = browserName + " — " + platformName;
@@ -526,7 +526,7 @@ export default class ClientProtocol5 extends ProtocolManager {
 		else if(platformName) clientName = platformName;
 		else clientName = "Unknown browser";
 		const platformID = mapBrowserAM(browser.name ?? "browser");
-		
+
 		//Checking if the current protocol requires authentication
 		if(unpacker.unpackBoolean()) {
 			//Checking if we don't have a password to use
@@ -535,17 +535,17 @@ export default class ClientProtocol5 extends ProtocolManager {
 				this.communicationsManager.disconnect(ConnectionErrorCode.Unauthorized);
 				return false;
 			}
-			
+
 			//Telling the data proxy that encrypted messages should be used
 			this.dataProxy.serverRequestsEncryption = true;
-			
+
 			//Reading the transmission check
 			const transmissionCheck = unpacker.unpackPayload();
-			
+
 			const packer = AirPacker.get();
 			try {
 				packer.packInt(nhtAuthentication);
-				
+
 				//Building the secure data
 				let secureData: ArrayBuffer;
 				{
@@ -556,10 +556,10 @@ export default class ClientProtocol5 extends ProtocolManager {
 					securePacker.packString(platformID);
 					secureData = securePacker.toArrayBuffer();
 				}
-				
+
 				//Encrypting the secure data and adding it to the original message
 				packer.packPayload(await encryptData(secureData));
-				
+
 				this.dataProxy.send(packer.toArrayBuffer(), false);
 			} finally {
 				packer.reset();
@@ -567,7 +567,7 @@ export default class ClientProtocol5 extends ProtocolManager {
 		} else {
 			//Telling the data proxy that encrypted messages should not be used
 			this.dataProxy.serverRequestsEncryption = false;
-			
+
 			//Sending a response
 			const packer = AirPacker.get();
 			try {
@@ -575,16 +575,16 @@ export default class ClientProtocol5 extends ProtocolManager {
 				packer.packString(installationID);
 				packer.packString(clientName);
 				packer.packString(platformID);
-				
+
 				this.dataProxy.send(packer.toArrayBuffer(), true);
 			} finally {
 				packer.reset();
 			}
 		}
-		
+
 		return true;
 	}
-	
+
 	sendMessage(requestID: number, conversation: ConversationTarget, message: string): boolean {
 		const packer = AirPacker.get();
 		try {
@@ -597,21 +597,21 @@ export default class ClientProtocol5 extends ProtocolManager {
 				packer.packString(conversation.service);
 			}
 			packer.packString(message);
-			
+
 			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
-		
+
 		return true;
 	}
-	
+
 	async sendFile(requestID: number, conversation: ConversationTarget, file: File, progressCallback: (bytesUploaded: number) => void): Promise<string> {
 		//TODO find some way to stream deflate
 		const fileData = await file.arrayBuffer();
 		const hash = SparkMD5.ArrayBuffer.hash(fileData);
 		const compressedData = pako.deflate(new Uint8Array(fileData));
-		
+
 		try {
 			//Reading the file
 			let chunkIndex = 0;
@@ -619,17 +619,17 @@ export default class ClientProtocol5 extends ProtocolManager {
 			while(readOffset < compressedData.length) {
 				const newOffset = readOffset + attachmentChunkSize;
 				const chunkData = compressedData.slice(readOffset, newOffset);
-				
+
 				//Uploading the data
 				const packer = AirPacker.get();
 				try {
 					if(conversation.type === "linked") packer.packInt(nhtSendFileExisting);
 					else packer.packInt(nhtSendFileNew);
-					
+
 					packer.packShort(requestID);
 					packer.packInt(chunkIndex);
 					packer.packBoolean(newOffset >= file.size); //Is this the last part?
-					
+
 					packer.packPayload(chunkData);
 					if(chunkIndex === 0) {
 						packer.packString(file.name);
@@ -639,44 +639,44 @@ export default class ClientProtocol5 extends ProtocolManager {
 							packer.packString(conversation.service);
 						}
 					}
-					
+
 					this.dataProxy.send(packer.toArrayBuffer(), true);
 				} finally {
 					packer.reset();
 				}
-				
+
 				//Updating the index and read offset
 				chunkIndex++;
 				readOffset = newOffset;
-				
+
 				//Updating the progress
 				progressCallback(Math.min(readOffset, file.size));
 			}
 		} catch(error) {
 			return Promise.reject({code: MessageErrorCode.LocalIO} as MessageError);
 		}
-		
+
 		//Returning with the file's MD5 hash
 		return hash;
 	}
-	
+
 	requestAttachmentDownload(requestID: number, attachmentGUID: string): boolean {
 		const packer = AirPacker.get();
 		try {
 			packer.packInt(nhtAttachmentReq);
-			
+
 			packer.packShort(requestID);
 			packer.packInt(attachmentChunkSize);
 			packer.packString(attachmentGUID);
-			
+
 			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
-		
+
 		return true;
 	}
-	
+
 	requestLiteConversation(): boolean {
 		const packer = AirPacker.get();
 		try {
@@ -685,26 +685,26 @@ export default class ClientProtocol5 extends ProtocolManager {
 		} finally {
 			packer.reset();
 		}
-		
+
 		return true;
 	}
-	
+
 	requestConversationInfo(chatGUIDs: string[]): boolean {
 		const packer = AirPacker.get();
 		try {
 			packer.packInt(nhtConversationUpdate);
-			
+
 			packer.packArrayHeader(chatGUIDs.length);
 			for(const chatGUID of chatGUIDs) packer.packString(chatGUID);
-			
+
 			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
-		
+
 		return true;
 	}
-	
+
 	requestLiteThread(chatGUID: string, firstMessageID?: number): boolean {
 		const packer = AirPacker.get();
 		try {
@@ -720,88 +720,88 @@ export default class ClientProtocol5 extends ProtocolManager {
 		} finally {
 			packer.reset();
 		}
-		
+
 		return true;
 	}
-	
+
 	requestChatCreation(requestID: number, members: string[], service: string): boolean {
 		const packer = AirPacker.get();
 		try {
 			packer.packInt(nhtCreateChat);
-			
+
 			packer.packShort(requestID);
 			packer.packArrayHeader(members.length);
 			for(const member of members) packer.packString(member);
 			packer.packString(service);
-			
+
 			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
-		
+
 		return true;
 	}
-	
+
 	requestRetrievalTime(timeLower: Date, timeUpper: Date): boolean {
 		const packer = AirPacker.get();
 		try {
 			packer.packInt(nhtTimeRetrieval);
-			
+
 			packer.packLong(timeLower.getTime());
 			packer.packLong(timeUpper.getTime());
-			
+
 			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
-		
+
 		return true;
 	}
-	
+
 	requestRetrievalID(idLower: number, timeLower: Date, timeUpper: Date): boolean {
 		const packer = AirPacker.get();
 		try {
 			packer.packInt(nhtIDRetrieval);
-			
+
 			packer.packLong(idLower);
 			packer.packLong(timeLower.getTime());
 			packer.packLong(timeUpper.getTime());
-			
+
 			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
-		
+
 		return true;
 	}
-	
+
 	requestInstallRemoteUpdate(updateID: number): boolean {
 		const packer = AirPacker.get();
 		try {
 			packer.packInt(nhtSoftwareUpdateInstall);
 			packer.packInt(updateID);
-			
+
 			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
-		
+
 		return true;
 	}
-	
+
 	requestFaceTimeLink(): boolean {
 		const packer = AirPacker.get();
 		try {
 			packer.packInt(nhtFaceTimeCreateLink);
-			
+
 			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
-		
+
 		return true;
 	}
-	
+
 	initiateFaceTimeCall(addresses: string[]): boolean {
 		const packer = AirPacker.get();
 		try {
@@ -810,40 +810,40 @@ export default class ClientProtocol5 extends ProtocolManager {
 			for(const address of addresses) {
 				packer.packString(address);
 			}
-			
+
 			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
-		
+
 		return true;
 	}
-	
+
 	handleIncomingFaceTimeCall(caller: string, accept: boolean): boolean {
 		const packer = AirPacker.get();
 		try {
 			packer.packInt(nhtFaceTimeIncomingHandle);
 			packer.packString(caller);
 			packer.packBoolean(accept);
-			
+
 			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
-		
+
 		return true;
 	}
-	
+
 	dropFaceTimeCallServer(): boolean {
 		const packer = AirPacker.get();
 		try {
 			packer.packInt(nhtFaceTimeDisconnect);
-			
+
 			this.dataProxy.send(packer.toArrayBuffer(), true);
 		} finally {
 			packer.reset();
 		}
-		
+
 		return true;
 	}
 }
@@ -869,11 +869,11 @@ function unpackPreviewConversation(unpacker: AirUnpacker): LinkedConversation {
 	const guid = unpacker.unpackString();
 	const service = unpacker.unpackString();
 	const name = unpacker.unpackNullableString();
-	
+
 	const membersLength = unpacker.unpackArrayHeader();
 	const members: string[] = [];
 	for(let i = 0; i < membersLength; i++) members[i] = unpacker.unpackString();
-	
+
 	const previewDate = new Date(unpacker.unpackLong());
 	/*const previewSender = */unpacker.unpackNullableString();
 	const previewText = unpacker.unpackNullableString();
@@ -881,7 +881,7 @@ function unpackPreviewConversation(unpacker: AirUnpacker): LinkedConversation {
 	const previewAttachmentsLength = unpacker.unpackArrayHeader();
 	const previewAttachments: string[] = [];
 	for(let i = 0; i < previewAttachmentsLength; i++) previewAttachments[i] = unpacker.unpackString();
-	
+
 	return {
 		localID: generateConversationLocalID(),
 		guid: guid,
@@ -903,16 +903,16 @@ function unpackPreviewConversation(unpacker: AirUnpacker): LinkedConversation {
 function unpackRequestedConversation(unpacker: AirUnpacker): [string, Conversation | undefined] {
 	const guid = unpacker.unpackString();
 	const available = unpacker.unpackBoolean();
-	
+
 	if(available) {
 		//Unpack the rest of the conversation data and return it
 		const service = unpacker.unpackString();
 		const name = unpacker.unpackNullableString();
-		
+
 		const membersLength = unpacker.unpackArrayHeader();
 		const members: string[] = [];
 		for(let i = 0; i < membersLength; i++) members[i] = unpacker.unpackString();
-		
+
 		return [guid, {
 			localID: generateConversationLocalID(),
 			guid: guid,
@@ -936,14 +936,14 @@ function unpackRequestedConversation(unpacker: AirUnpacker): [string, Conversati
 function unpackArray<T>(unpacker: AirUnpacker, unpackerFunction: (unpacker: AirUnpacker) => T | null): T[] {
 	//Creating the array
 	const array: T[] = [];
-	
+
 	//Reading the items
 	const count = unpacker.unpackArrayHeader();
 	for(let i = 0; i < count; i++) {
 		const item = unpackerFunction(unpacker);
 		if(item) array.push(item);
 	}
-	
+
 	return array;
 }
 
@@ -954,7 +954,7 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 	const guid = unpacker.unpackString();
 	const chatGuid = unpacker.unpackString();
 	const date = new Date(unpacker.unpackLong());
-	
+
 	switch(itemType) {
 		default: {
 			console.warn(`Unknown conversation item type ${itemType}`);
@@ -972,14 +972,16 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 			const errorCode = mapCodeDBError(unpacker.unpackInt());
 			const error: MessageError | undefined = errorCode ? {code: errorCode} : undefined;
 			const dateRead = new Date(unpacker.unpackLong());
-		
+			const editHistory = unpackArray(unpacker, (unpacker) => unpacker.unpackString());
+			const isRemoved = unpacker.unpackBoolean();
+
 			return {
 				itemType: itemType,
 				serverID: serverID,
 				guid: guid,
 				chatGuid: chatGuid,
 				date: date,
-			
+
 				text: text,
 				subject: subject,
 				sender: sender,
@@ -990,22 +992,23 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 				status: statusCode,
 				error: error,
 				statusDate: dateRead,
-				editHistory: [],
-				isRemoved: false
+				
+				editHistory: editHistory,
+				isRemoved: isRemoved
 			};
 		}
 		case ConversationItemType.ParticipantAction: {
 			const user = unpacker.unpackNullableString();
 			const target = unpacker.unpackNullableString();
 			const actionType = mapParticipantActionType(unpacker.unpackInt());
-		
+
 			return {
 				itemType: itemType,
 				serverID: serverID,
 				guid: guid,
 				chatGuid: chatGuid,
 				date: date,
-			
+
 				type: actionType,
 				user: user,
 				target: target
@@ -1014,14 +1017,14 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 		case ConversationItemType.ChatRenameAction: {
 			const user = unpacker.unpackNullableString();
 			const chatName = unpacker.unpackNullableString();
-		
+
 			return {
 				itemType: itemType,
 				serverID: serverID,
 				guid: guid,
 				chatGuid: chatGuid,
 				date: date,
-			
+
 				user: user,
 				chatName: chatName
 			};
@@ -1037,7 +1040,7 @@ function unpackAttachment(unpacker: AirUnpacker): AttachmentItem {
 	const checksum = unpacker.unpackNullablePayload();
 	const checksumString = checksum && arrayBufferToHex(checksum);
 	const sort = unpacker.unpackLong();
-	
+
 	return {
 		guid: guid,
 		name: name,
@@ -1051,7 +1054,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 	//Unpacking the shared data
 	const type = unpacker.unpackInt();
 	const messageGuid = unpacker.unpackString();
-	
+
 	switch(type) {
 		default:
 			console.warn(`Unknown modifier item type ${type}`);
@@ -1059,7 +1062,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 		case NSTModifierType.Activity: {
 			const status = mapCodeMessageStatus(unpacker.unpackInt());
 			const date = new Date(unpacker.unpackLong());
-		
+
 			return {
 				type: MessageModifierType.StatusUpdate,
 				messageGuid: messageGuid,
@@ -1074,7 +1077,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 			const date = new Date(unpacker.unpackLong());
 			const data = pako.inflate(new Uint8Array(unpacker.unpackPayload()));
 			const dataType = unpacker.unpackString();
-		
+
 			return {
 				type: MessageModifierType.Sticker,
 				messageGuid: messageGuid,
@@ -1095,7 +1098,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 				console.warn(`Unknown Apple tapback type ${dbTapbackType}`);
 				return null;
 			}
-		
+
 			return {
 				type: MessageModifierType.Tapback,
 				messageGuid: messageGuid,
