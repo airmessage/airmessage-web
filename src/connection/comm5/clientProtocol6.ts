@@ -876,10 +876,9 @@ function unpackPreviewConversation(unpacker: AirUnpacker): LinkedConversation {
 	/*const previewSender = */unpacker.unpackNullableString();
 	const previewText = unpacker.unpackNullableString();
 	const previewSendStyle = unpacker.unpackNullableString();
-	const previewAttachmentsLength = unpacker.unpackArrayHeader();
-	const previewAttachments: string[] = [];
-	for(let i = 0; i < previewAttachmentsLength; i++) previewAttachments[i] = unpacker.unpackString();
-
+	const previewAttachments = unpacker.unpackStringArray();
+	const previewUnsent = unpacker.unpackBoolean();
+	
 	return {
 		localID: generateConversationLocalID(),
 		guid: guid,
@@ -891,7 +890,8 @@ function unpackPreviewConversation(unpacker: AirUnpacker): LinkedConversation {
 			date: previewDate,
 			text: previewText,
 			sendStyle: previewSendStyle,
-			attachments: previewAttachments
+			attachments: previewAttachments,
+			isUnsent: previewUnsent
 		},
 		unreadMessages: false,
 		localOnly: false

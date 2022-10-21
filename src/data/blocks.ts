@@ -36,9 +36,10 @@ interface ConversationPreviewBase {
 
 export interface ConversationPreviewMessage extends ConversationPreviewBase {
 	readonly type: ConversationPreviewType.Message;
-	readonly text?: string;
-	readonly sendStyle?: string;
+	readonly text: string | undefined;
+	readonly sendStyle: string | undefined;
 	readonly attachments: string[];
+	readonly isUnsent: boolean;
 }
 
 export interface ConversationPreviewChatCreation extends ConversationPreviewBase {

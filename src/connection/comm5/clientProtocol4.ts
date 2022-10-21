@@ -6,13 +6,9 @@ import {getInstallationID} from "../../util/installationUtils";
 import AirPacker from "./airPacker";
 import {
 	AttachmentItem,
-	ChatRenameAction,
 	ConversationItem,
 	LinkedConversation,
-	MessageItem,
 	MessageModifier,
-	ParticipantAction,
-	StatusUpdate,
 	StickerItem,
 	TapbackItem
 } from "../../data/blocks";
@@ -692,7 +688,8 @@ function unpackPreviewConversation(unpacker: AirUnpacker): LinkedConversation {
 			date: previewDate,
 			text: previewText,
 			sendStyle: previewSendStyle,
-			attachments: previewAttachments
+			attachments: previewAttachments,
+			isUnsent: false
 		},
 		unreadMessages: false,
 		localOnly: false

@@ -1,7 +1,6 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 
 import * as ConversationUtils from "../../../util/conversationUtils";
-import {isConversationPreviewMessage} from "../../../util/conversationUtils";
 
 import {ListItemAvatar, ListItemButton, ListItemText, Typography, TypographyProps} from "@mui/material";
 
@@ -90,15 +89,17 @@ export default function ListConversation(props: {
 }
 
 function previewString(preview: ConversationPreview): string {
-	if(isConversationPreviewMessage(preview)) {
-		if(preview.sendStyle === appleSendStyleBubbleInvisibleInk) return "Message sent with Invisible Ink";
-		else if(preview.text) return preview.text;
-		else if(preview.attachments.length) {
-			if(preview.attachments.length === 1) {
-				return ConversationUtils.mimeTypeToPreview(preview.attachments[0]);
-			} else {
-				return `${preview.attachments.length} attachments`;
-			}
+	if(preview.type === ConversationPreviewType.Message) {
+		if(preview.isUnsent) {
+			return "Unsent message";
+		} else if(preview.sendStyle === appleSendStyleBubbleInvisibleInk) {
+			return "Message sent with Invisible Ink";
+		} else if(preview.text !== undefined) {
+			return preview.text;
+		} else if(preview.attachments.length === 1) {
+			return ConversationUtils.mimeTypeToPreview(preview.attachments[0]);
+		} else if(preview.attachments.length > 1) {
+			return `${preview.attachments.length} attachments`;
 		}
 	} else if(preview.type === ConversationPreviewType.ChatCreation) {
 		return "New conversation created";
