@@ -790,7 +790,7 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 				error: error,
 				statusDate: dateRead,
 				editHistory: [],
-				isRemoved: false
+				isUnsent: false
 			};
 		}
 		case ConversationItemType.ParticipantAction: {

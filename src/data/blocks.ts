@@ -71,7 +71,7 @@ export interface MessageItem extends ConversationItemBase {
 	error?: MessageError;
 	progress?: number; //Undefined for hide, -1 for indeterminate, 0-100 for determinate
 	editHistory: string[];
-	isRemoved: boolean;
+	isUnsent: boolean;
 }
 
 export interface AttachmentItem {
@@ -118,7 +118,7 @@ export interface TapbackItem extends ResponseMessageModifier {
 export interface EditUpdate extends MessageModifierBase {
 	readonly type: MessageModifierType.Edit;
 	readonly editHistory: string[];
-	readonly isRemoved: boolean;
+	readonly isUnsent: boolean;
 }
 
 export interface ParticipantAction extends ConversationItemBase {

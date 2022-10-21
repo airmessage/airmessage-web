@@ -361,7 +361,7 @@ export default function DetailThread({conversation}: {
 				error: undefined,
 				statusDate: undefined,
 				editHistory: [],
-				isRemoved: false
+				isUnsent: false
 			};
 			
 			//Send the message
@@ -406,7 +406,7 @@ export default function DetailThread({conversation}: {
 				error: undefined,
 				progress: -1, //Show indeterminate progress by default for attachments
 				editHistory: [],
-				isRemoved: false
+				isUnsent: false
 			};
 			
 			//Send the file

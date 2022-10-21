@@ -87,7 +87,7 @@ export default class MessageList extends React.Component<Props, State> {
 				}} direction="column-reverse">
 					{this.props.items.map((item, i, array) => {
 						if(item.itemType === ConversationItemType.Message) {
-							if(item.isRemoved) {
+							if(item.isUnsent) {
 								return (
 									<UnsentMessage
 										key={(item.localID ?? item.guid)}

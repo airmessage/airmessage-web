@@ -971,7 +971,7 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 			const error: MessageError | undefined = errorCode ? {code: errorCode} : undefined;
 			const dateRead = new Date(unpacker.unpackLong());
 			const editHistory = unpacker.unpackStringArray();
-			const isRemoved = unpacker.unpackBoolean();
+			const isUnsent = unpacker.unpackBoolean();
 
 			return {
 				itemType: itemType,
@@ -992,7 +992,7 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 				statusDate: dateRead,
 				
 				editHistory: editHistory,
-				isRemoved: isRemoved
+				isUnsent: isUnsent
 			};
 		}
 		case ConversationItemType.ParticipantAction: {
@@ -1108,13 +1108,13 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 		}
 		case NSTModifierType.Edit: {
 			const editHistory = unpacker.unpackStringArray();
-			const isRemoved = unpacker.unpackBoolean();
+			const isUnsent = unpacker.unpackBoolean();
 			
 			return {
 				type: MessageModifierType.Edit,
 				messageGuid: messageGuid,
 				editHistory: editHistory,
-				isRemoved: isRemoved
+				isUnsent: isUnsent
 			};
 		}
 	}
