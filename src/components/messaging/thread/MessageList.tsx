@@ -7,6 +7,7 @@ import {ConversationItemType, MessageStatusCode} from "../../../data/stateCodes"
 import EventEmitter from "../../../util/eventEmitter";
 import ConversationActionParticipant from "./item/ConversationActionParticipant";
 import ConversationActionRename from "./item/ConversationActionRename";
+import UnsentMessage from "shared/components/messaging/thread/item/UnsentMessage";
 
 interface Props {
 	conversation: Conversation;
@@ -86,6 +87,13 @@ export default class MessageList extends React.Component<Props, State> {
 				}} direction="column-reverse">
 					{this.props.items.map((item, i, array) => {
 						if(item.itemType === ConversationItemType.Message) {
+							if(item.isRemoved) {
+								return (
+									<UnsentMessage
+										key={(item.localID ?? item.guid)}
+										message={item} />
+								);
+							}
 							return (
 								<Message
 									key={(item.localID ?? item.guid)}
