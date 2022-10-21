@@ -159,7 +159,7 @@ export default function Message(props: {
 					anchorBottom: props.flow.anchorBottom || props.message.attachments.length > 0
 				}}
 				text={props.message.text}
-				history={props.message.editHistory}
+				history={props.message.editHistory.slice(0, -1)}
 				showHistory={showEditHistory}
 				stickers={stickerGroups.get(0) ?? []}
 				tapbacks={tapbackGroups.get(0) ?? []} />
