@@ -28,7 +28,10 @@ export default class MessageList extends React.Component<Props, State> {
 	};
 	
 	//Reference to the message scroll list element
-	readonly scrollRef = React.createRef<HTMLDivElement>();
+	private readonly scrollRef = React.createRef<HTMLDivElement>();
+	
+	//Receiver controller for children to adjust scrolling
+	private readonly scrollReceiver = new EventEmitter<void>();
 	
 	//List scroll position snapshot values
 	private snapshotScrollHeight = 0;
@@ -90,7 +93,8 @@ export default class MessageList extends React.Component<Props, State> {
 									isGroupChat={this.props.conversation.members.length > 1}
 									service={this.props.conversation.service}
 									flow={getMessageFlow(item, array[i + 1], array[i - 1])}
-									showStatus={i === readTargetIndex || i === deliveredTargetIndex} />
+									showStatus={i === readTargetIndex || i === deliveredTargetIndex}
+									scrollAdjustEmitter={this.scrollReceiver} />
 							);
 						} else if(item.itemType === ConversationItemType.ParticipantAction) {
 							return (
@@ -118,6 +122,9 @@ export default class MessageList extends React.Component<Props, State> {
 	componentDidMount() {
 		//Registering the submit listener
 		this.props.messageSubmitEmitter.subscribe(this.onMessageSubmit);
+		
+		//Registering the scroll update receiver
+		this.scrollReceiver.subscribe(this.onAdjustScroll);
 		
 		//Scrolling to the bottom of the list
 		this.scrollToBottom(true);
@@ -152,14 +159,25 @@ export default class MessageList extends React.Component<Props, State> {
 		}
 	}
 	
-	
 	componentWillUnmount() {
 		//Unregistering the submit listener
 		this.props.messageSubmitEmitter.unsubscribe(this.onMessageSubmit);
+		
+		//Unregistering the scroll update receiver
+		this.scrollReceiver.unsubscribe(this.onAdjustScroll);
 	}
 	
 	private readonly onMessageSubmit = () => {
 		setTimeout(() => this.scrollToBottom(), 0);
+	};
+	
+	private readonly onAdjustScroll = () => {
+		//Keep the list scrolled to the bottom
+		if(this.checkScrolledToBottom()) {
+			setTimeout(() => {
+				this.scrollToBottom(true);
+			});
+		}
 	};
 	
 	private scrollToBottom(disableAnimation: boolean = false): void {
