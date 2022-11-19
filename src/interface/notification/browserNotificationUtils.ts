@@ -17,6 +17,9 @@ export default class BrowserNotificationUtils extends NotificationUtils {
 	private readonly callerNotificationActionEmitter = new EventEmitter<CallerNotificationAction>();
 	
 	initialize(): void {
+		//Make sure the browser supports notifications
+		if(!("Notification" in window)) return;
+		
 		//Requesting permission to send notifications
 		if(Notification.permission === "default") {
 			setTimeout(() => Notification.requestPermission(), 1000);
@@ -27,7 +30,7 @@ export default class BrowserNotificationUtils extends NotificationUtils {
 	showMessageNotifications(conversation: LinkedConversation, messages: MessageItem[], peopleState: PeopleState) {
 		//Ignoring if the app isn't allowed to send notifications,
 		//or if there aren't any messages to notify
-		if(Notification.permission !== "granted" || messages.length === 0) return;
+		if(!("Notification" in window) || Notification.permission !== "granted" || messages.length === 0) return;
 		
 		//Getting the conversation title to display in the notification
 		const title = conversation.name ?? getMemberTitleSync(conversation.members, peopleState);
@@ -91,6 +94,9 @@ export default class BrowserNotificationUtils extends NotificationUtils {
 	}
 	
 	updateCallerNotification(caller: string | undefined): void {
+		//Make sure the browser supports notifications
+		if(!("Notification" in window)) return;
+		
 		if(caller !== undefined) {
 			const notification = new Notification(caller, {
 				body: "FaceTime",
