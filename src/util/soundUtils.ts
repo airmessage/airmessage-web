@@ -7,34 +7,44 @@ import soundTapback from "shared/resources/audio/tapback.wav";
  * Plays the audio sound for an incoming notification
  */
 export function playSoundNotification() {
-	new Audio(soundNotification).play()?.catch((reason) => {
-		console.log("Failed to play notification audio: " + reason);
-	});
+	playAudio(soundNotification);
 }
 
 /**
  * Plays the audio sound for an incoming message
  */
 export function playSoundMessageIn() {
-	new Audio(soundMessageIn).play()?.catch((reason) => {
-		console.log("Failed to play incoming message audio: " + reason);
-	});
+	playAudio(soundMessageIn);
 }
 
 /**
  * Plays the audio sound for an outgoing message
  */
 export function playSoundMessageOut() {
-	new Audio(soundMessageOut).play()?.catch((reason) => {
-		console.log("Failed to play outgoing message audio: " + reason);
-	});
+	playAudio(soundMessageOut);
 }
 
 /**
  * Plays the audio sound for a new tapback
  */
 export function playSoundTapback() {
-	new Audio(soundTapback).play()?.catch((reason) => {
-		console.log("Failed to play tapback audio: " + reason);
+	playAudio(soundTapback);
+}
+
+private function playAudio(src: string) {
+	//Initialize the audio
+	const audio = new Audio(src);
+	
+	//Play the audio
+	let playResult: Promise<void> | undefined;
+	try {
+		playResult = audio.play();
+	} catch(error) {
+		console.log(`Failed to play audio: ${src}: ${error}`);
+	}
+	
+	//Handle any asynchronous errors
+	playResult?.catch((error) => {
+		console.log(`Failed to play audio: ${src}: ${error}`);
 	});
 }
