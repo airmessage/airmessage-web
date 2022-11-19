@@ -31,7 +31,11 @@ export function playSoundTapback() {
 	playAudio(soundTapback);
 }
 
-private function playAudio(src: string) {
+/**
+ * Plays an audio file
+ * @param src The audio file URI to load and play
+ */
+function playAudio(src: string) {
 	//Initialize the audio
 	const audio = new Audio(src);
 	
