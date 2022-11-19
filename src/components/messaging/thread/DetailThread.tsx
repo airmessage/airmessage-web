@@ -18,13 +18,10 @@ import {
 	checkMessageConversationOwnership,
 	findMatchingUnconfirmedMessageIndex,
 	generateAttachmentLocalID,
-	generateMessageLocalID,
-	isModifierStatusUpdate,
-	isModifierSticker,
-	isModifierTapback
+	generateMessageLocalID
 } from "shared/util/conversationUtils";
 import ConversationTarget from "shared/data/conversationTarget";
-import {ConversationItemType, MessageError, MessageStatusCode} from "shared/data/stateCodes";
+import {ConversationItemType, MessageError, MessageModifierType, MessageStatusCode} from "shared/data/stateCodes";
 import EmitterPromiseTuple from "shared/util/emitterPromiseTuple";
 import {playSoundMessageOut} from "shared/util/soundUtils";
 import EventEmitter from "shared/util/eventEmitter";
@@ -181,27 +178,43 @@ export default function DetailThread({conversation}: {
 				const matchedItem = pendingItemArray[matchingIndex] as MessageItem;
 				
 				//Apply the modifier
-				if(isModifierStatusUpdate(modifier)) {
-					pendingItemArray[matchingIndex] = {
-						...matchedItem,
-						status: modifier.status,
-						statusDate: modifier.date
-					};
-				} else if(isModifierSticker(modifier)) {
-					pendingItemArray[matchingIndex] = {
-						...matchedItem,
-						stickers: matchedItem.stickers.concat(modifier),
-					} as MessageItem;
-				} else if(isModifierTapback(modifier)) {
-					const pendingTapbacks = [...matchedItem.tapbacks];
-					const matchingTapbackIndex = pendingTapbacks.findIndex((tapback) => tapback.sender === modifier.sender);
-					if(matchingTapbackIndex !== -1) pendingTapbacks[matchingTapbackIndex] = modifier;
-					else pendingTapbacks.push(modifier);
-					
-					pendingItemArray[matchingIndex] = {
-						...matchedItem,
-						tapbacks: pendingTapbacks
-					};
+				switch(modifier.type) {
+					case MessageModifierType.StatusUpdate: {
+						pendingItemArray[matchingIndex] = {
+							...matchedItem,
+							status: modifier.status,
+							statusDate: modifier.date
+						};
+						break;
+					}
+					case MessageModifierType.Sticker: {
+						pendingItemArray[matchingIndex] = {
+							...matchedItem,
+							stickers: matchedItem.stickers.concat(modifier),
+						} as MessageItem;
+						break;
+					}
+					case MessageModifierType.Tapback: {
+						const pendingTapbacks = [...matchedItem.tapbacks];
+						const matchingTapbackIndex = pendingTapbacks.findIndex((tapback) => tapback.sender === modifier.sender);
+						if(matchingTapbackIndex !== -1) pendingTapbacks[matchingTapbackIndex] = modifier;
+						else pendingTapbacks.push(modifier);
+						
+						pendingItemArray[matchingIndex] = {
+							...matchedItem,
+							tapbacks: pendingTapbacks
+						};
+						break;
+					}
+					case MessageModifierType.Edit: {
+						pendingItemArray[matchingIndex] = {
+							...matchedItem,
+							text: modifier.editHistory[modifier.editHistory.length - 1],
+							editHistory: modifier.editHistory,
+							isUnsent: modifier.isUnsent
+						};
+						break;
+					}
 				}
 			}
 			
@@ -359,7 +372,9 @@ export default function DetailThread({conversation}: {
 				sendStyle: undefined,
 				status: MessageStatusCode.Unconfirmed,
 				error: undefined,
-				statusDate: undefined
+				statusDate: undefined,
+				editHistory: [],
+				isUnsent: false
 			};
 			
 			//Send the message
@@ -402,7 +417,9 @@ export default function DetailThread({conversation}: {
 				status: MessageStatusCode.Unconfirmed,
 				statusDate: undefined,
 				error: undefined,
-				progress: -1 //Show indeterminate progress by default for attachments
+				progress: -1, //Show indeterminate progress by default for attachments
+				editHistory: [],
+				isUnsent: false
 			};
 			
 			//Send the file

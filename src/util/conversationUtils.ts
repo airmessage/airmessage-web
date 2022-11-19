@@ -116,7 +116,8 @@ export function messageItemToConversationPreview(messageItem: MessageItem): Conv
 		date: messageItem.date,
 		text: messageItem.text,
 		sendStyle: messageItem.sendStyle,
-		attachments: messageItem.attachments.map(attachment => attachment.type)
+		attachments: messageItem.attachments.map(attachment => attachment.type),
+		isUnsent: messageItem.isUnsent
 	};
 }
 

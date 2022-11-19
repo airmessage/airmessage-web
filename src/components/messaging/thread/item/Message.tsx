@@ -1,7 +1,7 @@
 import React, {useCallback, useMemo, useState} from "react";
 import {MessageItem} from "shared/data/blocks";
 import {
-	Avatar,
+	Avatar, Box,
 	Button,
 	CircularProgress,
 	Dialog,
@@ -9,7 +9,7 @@ import {
 	DialogContent,
 	DialogContentText,
 	DialogTitle,
-	IconButton,
+	IconButton, Link,
 	Palette,
 	Stack,
 	StackProps,
@@ -30,6 +30,7 @@ import MessageBubbleImage from "shared/components/messaging/thread/item/bubble/M
 import MessageBubbleDownloadable from "shared/components/messaging/thread/item/bubble/MessageBubbleDownloadable";
 import {messageErrorToDisplay} from "shared/util/languageUtils";
 import {groupArray} from "shared/util/arrayUtils";
+import EventEmitter from "shared/util/eventEmitter";
 
 enum MessageDialog {
 	Error,
@@ -49,11 +50,21 @@ export default function Message(props: {
 	service: string;
 	flow: MessageFlow;
 	showStatus?: boolean;
+	scrollAdjustEmitter?: EventEmitter<void>;
 }) {
 	const [dialogState, setDialogState] = useState<MessageDialog | undefined>(undefined);
 	const closeDialog = useCallback(() => setDialogState(undefined), [setDialogState]);
 	const openDialogError = useCallback(() => setDialogState(MessageDialog.Error), [setDialogState]);
 	const openDialogRawError = useCallback(() => setDialogState(MessageDialog.RawError), [setDialogState]);
+	
+	const [showEditHistory, setShowEditHistory] = useState(false);
+	const toggleShowEditHistory = useCallback(() => {
+		if(!showEditHistory) {
+			props.scrollAdjustEmitter?.notify();
+		}
+		
+		setShowEditHistory(!showEditHistory);
+	}, [showEditHistory, setShowEditHistory, props.scrollAdjustEmitter]);
 	
 	/**
 	 * Copies the message error detail to the clipboard,
@@ -74,6 +85,7 @@ export default function Message(props: {
 	const displayAvatar = !isOutgoing && !props.flow.anchorTop;
 	const displaySender = props.isGroupChat && displayAvatar;
 	const isUnconfirmed = props.message.status === MessageStatusCode.Unconfirmed;
+	const showEdited = props.message.editHistory.length > 0;
 	
 	const handleAttachmentData = useCallback((attachmentIndex: number, shouldDownload: boolean, result: FileDownloadResult) => {
 		if(shouldDownload) {
@@ -147,6 +159,8 @@ export default function Message(props: {
 					anchorBottom: props.flow.anchorBottom || props.message.attachments.length > 0
 				}}
 				text={props.message.text}
+				history={props.message.editHistory.slice(0, -1)}
+				showHistory={showEditHistory}
 				stickers={stickerGroups.get(0) ?? []}
 				tapbacks={tapbackGroups.get(0) ?? []} />
 		);
@@ -283,14 +297,40 @@ export default function Message(props: {
 			</Stack>
 			
 			{/* Message status */}
-			{props.showStatus && (
-				<Typography
+			{(props.showStatus || showEdited) && (
+				<Stack
+					marginLeft={(theme) => `calc(32px + ${theme.spacing(1)})`}
 					marginTop={0.5}
-					textAlign="end"
-					variant="caption"
-					color="textSecondary">
-					{getStatusString(props.message)}
-				</Typography>
+					spacing={0.5}
+					direction="row"
+					alignItems="center"
+					justifyContent={isOutgoing ? "end" : "start"}>
+					{props.showStatus && (
+						<Typography
+							variant="caption"
+							color="textSecondary">
+							{getStatusString(props.message)}
+						</Typography>
+					)}
+					
+					{(props.showStatus && showEdited) && (
+						<Typography
+							variant="caption"
+							color="textSecondary">
+							{"•"}
+						</Typography>
+					)}
+					
+					{showEdited && (
+						<Link
+							component="button"
+							underline="none"
+							variant="caption"
+							onClick={toggleShowEditHistory}>
+							{!showEditHistory ? "Edited" : "Hide edits"}
+						</Link>
+					)}
+				</Stack>
 			)}
 		</MessageStack>
 		
@@ -344,11 +384,17 @@ export default function Message(props: {
  * Gets a human-readable status string for the given message item,
  * or undefined if no status string should be displayed
  */
-function getStatusString(message: MessageItem): string | undefined {
+function getStatusString(message: MessageItem): React.ReactNode | undefined {
 	if(message.status === MessageStatusCode.Delivered) {
 		return "Delivered";
 	} else if(message.status === MessageStatusCode.Read) {
-		return message.statusDate ? "Read • " + getDeliveryStatusTime(message.statusDate) : "Read";
+		if(message.statusDate === undefined) {
+			return "Read";
+		} else {
+			return (<>
+				<Box display="inline" sx={{fontWeight: "medium"}}>Read</Box> {getDeliveryStatusTime(message.statusDate)}
+			</>);
+		}
 	} else {
 		return undefined;
 	}

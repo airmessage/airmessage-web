@@ -6,14 +6,10 @@ import {getInstallationID} from "../../util/installationUtils";
 import AirPacker from "./airPacker";
 import {
 	AttachmentItem,
-	ChatRenameAction,
 	Conversation,
 	ConversationItem,
 	LinkedConversation,
-	MessageItem,
 	MessageModifier,
-	ParticipantAction,
-	StatusUpdate,
 	StickerItem,
 	TapbackItem
 } from "../../data/blocks";
@@ -653,7 +649,8 @@ export default class ClientProtocol5 extends ProtocolManager {
 				progressCallback(Math.min(readOffset, file.size));
 			}
 		} catch(error) {
-			return Promise.reject({code: MessageErrorCode.LocalIO} as MessageError);
+			const messageError: MessageError = {code: MessageErrorCode.LocalIO};
+			return Promise.reject(messageError);
 		}
 		
 		//Returning with the file's MD5 hash
@@ -893,7 +890,8 @@ function unpackPreviewConversation(unpacker: AirUnpacker): LinkedConversation {
 			date: previewDate,
 			text: previewText,
 			sendStyle: previewSendStyle,
-			attachments: previewAttachments
+			attachments: previewAttachments,
+			isUnsent: false
 		},
 		unreadMessages: false,
 		localOnly: false
@@ -989,8 +987,10 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 				sendStyle: sendStyle,
 				status: statusCode,
 				error: error,
-				statusDate: dateRead
-			} as MessageItem;
+				statusDate: dateRead,
+				editHistory: [],
+				isUnsent: false
+			};
 		}
 		case ConversationItemType.ParticipantAction: {
 			const user = unpacker.unpackNullableString();
@@ -1007,7 +1007,7 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 				type: actionType,
 				user: user,
 				target: target
-			} as ParticipantAction;
+			};
 		}
 		case ConversationItemType.ChatRenameAction: {
 			const user = unpacker.unpackNullableString();
@@ -1022,7 +1022,7 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 			
 				user: user,
 				chatName: chatName
-			} as ChatRenameAction;
+			};
 		}
 	}
 }
@@ -1063,7 +1063,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 				messageGuid: messageGuid,
 				status: status,
 				date: date
-			} as StatusUpdate;
+			};
 		}
 		case NSTModifierType.Sticker: {
 			const index = unpacker.unpackInt();
@@ -1081,7 +1081,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 				date: date,
 				dataType: dataType,
 				data: data
-			} as StickerItem;
+			};
 		}
 		case NSTModifierType.Tapback: {
 			const index = unpacker.unpackInt();
@@ -1101,7 +1101,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 				sender: sender,
 				isAddition: isAddition,
 				tapbackType: tapbackType
-			} as TapbackItem;
+			};
 		}
 	}
 }

@@ -12,7 +12,8 @@ export enum ConversationPreviewType {
 export enum MessageModifierType {
 	StatusUpdate,
 	Sticker,
-	Tapback
+	Tapback,
+	Edit
 }
 
 export enum TapbackType {

@@ -5,6 +5,7 @@ import {ConnectionErrorCode, MessageError, MessageErrorCode} from "../../data/st
 import ClientProtocol4 from "shared/connection/comm5/clientProtocol4";
 import ClientProtocol5 from "shared/connection/comm5/clientProtocol5";
 import ConversationTarget from "shared/data/conversationTarget";
+import ClientProtocol6 from "shared/connection/comm5/clientProtocol6";
 
 const targetCommVer = 5;
 
@@ -99,6 +100,8 @@ export default class ClientComm5 extends CommunicationsManager {
 				return new ClientProtocol4(this, this.dataProxy);
 			case 5:
 				return new ClientProtocol5(this, this.dataProxy);
+			case 6:
+				return new ClientProtocol6(this, this.dataProxy);
 			default:
 				if(subVersion < 4) return ConnectionErrorCode.ServerOutdated;
 				else return ConnectionErrorCode.ClientOutdated;

@@ -36,9 +36,10 @@ interface ConversationPreviewBase {
 
 export interface ConversationPreviewMessage extends ConversationPreviewBase {
 	readonly type: ConversationPreviewType.Message;
-	readonly text?: string;
-	readonly sendStyle?: string;
+	readonly text: string | undefined;
+	readonly sendStyle: string | undefined;
 	readonly attachments: string[];
+	readonly isUnsent: boolean;
 }
 
 export interface ConversationPreviewChatCreation extends ConversationPreviewBase {
@@ -70,6 +71,8 @@ export interface MessageItem extends ConversationItemBase {
 	statusDate?: Date;
 	error?: MessageError;
 	progress?: number; //Undefined for hide, -1 for indeterminate, 0-100 for determinate
+	editHistory: string[];
+	isUnsent: boolean;
 }
 
 export interface AttachmentItem {
@@ -82,43 +85,54 @@ export interface AttachmentItem {
 	data?: File;
 }
 
-export interface MessageModifier {
+export interface MessageModifierBase {
 	readonly type: MessageModifierType;
 	readonly messageGuid: string;
 }
 
-export interface StatusUpdate extends MessageModifier {
-	status: MessageStatusCode;
-	date?: Date;
+export type MessageModifier = StatusUpdate | StickerItem | TapbackItem | EditUpdate;
+
+export interface StatusUpdate extends MessageModifierBase {
+	readonly type: MessageModifierType.StatusUpdate;
+	readonly status: MessageStatusCode;
+	readonly date?: Date;
 }
 
-export interface ResponseMessageModifier extends MessageModifier {
+export interface ResponseMessageModifier extends MessageModifierBase {
 	readonly messageIndex: number;
-	readonly sender: string;
+	readonly sender: string | undefined;
 }
 
 export interface StickerItem extends ResponseMessageModifier {
+	readonly type: MessageModifierType.Sticker;
 	readonly date: Date;
 	readonly dataType: string;
 	readonly data: ArrayBuffer;
 }
 
 export interface TapbackItem extends ResponseMessageModifier {
+	readonly type: MessageModifierType.Tapback;
 	readonly isAddition: boolean;
 	readonly tapbackType: TapbackType;
+}
+
+export interface EditUpdate extends MessageModifierBase {
+	readonly type: MessageModifierType.Edit;
+	readonly editHistory: string[];
+	readonly isUnsent: boolean;
 }
 
 export interface ParticipantAction extends ConversationItemBase {
 	readonly itemType: ConversationItemType.ParticipantAction;
 	readonly type: ParticipantActionType;
-	readonly user?: string;
-	readonly target?: string;
+	readonly user: string | undefined;
+	readonly target: string | undefined;
 }
 
 export interface ChatRenameAction extends ConversationItemBase {
 	readonly itemType: ConversationItemType.ChatRenameAction;
-	readonly user: string;
-	readonly chatName: string;
+	readonly user: string | undefined;
+	readonly chatName: string | undefined;
 }
 
 export type ConversationItem = MessageItem | ParticipantAction | ChatRenameAction;
