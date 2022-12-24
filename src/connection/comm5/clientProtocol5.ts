@@ -201,7 +201,7 @@ export default class ClientProtocol5 extends ProtocolManager {
 				} finally {
 					packer.reset();
 				}
-			
+				
 				break;
 			}
 			case nhtAuthentication:
@@ -970,14 +970,14 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 			const errorCode = mapCodeDBError(unpacker.unpackInt());
 			const error: MessageError | undefined = errorCode ? {code: errorCode} : undefined;
 			const dateRead = new Date(unpacker.unpackLong());
-		
+			
 			return {
 				itemType: itemType,
 				serverID: serverID,
 				guid: guid,
 				chatGuid: chatGuid,
 				date: date,
-			
+				
 				text: text,
 				subject: subject,
 				sender: sender,
@@ -996,14 +996,14 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 			const user = unpacker.unpackNullableString();
 			const target = unpacker.unpackNullableString();
 			const actionType = mapParticipantActionType(unpacker.unpackInt());
-		
+			
 			return {
 				itemType: itemType,
 				serverID: serverID,
 				guid: guid,
 				chatGuid: chatGuid,
 				date: date,
-			
+				
 				type: actionType,
 				user: user,
 				target: target
@@ -1012,14 +1012,14 @@ function unpackConversationItem(unpacker: AirUnpacker): ConversationItem | null 
 		case ConversationItemType.ChatRenameAction: {
 			const user = unpacker.unpackNullableString();
 			const chatName = unpacker.unpackNullableString();
-		
+			
 			return {
 				itemType: itemType,
 				serverID: serverID,
 				guid: guid,
 				chatGuid: chatGuid,
 				date: date,
-			
+				
 				user: user,
 				chatName: chatName
 			};
@@ -1057,7 +1057,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 		case NSTModifierType.Activity: {
 			const status = mapCodeMessageStatus(unpacker.unpackInt());
 			const date = new Date(unpacker.unpackLong());
-		
+			
 			return {
 				type: MessageModifierType.StatusUpdate,
 				messageGuid: messageGuid,
@@ -1072,7 +1072,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 			const date = new Date(unpacker.unpackLong());
 			const data = pako.inflate(new Uint8Array(unpacker.unpackPayload()));
 			const dataType = unpacker.unpackString();
-		
+			
 			return {
 				type: MessageModifierType.Sticker,
 				messageGuid: messageGuid,
@@ -1093,7 +1093,7 @@ function unpackModifier(unpacker: AirUnpacker): MessageModifier | null {
 				console.warn(`Unknown Apple tapback type ${dbTapbackType}`);
 				return null;
 			}
-		
+			
 			return {
 				type: MessageModifierType.Tapback,
 				messageGuid: messageGuid,
